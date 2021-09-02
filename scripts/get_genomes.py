@@ -53,7 +53,7 @@ class GetGenomes(object):
             # does the species have a fasta file in ncbi?
             if specncbi in ncbi_specs :
 
-                srcurl = f'{self.ncbi_url}{specncbi}/latest_assembly_versions/'
+                srcurl = f'{self.ncbi_url}{specncbi}latest_assembly_versions/'
                 cmd = ['wget','-r','--directory-prefix',f'{self.tempdir}',f'{srcurl}']
                 stderr, stdout, rc = run_command(cmd)
 
@@ -64,8 +64,8 @@ class GetGenomes(object):
                         print(f'downloading {htmlpath}')
                         version_name = get_links_from_html(htmlpath)[1][:-1]
 
-                        fa_cmd = ['wget','-nc','-nv', '--directory-prefix', f'{self.tempdir}',f'{srcurl}{version_name}/{version_name}_genomic.fna.gz']
-                        gtf_cmd= ['wget','-nc','-nv', '--directory-prefix', f'{self.tempdir}',f'{srcurl}{version_name}/{version_name}_genomic.gtf.gz']
+                        fa_cmd = ['wget','-nc','-nv', '--directory-prefix', f'{self.tempdir}/{specncbi}/',f'{srcurl}{version_name}/{version_name}_genomic.fna.gz']
+                        gtf_cmd= ['wget','-nc','-nv', '--directory-prefix', f'{self.tempdir}/{specncbi}/',f'{srcurl}{version_name}/{version_name}_genomic.gtf.gz']
 
                         fastderr, fastdout, farc = run_command(fa_cmd)
                         gtfstderr, gtfstdout, gtfrc = run_command(gtf_cmd)
