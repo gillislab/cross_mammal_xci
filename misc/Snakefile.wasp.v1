@@ -1,0 +1,358 @@
+# To submit on Elzar:
+#  snakemake --jobs 20 --cluster "qsub 
+#									-N werner1 
+#									-pe threads {threads}
+# 									-wd ~/project/werner1.1 
+#									-l m_mem_free={resources.mem_mb}M 
+import os
+
+homedir = os.path.expanduser("~/")
+print(homedir)
+wdir = homedir + "work/werner1"
+chr="X"
+
+
+#Going to process data by species, will need to have path to the sample names for the given species
+
+#(SAMPLE,) = glob_wildcards(homedir + "data/GTEx/v8/jon_bams/{sample}.Aligned.sortedByCoord.out.patched.md.bam")
+#(SAMPLE,) = glob_wildcards(homedir + "PATH_TO_FASTQ/{sample}.fq")
+
+
+#Only need to save the STAR and GATK output after the WASP filtering, only need the .vcf and .wig files to start on the skew analysis 
+
+
+rule all:
+	input:
+		# from STAR
+	  log = expand(wdir + "/{sample}.Log.wasp.out", sample=SAMPLE ),		
+		flog= expand(wdir + "/{sample}.Log.final.wasp.out", sample=SAMPLE),
+		rpg=  expand(wdir + "/{sample}.ReadsPerGene.out.wasp.tab",	sample=SAMPLE),
+	   
+		# from gatk
+		sfvcf = expand(wdir + "/{sample}." + chr + ".snps_filtered.vcf",  sample=SAMPLE ),
+	    
+    # from igvtools
+    wig =   expand(wdir + "/{sample}." + chr + ".split.filtered.wasp.wig", sample=SAMPLE )
+
+
+
+#Align without WASP filtering
+
+rule starNoWasp:
+	input:
+		end1= wdir + "/{sample}.end1.fq",	
+		end2= wdir + "/{sample}.end2.fq",
+	
+	output: 	
+		abam= wdir + "/{sample}.Aligned.out.bam",
+		rpg= wdir + "/{sample}.ReadsPerGene.out.tab",
+		sjtab= wdir + "/{sample}.SJ.out.tab",
+		log= wdir + "/{sample}.Log.out",		
+		plog= wdir + "/{sample}.Log.progress.out",
+		flog= wdir + "/{sample}.Log.final.out",
+
+			
+	params:		
+		tmpdir = "{sample}_starout",
+		wdir = wdir + "/",
+		gdir= homedir + "data/genomes/GRCh38_Gencode25/",
+	
+	resources:
+		mem_mb=3072
+	threads: 16
+	shell:
+		" d1=`date +%s` && echo $JOB_NAME $JOB_ID {rule} start $d1 && set -x && "
+		" cd {params.wdir} && rm -rf {params.tmpdir} && mkdir {params.tmpdir} && cd {params.tmpdir} && "
+		" STAR  --genomeDir {params.gdir} --readFilesIn {input.end1} {input.end2} "
+		" --runThreadN {threads} --twopassMode Basic --twopass1readsN -1 " 
+		" --outSAMtype BAM Unsorted --quantMode GeneCounts && "
+		" mv -v Aligned.out.bam {output.abam} &&  "
+		" mv -v ReadsPerGene.out.tab {output.rpg} && "
+		" mv -v SJ.out.tab {output.sjtab} && "
+		" mv -v Log.out {output.log} && "
+		" mv -v Log.progress.out {output.plog} && "
+		" mv -v Log.final.out {output.flog} && "
+		
+		" cd .. && rm -rf {params.tmpdir} && "
+		" d2=`date +%s` && echo $JOB_NAME $JOB_ID {rule} end $d2 && "
+		" let rt=$d2-$d1 && echo $JOB_NAME $JOB_ID {rule} runtime $rt "
+
+
+
+#Sort the BAM with samtools
+
+rule samtools1: 
+	input: 		wdir + "/{sample}.Aligned.out.bam"	
+	output:	    wdir + "/{sample}.Aligned.sortedByCoord.out.bam"
+	resources:
+		mem_mb=3072
+	threads: 20
+	shell:
+		" d1=`date +%s` && echo $JOB_NAME $JOB_ID {rule} start $d1  && set -x && "
+		" samtools sort -m {resources.mem_mb}M -o {output} -O bam -@ {threads} {input} && "
+		" samtools index {output} && "
+		" d2=`date +%s` && echo $JOB_NAME $JOB_ID {rule} end $d2 && "
+		" let rt=$d2-$d1 && echo $JOB_NAME $JOB_ID {rule} runtime $rt "
+
+
+#Extract and filter the chrX BAM with samtools
+
+rule samtools2:
+	input:
+		bam= wdir + "/{sample}.Aligned.sortedByCoord.out.bam"	
+	output:
+		xbam= wdir + "/{sample}."+ chr +".bam",	
+		xfiltbam= wdir + "/{sample}."+ chr +".filt.bam"	
+
+	params:
+		tmpdir = "{sample}_tmpdir",
+		chrom = chr,
+		wdir = wdir + "/",
+		gdir=homedir + "data/genomes/GRCh38_Gencode25",
+	resources:
+		mem_mb=3072
+	threads: 1
+	shell:
+		" d1=`date +%s` && echo $JOB_NAME $JOB_ID {rule} start $d1  && set -x && "
+		" cd {params.wdir} && rm -rf {params.tmpdir} && mkdir {params.tmpdir} && cd {params.tmpdir} && "
+		" samtools view -b {input.bam} chr{params.chrom} > {params.chrom}.bam && "
+		" samtools view -b -q 10 {params.chrom}.bam > {params.chrom}.filt.bam && "
+		" mv -v {params.chrom}.bam {output.xbam} && "
+		" mv -v {params.chrom}.filt.bam {output.xfiltbam} && "
+		" cd .. && rm -rf {params.tmpdir} && "
+		" d2=`date +%s` && echo $JOB_NAME $JOB_ID {rule} end $d2 && "
+		" let rt=$d2-$d1 && echo $JOB_NAME $JOB_ID {rule} runtime $rt "
+
+
+#GATK suite of tools to identify SNPs
+
+rule gatk1:		
+	input:
+		xbam= wdir + "/{sample}."+ chr +".bam",	
+		xfiltbam= wdir + "/{sample}."+ chr +".filt.bam",
+
+	output:
+		sfbam = wdir + "/{sample}." + chr + ".split.filtered.bam",
+		sfvcf = wdir + "/{sample}." + chr + ".snps_filtered.vcf",
+		xfvcf = wdir + "/{sample}." + chr + ".filtered.vcf",
+		
+	params:
+		tmpdir = "{sample}_tmpdir",
+		chrom = chr,
+		wdir = wdir + "/",
+		gdir = homedir + "data/genomes/GRCh38_Gencode25",
+	
+	resources:
+		#mem_mb=46080
+		mem_mb= 5760
+	#threads: 1
+	threads: 8
+	
+	shell:
+		" d1=`date +%s` && echo $JOB_NAME $JOB_ID {rule} start $d1  && set -x && "
+		" cd {params.wdir} && rm -rf {params.tmpdir} && mkdir {params.tmpdir} && cd {params.tmpdir} && "
+		
+		" gatk AddOrReplaceReadGroups -I={input.xfiltbam} -O={params.chrom}.rg.bam -SO=coordinate "
+		"-RGID=id -RGLB=library -RGPL=platform -RGPU=machine -RGSM=sample && "
+		
+		" gatk MarkDuplicates -I={params.chrom}.rg.bam -O={params.chrom}.dedupped.bam -CREATE_INDEX=true " 
+		" -VALIDATION_STRINGENCY=SILENT -M=output.metrics && "
+		
+		" gatk SplitNCigarReads -R {params.gdir}/GRCh38.p7.genome.fa -I {params.chrom}.dedupped.bam " 
+		" -O {params.chrom}.split.filtered.bam --java-options '-XXgcThreads:2 -XX:ConcGCThreads ' && "
+		
+		" gatk HaplotypeCaller -R {params.gdir}/GRCh38.p7.genome.fa -L chr{params.chrom} " 
+		" -I {params.chrom}.split.filtered.bam --dont-use-soft-clipped-bases -stand-call-conf 0.0 "
+		" -O {params.chrom}.filtered.vcf && "
+		
+		" gatk SelectVariants -R {params.gdir}/GRCh38.p7.genome.fa -L chr{params.chrom} "
+        "-V {params.chrom}.filtered.vcf -O {params.chrom}.snps.vcf -select-type SNP &&"
+		
+		" gatk VariantFiltration -R {params.gdir}/GRCh38.p7.genome.fa -L chr{params.chrom} "
+        " -V {params.chrom}.snps.vcf -O {params.chrom}.snps_filtered.vcf "
+        ' -filter "QD < 2.0" --filter-name "QD2" '
+        ' -filter "QUAL < 30.0" --filter-name "QUAL30" '
+        ' -filter "SOR > 3.0" --filter-name "SOR3" '
+        ' -filter "FS > 60.0" --filter-name "FS60" '
+        ' -filter "MQ < 40.0" --filter-name "MQ40" '
+        ' -filter "MQRankSum < -12.5" --filter-name "MQRankSum-12.5" '
+        ' -filter "ReadPosRankSum < -8.0" --filter-name "ReadPosRankSum-8" && '
+
+		" mv -v {params.chrom}.split.filtered.bam {output.sfbam} && "	
+		" mv -v {params.chrom}.snps_filtered.vcf {output.sfvcf} && "
+		" mv -v {params.chrom}.filtered.vcf {output.xfvcf} && "
+		" cd .. && rm -rf {params.tmpdir} && "
+		" d2=`date +%s` && echo $JOB_NAME $JOB_ID {rule} end $d2 && "
+		" let rt=$d2-$d1 && echo $JOB_NAME $JOB_ID {rule} runtime $rt "
+		
+
+#STAR with WASP filtering
+
+rule starWasp:
+	input:
+		end1= wdir + "/{sample}.end1.fq",	
+		end2= wdir + "/{sample}.end2.fq",
+		sfvcf = wdir + "/{sample}." + chr + ".snps_filtered.vcf",
+	
+	output: 	
+		abam= wdir + "/{sample}.Aligned.out.wasp.bam",
+		rpg= wdir + "/{sample}.ReadsPerGene.out.wasp.tab",
+		sjtab= wdir + "/{sample}.SJ.out.wasp.tab",
+		log= wdir + "/{sample}.Log.wasp.out",		
+		plog= wdir + "/{sample}.Log.progress.wasp.out",
+		flog= wdir + "/{sample}.Log.final.wasp.out",
+
+			
+	params:		
+		tmpdir = "{sample}_starout",
+		wdir = wdir + "/",
+		gdir= homedir + "data/genomes/GRCh38_Gencode25/",
+	
+	resources:
+		mem_mb=3072
+	threads: 16
+	shell:
+		" d1=`date +%s` && echo $JOB_NAME $JOB_ID {rule} start $d1 && set -x && "
+		" cd {params.wdir} && rm -rf {params.tmpdir} && mkdir {params.tmpdir} && cd {params.tmpdir} && "
+		" STAR  --genomeDir {params.gdir} --readFilesIn {input.end1} {input.end2} "
+		" --runThreadN {threads} --twopassMode Basic --twopass1readsN -1 " 
+		" --outSAMtype BAM Unsorted --quantMode GeneCounts "
+		" --waspOutputMode SAMtag --varVCFfile {input.sfvcf} && "
+		" mv -v Aligned.out.bam {output.abam} &&  "
+		" mv -v ReadsPerGene.out.tab {output.rpg} && "
+		" mv -v SJ.out.tab {output.sjtab} && "
+		" mv -v Log.out {output.log} && "
+		" mv -v Log.progress.out {output.plog} && "
+		" mv -v Log.final.out {output.flog} && "
+		
+		" cd .. && rm -rf {params.tmpdir} && "
+		" d2=`date +%s` && echo $JOB_NAME $JOB_ID {rule} end $d2 && "
+		" let rt=$d2-$d1 && echo $JOB_NAME $JOB_ID {rule} runtime $rt "
+
+
+rule samtools3: 
+	input: 		wdir + "/{sample}.Aligned.out.wasp.bam"	
+	output:	    wdir + "/{sample}.Aligned.sortedByCoord.out.wasp.bam"
+	resources:
+		mem_mb=3072
+	threads: 20
+	shell:
+		" d1=`date +%s` && echo $JOB_NAME $JOB_ID {rule} start $d1  && set -x && "
+		" samtools sort -m {resources.mem_mb}M -o {output} -O bam -@ {threads} {input} && "
+		" samtools index {output} && "
+		" d2=`date +%s` && echo $JOB_NAME $JOB_ID {rule} end $d2 && "
+		" let rt=$d2-$d1 && echo $JOB_NAME $JOB_ID {rule} runtime $rt "
+
+
+#Filters out the WASP tagged reads 
+
+rule samtools4:
+	input:
+		bam= wdir + "/{sample}.Aligned.sortedByCoord.out.wasp.bam"	
+	output:
+		xbam= wdir + "/{sample}."+ chr +".wasp.bam",	
+		xfiltbam= wdir + "/{sample}."+ chr +".wasp.filt.bam"	
+
+	params:
+		tmpdir = "{sample}_tmpdir",
+		chrom = chr,
+		wdir = wdir + "/",
+		gdir=homedir + "data/genomes/GRCh38_Gencode25",
+	resources:
+		mem_mb=3072
+	threads: 1
+	shell:
+		" d1=`date +%s` && echo $JOB_NAME $JOB_ID {rule} start $d1  && set -x && "
+		" cd {params.wdir} && rm -rf {params.tmpdir} && mkdir {params.tmpdir} && cd {params.tmpdir} && "
+		" samtools view -b {input.bam} chr{params.chrom} > {params.chrom}.bam && "
+		" samtools view -b -q 10 -d vW:1 {params.chrom}.bam > {params.chrom}.filt.bam && "
+		" mv -v {params.chrom}.bam {output.xbam} && "
+		" mv -v {params.chrom}.filt.bam {output.xfiltbam} && "
+		" cd .. && rm -rf {params.tmpdir} && "
+		" d2=`date +%s` && echo $JOB_NAME $JOB_ID {rule} end $d2 && "
+		" let rt=$d2-$d1 && echo $JOB_NAME $JOB_ID {rule} runtime $rt "
+		
+
+rule gatk2:		
+	input:
+		xbam= wdir + "/{sample}."+ chr +".wasp.bam",	
+		xfiltbam= wdir + "/{sample}."+ chr +".wasp.filt.bam",
+
+	output:
+		sfbam = wdir + "/{sample}." + chr + ".split.filtered.wasp.bam",
+		sfvcf = wdir + "/{sample}." + chr + ".snps_filtered.wasp.vcf",
+		xfvcf = wdir + "/{sample}." + chr + ".filtered.wasp.vcf",
+		
+	params:
+		tmpdir = "{sample}_tmpdir",
+		chrom = chr,
+		wdir = wdir + "/",
+		gdir = homedir + "data/genomes/GRCh38_Gencode25",
+	
+	resources:
+		#mem_mb=46080
+		mem_mb= 5760
+	#threads: 1
+	threads: 8
+	
+	shell:
+		" d1=`date +%s` && echo $JOB_NAME $JOB_ID {rule} start $d1  && set -x && "
+		" cd {params.wdir} && rm -rf {params.tmpdir} && mkdir {params.tmpdir} && cd {params.tmpdir} && "
+		
+		" gatk AddOrReplaceReadGroups -I={input.xfiltbam} -O={params.chrom}.rg.bam -SO=coordinate "
+		"-RGID=id -RGLB=library -RGPL=platform -RGPU=machine -RGSM=sample && "
+		
+		" gatk MarkDuplicates -I={params.chrom}.rg.bam -O={params.chrom}.dedupped.bam -CREATE_INDEX=true " 
+		" -VALIDATION_STRINGENCY=SILENT -M=output.metrics && "
+		
+		" gatk SplitNCigarReads -R {params.gdir}/GRCh38.p7.genome.fa -I {params.chrom}.dedupped.bam " 
+		" -O {params.chrom}.split.filtered.bam --java-options '-XXgcThreads:2 -XX:ConcGCThreads ' && "
+		
+		" gatk HaplotypeCaller -R {params.gdir}/GRCh38.p7.genome.fa -L chr{params.chrom} " 
+		" -I {params.chrom}.split.filtered.bam --dont-use-soft-clipped-bases -stand-call-conf 0.0 "
+		" -O {params.chrom}.filtered.vcf && "
+		
+		" gatk SelectVariants -R {params.gdir}/GRCh38.p7.genome.fa -L chr{params.chrom} "
+        "-V {params.chrom}.filtered.vcf -O {params.chrom}.snps.vcf -select-type SNP &&"
+		
+		" gatk VariantFiltration -R {params.gdir}/GRCh38.p7.genome.fa -L chr{params.chrom} "
+        " -V {params.chrom}.snps.vcf -O {params.chrom}.snps_filtered.vcf "
+        ' -filter "QD < 2.0" --filter-name "QD2" '
+        ' -filter "QUAL < 30.0" --filter-name "QUAL30" '
+        ' -filter "SOR > 3.0" --filter-name "SOR3" '
+        ' -filter "FS > 60.0" --filter-name "FS60" '
+        ' -filter "MQ < 40.0" --filter-name "MQ40" '
+        ' -filter "MQRankSum < -12.5" --filter-name "MQRankSum-12.5" '
+        ' -filter "ReadPosRankSum < -8.0" --filter-name "ReadPosRankSum-8" && '
+
+		" mv -v {params.chrom}.split.filtered.bam {output.sfbam} && "	
+		" mv -v {params.chrom}.snps_filtered.vcf {output.sfvcf} && "
+		" mv -v {params.chrom}.filtered.vcf {output.xfvcf} && "
+		" cd .. && rm -rf {params.tmpdir} && "
+		" d2=`date +%s` && echo $JOB_NAME $JOB_ID {rule} end $d2 && "
+		" let rt=$d2-$d1 && echo $JOB_NAME $JOB_ID {rule} runtime $rt "
+
+rule igvtools7:	
+	input:
+		sfbam= wdir + "/{sample}." + chr + ".split.filtered.wasp.bam",
+
+	output:
+	  splitwig= wdir + "/{sample}." + chr + ".split.filtered.wasp.wig", 
+		
+	resources:
+		mem_mb=12288
+	threads: 1
+	
+	params:
+		tmpdir = "{sample}_tmpdir",
+		wdir = wdir + "/",
+		chrom=chr,
+	
+	shell:
+		" d1=`date +%s` && echo $JOB_NAME $JOB_ID {rule} start $d1  && set -x && "
+		" cd {params.wdir} && rm -rf {params.tmpdir} && mkdir {params.tmpdir} && cd {params.tmpdir} && "		
+		" igvtools count -z 0 -w 1 --bases --strands read {input.sfbam} " 
+		" mv -v tmp.{wildcards.sample}.wig {output.splitwig}  && "
+		" cd .. && rm -rf {params.tmpdir} && "
+		" d2=`date +%s` && echo $JOB_NAME $JOB_ID {rule} end $d2 && "
+		" let rt=$d2-$d1 && echo $JOB_NAME $JOB_ID {rule} runtime $rt "
