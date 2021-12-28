@@ -1,0 +1,505 @@
+#
+# Genomes in /data/johlee/cross_mammal_xci/genomes
+# Data in /data/johlee/cross_mammal_xci/temp/sra
+# #  snakemake --jobs 20 --cluster "qsub -N xskew1 -pe threads {threads} -wd ~/work/xskew1 -l m_mem_free={resources.mem_mb}M 
+#
+# Interactive invocation:
+#  time snakemake -c16 --keep-going  --config species=Bos_taurus num_workers=2 worker_idx=1 > log.7.txt 2>&1
+#
+#
+#
+
+import os
+import sys
+import logging
+
+gitpath=os.path.expanduser("~/git/xskew")
+sys.path.append(gitpath)
+
+from xskew.tools import *
+
+configfile: "workflow/config.yaml"
+
+species = config["species"]
+chr = config["chr"]
+num_workers = config["num_workers"]
+worker_idx = config["worker_idx"]
+
+genomedir = os.path.expanduser(f'~/data/cross_mammal_xci/genomes/{species}')
+datadir = os.path.expanduser(f'~/data/cross_mammal_xci/sra/{species}')
+homedir = os.path.expanduser("~/")
+wdir = f"{homedir}work/cmxci1/{species}"
+
+setup_logging(logging.DEBUG)
+
+logging.debug(f"HOME={homedir} WORKDIR={wdir} CHR={chr} GENOMEDIR={genomedir}")
+logging.debug(f"NUM_WORKERS={num_workers} WORKER_IDX={worker_idx}")
+
+# Collect samples and optionally filter across hosts.
+(SAMPLE,) = glob_wildcards(datadir + "/{sample}.sra")
+logging.debug(f'Initial sample number = {len(SAMPLE)}. Filtering...')
+SAMPLE = modulo_filter(SAMPLE, num_workers, worker_idx)
+logging.debug(f"SAMPLE={SAMPLE}")
+
+# Needed to avoid matching anything past the '.', e.g. XYZ.wasp.<sufficx> 
+wildcard_constraints:
+    sample="\w+"
+
+rule all:
+    input:
+        expand(wdir + "/{sample}." + chr + ".split.filtered.wig", sample=SAMPLE ),
+        expand(wdir + "/{sample}.wasp." + chr + ".snps.vcf", sample=SAMPLE), 
+        expand(wdir + "/{sample}.wasp." + chr + ".filtered.vcf", sample=SAMPLE), 
+        expand(wdir + "/{sample}.wasp." + chr + ".snps_filtered.vcf", sample=SAMPLE),         
+        expand(wdir + "/{sample}." + chr + ".split.filtered.wig", sample=SAMPLE),          
+        expand(wdir + "/{sample}.wasp.SJ.out.tab", sample=SAMPLE),
+        expand(wdir + "/{sample}.wasp.Log.out", sample=SAMPLE),  
+        expand(wdir + "/{sample}.wasp.Log.final.out", sample=SAMPLE),
+        expand(wdir + "/{sample}.wasp.Aligned.sortedByCoord.out.bam", sample=SAMPLE),
+        expand(wdir + "/{sample}.wasp.Aligned.sortedByCoord.out.bam.bai", sample=SAMPLE),
+        expand(wdir + "/{sample}.wasp." + chr + ".filtered.vcf", sample=SAMPLE),
+        expand(wdir + "/{sample}.wasp." + chr + ".snps.vcf", sample=SAMPLE),
+        expand(wdir + "/{sample}.wasp." + chr + ".snps_filtered.vcf", sample=SAMPLE),
+        expand(wdir + "/{sample}.wasp." + chr + ".split.filtered.wig", sample=SAMPLE ),        
+        # FROM GENOME SETUP
+        #gdict = genomedir + "/genome.dict",
+        #gfai = genomedir + "/genome.fa.fai",
+        #gpar = genomedir + "/genomeParameters.txt",
+        
+        # from genome processing
+        #xreg = genomedir + "/" + chr + "label.txt",
+        #yreg = genomedir + "/chrYlabel.txt",
+        #regfa = genomedir + "/" + chr + ".fa",
+         
+        # testing. 
+        #end1 = expand(wdir +  "/{sample}_1.fastq", sample=SAMPLE ),
+        #end2 = expand(wdir +  "/{sample}_2.fastq", sample=SAMPLE ),   
+       
+        # from STAR
+        #abam = expand(wdir + "/{sample}.Aligned.out.bam", sample=SAMPLE ),
+        # from SAMTOOLS1
+        #sbam = expand(wdir + "/{sample}.Aligned.sortedByCoord.out.bam", sample=SAMPLE ),
+        #sbam = expand(wdir + "/{sample}.Aligned.sortedByCoord.out.bam", sample=SAMPLE ),  
+        #xbam = expand(wdir + "/{sample}." + chr + ".bam", sample=SAMPLE ),
+        #xfiltbam = expand(wdir + "/{sample}." + chr + ".filt.bam", sample=SAMPLE ),
+
+        # from GATK1
+        #rgbam = expand(wdir + "/{sample}." + chr + ".rg.bam", sample=SAMPLE),
+        #sfbam = expand(wdir + "/{sample}." + chr + ".split.filtered.bam", sample=SAMPLE),
+        #svcf =  expand(wdir + "/{sample}." + chr + ".snps.vcf", sample=SAMPLE), 
+        #xfvcf = expand(wdir + "/{sample}." + chr + ".filtered.vcf", sample=SAMPLE),
+        # sfvcf = expand(wdir + "/{sample}." + chr + ".snps_filtered.vcf",  sample=SAMPLE ),
+        #ddbam = expand(wdir + "/{sample}." + chr + ".dedupped.bam", sample=SAMPLE), 
+        #metrics = expand(wdir + "/{sample}." + chr + ".output.metrics", sample=SAMPLE),
+
+        # from igvtools6
+        #sfwig = expand(wdir + "/{sample}." + chr + ".split.filtered.wig", sample=SAMPLE ),
+        
+        # from STAR wasp
+        #wabam= expand(wdir + "/{sample}.wasp.Aligned.out.bam",  sample=SAMPLE), 
+        #wlog = expand(wdir + "/{sample}.wasp.Log.out", sample=SAMPLE ),        
+        #wflog= expand(wdir +"/{sample}.wasp.Log.final.out", sample=SAMPLE),
+        #wrpg=  expand(wdir +"/{sample}.wasp.ReadsPerGene.out.tab",    sample=SAMPLE),        
+
+        # from SAMTOOLS2
+
+        #wsbam = expand(wdir + "/{sample}.wasp.Aligned.sortedByCoord.out.bam",sample=SAMPLE ),
+        #wsbai = expand(wdir + "/{sample}.wasp.Aligned.sortedByCoord.out.bam.bai",sample=SAMPLE ),
+        #wxfiltbam = expand(wdir + "/{sample}.wasp." + chr + ".filt.bam", sample=SAMPLE ),
+
+        # from GATK2
+        #wrgbam = expand(wdir + "/{sample}.wasp." + chr + ".rg.bam", sample=SAMPLE), 
+        #wsfbam = expand(wdir + "/{sample}.wasp." + chr + ".split.filtered.bam",  sample=SAMPLE), 
+        #wsvcf =  expand(wdir + "/{sample}.wasp." + chr + ".snps.vcf", sample=SAMPLE), 
+        #wxfvcf = expand(wdir + "/{sample}.wasp." + chr + ".filtered.vcf", sample=SAMPLE), 
+        #wsfvcf = expand(wdir + "/{sample}.wasp." + chr + ".snps_filtered.vcf", sample=SAMPLE), 
+        #wddbam = expand(wdir + "/{sample}.wasp." + chr + ".dedupped.bam", sample=SAMPLE), 
+        #wmetrics = expand(wdir + "/{sample}.wasp." + chr + ".output.metrics", sample=SAMPLE), 
+
+        # from igvtools7
+        #wwig = expand(wdir + "/{sample}.wasp." + chr + ".split.filtered.wig", sample=SAMPLE ),
+        
+
+
+rule build_genome_idx:
+    """
+        STAR --runThreadN 16 
+             --runMode genomeGenerate 
+             --genomeDir ~/data/cross_mammal_xci/genomes/Homo_sapiens
+             --genomeFastaFiles ~/data/cross_mammal_xci/genomes/Homo_sapiens/genome.fa
+             --sjdbGTFfile ~/data/cross_mammal_xci/genomes/Homo_sapiens/annotation.gtf  
+            [ --sjdOverhang 100 ]
+        
+        samtools faidx genome.fa
+        samtools dict genome.fa -o genome.dict
+        
+        
+    """    
+    input:
+        gfa = genomedir + "/genome.fa",
+        gtf = genomedir + "/annotation.gtf",
+        arpt = genomedir + "/assembly_report.txt"
+        
+    output:
+        gdict = genomedir + "/genome.dict",
+        gfai = genomedir + "/genome.fa.fai",
+        gpar = genomedir + "/genomeParameters.txt",
+
+    
+    params:
+        gdir= genomedir,
+        chr=chr,
+    
+    resources:
+        mem_mb=2048
+    threads: 16
+    
+    run:
+        star_genome(genomedir=params.gdir, 
+                    nthreads=f"{threads}", 
+                    gtffile=input.gtf, 
+                    infile=input.gfa )
+        samtools_faidx(infile=input.gfa, 
+                       outfile=output.gfai)
+        samtools_dict(infile=input.gfa, 
+                      outfile=output.gdict)
+
+
+rule make_chr_label:
+    input: 
+        arpt = genomedir + "/assembly_report.txt",
+        gfa = genomedir + "/genome.fa",
+        
+    output:
+        xreg = genomedir + "/" + chr + "label.txt",
+        #yreg = genomedir + "/chrYlabel.txt",
+        regfa = genomedir + "/" + chr + ".fa"
+
+    params:
+        gdir= genomedir,
+        chr = chr,
+
+    run:
+        make_chr_label(reportfile=input.arpt,
+                       outfile=output.xreg,
+                       chr=params.chr)
+        #make_chr_label(reportfile=input.arpt,
+        #               outfile=output.yreg,
+        #               chr='chrY')
+        make_chr_index( infile=input.gfa,
+                        genomedir = params.gdir, 
+                        chr = params.chr, 
+                        outfile = output.regfa)
+
+
+rule dump_fastq:
+    priority: 5
+    input:
+        sra = datadir + "/{sample}.sra"
+    output:
+        end1= temp(wdir + "/{sample}_1.fastq"),    
+        end2= temp(wdir + "/{sample}_2.fastq")    
+    resources:
+        mem_mb=2048
+    threads: 6
+
+    run:
+        fasterq_dump( infile=input.sra, 
+                      outdir=wdir, 
+                      nthreads=f"{threads}", 
+                      tempdir =wdir)
+        
+        
+rule star_nowasp:
+    priority: 10
+    input:
+        end1= wdir + "/{sample}_1.fastq",   
+        end2= wdir + "/{sample}_2.fastq",
+        gdict = genomedir + "/genome.dict",
+        gfai = genomedir + "/genome.fa.fai",
+        gpar = genomedir + "/genomeParameters.txt",
+        
+    output:     
+        abam=  temp(wdir + "/{sample}.Aligned.out.bam"),
+        rpg=   temp(wdir + "/{sample}.ReadsPerGene.out.tab"),
+        sjtab= temp(wdir + "/{sample}.SJ.out.tab"),
+        log=   temp(wdir + "/{sample}.Log.out"),        
+        plog=  temp(wdir + "/{sample}.Log.progress.out"),
+        flog=  temp(wdir + "/{sample}.Log.final.out"),
+
+    params:        
+        tmpdir = wdir + "/{sample}_starout",
+        wdir = wdir + "/",
+        gdir= genomedir,
+        outprefix = wdir + "/{sample}."     
+    resources:
+        mem_mb=3072
+    threads: 16
+    
+    run:
+        star_nowasp( end1=input.end1, 
+                     end2=input.end2, 
+                     outprefix=params.outprefix,
+                     nthreads=f"{threads}", 
+                     genomedir=params.gdir)
+
+rule samtools1:
+    priority: 20 
+    input:
+        abam = wdir + "/{sample}.Aligned.out.bam"    
+    output:
+        sbam = temp(wdir + "/{sample}.Aligned.sortedByCoord.out.bam"),
+        sbai = temp(wdir + "/{sample}.Aligned.sortedByCoord.out.bam.bai")
+    resources:
+        mem_mb=3072
+    threads: 16
+    
+    run:
+        samtools_sort(infile=input.abam, 
+                      outfile=output.sbam, 
+                      memory=resources.mem_mb, 
+                      nthreads=f"{threads}")
+        samtools_index(infile=output.sbam, 
+                       nthreads=f"{threads}")
+
+
+rule samtools2:
+    priority: 25 
+    input:
+        bam= wdir + "/{sample}.Aligned.sortedByCoord.out.bam",
+        sbai = wdir + "/{sample}.Aligned.sortedByCoord.out.bam.bai",
+        xreg = genomedir + "/" + chr + "label.txt",
+            
+    output:
+        xbam=      temp(wdir + "/{sample}."+ chr +".bam"),    
+        xfiltbam=  temp(wdir + "/{sample}."+ chr +".filt.bam")
+            
+    params:
+        #region=f"{chr}",
+        #region = get_chr_label(genomedir, chr),
+        qual = 10,
+    resources:
+        mem_mb=3072  
+    threads: 1        
+
+    run:
+        samtools_view_region(infile=input.bam, 
+                             outfile=output.xbam, 
+                             regionfile=input.xreg)
+        samtools_view_quality(infile=output.xbam, 
+                              outfile=output.xfiltbam, 
+                              quality=f'{params.qual}')
+
+
+rule gatk1:
+    priority: 30         
+    input: 
+        xfiltbam= wdir + "/{sample}."+ chr +".filt.bam",
+        gdict = genomedir + "/genome.dict",
+        gfai = genomedir + "/genome.fa.fai",
+        gpar = genomedir + "/genomeParameters.txt",
+        xreg = genomedir + "/" + chr + "label.txt",
+        
+    output:
+        rgbam = temp(wdir + "/{sample}." + chr + ".rg.bam"),
+        ddbam = temp(wdir + "/{sample}." + chr + ".dedupped.bam"),
+        ddbai = temp(wdir + "/{sample}." + chr + ".dedupped.bai"),
+        metrics = temp(wdir + "/{sample}." + chr + ".output.metrics"),
+        sfbam = temp(wdir + "/{sample}." + chr + ".split.filtered.bam"),
+        sfbai = temp(wdir + "/{sample}." + chr + ".split.filtered.bai"),
+        
+        xfvcf = wdir + "/{sample}." + chr + ".filtered.vcf",
+        svcf =  wdir + "/{sample}." + chr + ".snps.vcf",
+        sfvcf = wdir + "/{sample}." + chr + ".snps_filtered.vcf",
+
+    params:
+        chrom = chr,
+        wdir = wdir + "/",
+        genome = genomedir + "/genome.fa",
+        #interval = get_chr_label(genomedir, chr),
+        
+    resources:
+        #mem_mb=46080
+        mem_mb= 5760
+    #threads: 1
+    threads: 8
+    
+    run:
+        gatk_arrg( infile=input.xfiltbam, outfile=output.rgbam)
+        list_sample(infile=input.xfiltbam)
+        gatk_md( infile=output.rgbam, outfile=output.ddbam, metrics=output.metrics)
+        list_sample(infile=input.xfiltbam)
+        gatk_sncr( infile=output.ddbam, outfile=output.sfbam, genome=params.genome )
+        list_sample(infile=input.xfiltbam)
+        gatk_htc( infile=output.sfbam, outfile=output.xfvcf, genome=params.genome, regionfile=input.xreg)
+        list_sample(infile=input.xfiltbam)        
+        gatk_sv(infile=output.xfvcf, outfile=output.svcf, genome=params.genome, regionfile=input.xreg )
+        list_sample(infile=input.xfiltbam)
+        gatk_vf(infile=output.svcf, outfile=output.sfvcf, genome=params.genome, regionfile=input.xreg )      
+        list_sample(infile=input.xfiltbam)
+
+
+rule igvtools6:
+    priority: 52     
+    input:
+        sfbam= wdir + "/{sample}." + chr + ".split.filtered.bam",
+        regfa = genomedir + "/" + chr + ".fa"
+        
+    output:
+        sfwig= wdir + "/{sample}." + chr + ".split.filtered.wig", 
+            
+    resources:
+        mem_mb=12288
+    threads: 1
+        
+    run:
+        igvtools_count(infile=input.sfbam, 
+                       outfile=output.sfwig, 
+                       reg_fa=input.regfa)      
+
+
+rule star_wasp:
+    priority: 35 
+    input:
+        end1= wdir + "/{sample}_1.fastq",   
+        end2= wdir + "/{sample}_2.fastq",
+        sfvcf = wdir + "/{sample}." + chr + ".snps_filtered.vcf",
+        gdict = genomedir + "/genome.dict",
+        gfai = genomedir + "/genome.fa.fai",
+        gpar = genomedir + "/genomeParameters.txt",
+        
+    output:     
+        wabam=  temp(wdir + "/{sample}.wasp.Aligned.out.bam"),
+        wrpg=   wdir + "/{sample}.wasp.ReadsPerGene.out.tab",
+        wsjtab= wdir + "/{sample}.wasp.SJ.out.tab",
+        wlog=   wdir + "/{sample}.wasp.Log.out",        
+        wplog=  temp(wdir + "/{sample}.wasp.Log.progress.out"),
+        wflog=  wdir + "/{sample}.wasp.Log.final.out",
+
+    params:        
+        tmpdir = wdir + "/{sample}_starout",
+        wdir = wdir + "/",
+        gdir = genomedir ,
+        outprefix = wdir + "/{sample}.wasp."
+    resources:
+        mem_mb=3072
+    threads: 16
+    
+    run:
+        star_wasp( end1=input.end1, 
+                     end2=input.end2,
+                     vcf=input.sfvcf, 
+                     outprefix=params.outprefix,
+                     nthreads=f"{threads}", 
+                     genomedir=params.gdir)
+
+
+rule samtools3: 
+    priority: 40 
+    input:         
+        wabam = wdir + "/{sample}.wasp.Aligned.out.bam"
+    output:        
+        wsbam = wdir + "/{sample}.wasp.Aligned.sortedByCoord.out.bam",
+        wsbai = wdir + "/{sample}.wasp.Aligned.sortedByCoord.out.bam.bai"
+    
+    resources:
+        mem_mb=3072
+    
+    threads: 16
+    run:
+        samtools_sort(infile=input.wabam, 
+                      outfile=output.wsbam, 
+                      memory=resources.mem_mb, 
+                      nthreads=f"{threads}")
+        samtools_index(infile=output.wsbam, 
+                       nthreads=f"{threads}")
+        
+rule samtools4:
+    priority: 45 
+    input:
+        wbam= wdir + "/{sample}.wasp.Aligned.sortedByCoord.out.bam",
+        wsbai = wdir + "/{sample}.wasp.Aligned.sortedByCoord.out.bam.bai",
+        xreg = genomedir + "/" + chr + "label.txt",    
+    output:
+        wxbam= temp(wdir + "/{sample}.wasp."+ chr +".bam"),    
+        wxfiltbam= temp(wdir + "/{sample}.wasp."+ chr +".filt.bam")    
+    params:
+        qual = 10,
+        tag = 'vW:1'
+    resources:
+        mem_mb=3072  
+    threads: 1        
+
+    run:
+        samtools_view_region(infile=input.wbam, 
+                             outfile=output.wxbam, 
+                             regionfile=input.xreg)
+        samtools_view_quality(infile=output.wxbam, 
+                              outfile=output.wxfiltbam,
+                              tag=params.tag, 
+                              quality=f'{params.qual}')
+     
+rule gatk2:
+    priority: 50         
+    input:   
+        wxfiltbam= wdir + "/{sample}.wasp."+ chr +".filt.bam",
+        gdict = genomedir + "/genome.dict",
+        gfai = genomedir + "/genome.fa.fai",
+        gpar = genomedir + "/genomeParameters.txt",
+        xreg = genomedir + "/" + chr + "label.txt",
+        
+    output:
+        wrgbam =  temp(wdir + "/{sample}.wasp." + chr + ".rg.bam"),
+        wddbam =  temp(wdir + "/{sample}.wasp." + chr + ".dedupped.bam"),
+        wddbai =  temp(wdir + "/{sample}.wasp." + chr + ".dedupped.bai"),
+        wmetrics =temp(wdir + "/{sample}.wasp." + chr + ".output.metrics"),
+        wsfbam =  temp(wdir + "/{sample}.wasp." + chr + ".split.filtered.bam"),
+        wsfbai =  temp(wdir + "/{sample}.wasp." + chr + ".split.filtered.bai"),
+        wxfvcf =  wdir + "/{sample}.wasp." + chr + ".filtered.vcf",
+        wsvcf =   wdir + "/{sample}.wasp." + chr + ".snps.vcf",
+        wsfvcf =  wdir + "/{sample}.wasp." + chr + ".snps_filtered.vcf",
+
+    
+    params:
+        chrom = chr,
+        wdir = wdir + "/",
+        genome = genomedir + "/genome.fa",
+        #interval = get_chr_label(genomedir, chr),    
+    resources:
+        #mem_mb=46080
+        mem_mb= 5760
+    #threads: 1
+    threads: 8
+    
+    run:
+        gatk_arrg( infile=input.wxfiltbam, outfile=output.wrgbam)
+        list_sample(infile=input.wxfiltbam)
+        gatk_md( infile=output.wrgbam, outfile=output.wddbam, metrics=output.wmetrics)
+        list_sample(infile=input.wxfiltbam)
+        gatk_sncr( infile=output.wddbam, outfile=output.wsfbam, genome=params.genome )
+        list_sample(infile=input.wxfiltbam)
+        gatk_htc( infile=output.wsfbam, outfile=output.wxfvcf, genome=params.genome, regionfile=input.xreg)
+        list_sample(infile=input.wxfiltbam)
+        gatk_sv( infile=output.wxfvcf, outfile=output.wsvcf, genome=params.genome, regionfile=input.xreg )
+        list_sample(infile=input.wxfiltbam)
+        gatk_vf( infile=output.wsvcf, outfile=output.wsfvcf, genome=params.genome, regionfile=input.xreg )
+        list_sample(infile=input.wxfiltbam)      
+
+
+rule igvtools7:
+    priority: 55     
+    input:
+        wsfbam= wdir + "/{sample}.wasp." + chr + ".split.filtered.bam",
+        regfa = genomedir + "/" + chr + ".fa"
+        
+    output:
+        wwig= wdir + "/{sample}.wasp." + chr + ".split.filtered.wig", 
+            
+    resources:
+        mem_mb=12288
+    threads: 1
+        
+    run:
+        igvtools_count(infile=input.wsfbam, 
+                       outfile=output.wwig, 
+                       reg_fa=input.regfa)      

@@ -6,7 +6,7 @@ import logging
 import time
 from requests.api import get 
 
-gitpath = os.path.expanduser("/home/johlee/git/scqc")
+gitpath = os.path.expanduser("~/git/scqc")
 sys.path.append(gitpath)
 from scqc.sra import *
 
