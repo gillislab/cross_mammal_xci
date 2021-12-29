@@ -1,12 +1,16 @@
 #
 # Genomes in /data/johlee/cross_mammal_xci/genomes
 # Data in /data/johlee/cross_mammal_xci/temp/sra
-# #  snakemake --jobs 20 --cluster "qsub -N xskew1 -pe threads {threads} -wd ~/work/xskew1 -l m_mem_free={resources.mem_mb}M 
+# #  snakemake --jobs 20 --cluster "qsub -N cmxci1 -pe threads {threads} -wd ~/work/cmxci1 -l m_mem_free={resources.mem_mb}M 
 #
+# Cluster w/ batches 
+# 
+#  time snakemake --keep-going --batch all=1/10 --config species=Bos_taurus --jobs 20 --cluster "qsub -N cmxci1 -pe threads {threads} -wd ~/work/cmxci1 -l m_mem_free={resources.mem_mb}M" > smlog.2.txt 2>&1
+
 # Interactive invocation:
 #  time snakemake -c16 --keep-going  --config species=Bos_taurus num_workers=2 worker_idx=1 > log.7.txt 2>&1
 #
-#
+#  
 #
 
 import os
