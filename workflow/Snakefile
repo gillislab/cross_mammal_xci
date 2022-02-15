@@ -183,6 +183,10 @@ rule make_chr_label:
         gdir= genomedir,
         chr = chr,
 
+    resources:
+        mem_mb=2048
+    threads: 1
+
     run:
         make_chr_label(reportfile=input.arpt,
                        outfile=output.xreg,
