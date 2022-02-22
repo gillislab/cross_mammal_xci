@@ -222,7 +222,6 @@ rule star_nowasp:
     priority: 10
     input:
         end1= wdir + "/{sample}.fastq",   
-        end2= None,
         gdict = genomedir + "/genome.dict",
         gfai = genomedir + "/genome.fa.fai",
         gpar = genomedir + "/genomeParameters.txt",
@@ -246,7 +245,6 @@ rule star_nowasp:
     
     run:
         star_nowasp( end1=input.end1, 
-                     end2= None,
                      outprefix=params.outprefix,
                      nthreads=f"{threads}", 
                      genomedir=params.gdir)
@@ -369,8 +367,7 @@ rule igvtools6:
 rule star_wasp:
     priority: 35 
     input:
-        end1= wdir + "/{sample}_1.fastq",   
-        end2= wdir + "/{sample}_2.fastq",
+        end1= wdir + "/{sample}.fastq",   
         sfvcf = wdir + "/{sample}." + chr + ".snps_filtered.vcf",
         gdict = genomedir + "/genome.dict",
         gfai = genomedir + "/genome.fa.fai",
@@ -395,7 +392,6 @@ rule star_wasp:
     
     run:
         star_wasp( end1=input.end1, 
-                     end2=input.end2,
                      vcf=input.sfvcf, 
                      outprefix=params.outprefix,
                      nthreads=f"{threads}", 
