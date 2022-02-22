@@ -29,7 +29,7 @@ chr = config["chr"]
 num_workers = config["num_workers"]
 worker_idx = config["worker_idx"]
 
-genomedir = os.path.expanduser(f'~/data/cross_mammal_xci/genomes/{species}.paired')
+genomedir = os.path.expanduser(f'~/data/cross_mammal_xci/genomes/{species}')
 datadir = os.path.expanduser(f'~/data/cross_mammal_xci/sra/{species}.paired')
 homedir = os.path.expanduser("~/")
 wdir = f"{homedir}work/cmxci.paired/{species}"
