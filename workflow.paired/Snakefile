@@ -246,10 +246,10 @@ rule star_nowasp:
     
     run:
         star_nowasp( end1=input.end1, 
-                     end2=input.end2, 
                      outprefix=params.outprefix,
                      nthreads=f"{threads}", 
-                     genomedir=params.gdir)
+                     genomedir=params.gdir,
+                     end2=input.end2, )
 
 rule samtools1:
     priority: 20 
@@ -395,11 +395,12 @@ rule star_wasp:
     
     run:
         star_wasp( end1=input.end1, 
-                     end2=input.end2,
-                     vcf=input.sfvcf, 
-                     outprefix=params.outprefix,
-                     nthreads=f"{threads}", 
-                     genomedir=params.gdir)
+                   vcf=input.sfvcf, 
+                   outprefix=params.outprefix,
+                   nthreads=f"{threads}", 
+                   genomedir=params.gdir,
+                   end2=input.end2,
+                   )
 
 
 rule samtools3: 
