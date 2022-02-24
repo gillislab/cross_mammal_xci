@@ -208,7 +208,7 @@ rule dump_fastq:
         end1= temp(wdir + "/{sample}_1.fastq"),    
         end2= temp(wdir + "/{sample}_2.fastq")    
     resources:
-        mem_mb=2048
+        mem_mb=8192
     threads: 6
 
     run:
