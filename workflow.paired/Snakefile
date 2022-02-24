@@ -49,6 +49,8 @@ logging.debug(f"SAMPLE={SAMPLE}")
 wildcard_constraints:
     sample="\w+"
 
+localrules: dump_fastq
+
 rule all:
     input:
         expand(wdir + "/{sample}." + chr + ".split.filtered.wig", sample=SAMPLE ),
