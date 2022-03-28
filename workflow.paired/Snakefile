@@ -49,7 +49,7 @@ logging.debug(f"SAMPLE={SAMPLE}")
 wildcard_constraints:
     sample="\w+"
 
-localrules: dump_fastq
+# localrules: dump_fastq
 
 rule all:
     input:
