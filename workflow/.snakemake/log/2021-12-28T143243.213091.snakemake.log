@@ -1,3 +1,0 @@
-FileNotFoundError in line 21 of /grid/gillis/home/hover/git/cross_mammal_xci/workflow/Snakefile:
-[Errno 2] No such file or directory: 'workflow/config.yaml'
-  File "/grid/gillis/home/hover/git/cross_mammal_xci/workflow/Snakefile", line 21, in <module>
