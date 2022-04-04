@@ -99,6 +99,11 @@ if __name__ == '__main__':
         try:
             b = is_paired(fn)
             logging.debug(f'{fn} -> {b}')
+            if b:
+                print(f'{fn} is paired.')
+            else:
+                print(f'{fn} is single.')
+            
             if args.s is not None:
                 if not b:
                     logging.info(f'{fn} -> {args.s}/{basename}')
