@@ -43,7 +43,19 @@ logging.debug(f"NUM_WORKERS={num_workers} WORKER_IDX={worker_idx}")
 (SAMPLE,) = glob_wildcards(datadir + "/{sample}.sra")
 logging.debug(f'Initial sample number = {len(SAMPLE)}. Filtering...')
 SAMPLE = modulo_filter(SAMPLE, num_workers, worker_idx)
+
+
+# check for an explicit input sample
+if len(sample) > 2:
+    logging.debug(f'explicity sample given: {sample}')
+    SAMPLE = [sample]
+
+
+
 logging.debug(f"SAMPLE={SAMPLE}")
+
+
+
 
 # Needed to avoid matching anything past the '.', e.g. XYZ.wasp.<sufficx> 
 wildcard_constraints:
