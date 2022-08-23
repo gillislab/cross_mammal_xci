@@ -15,6 +15,35 @@ import traceback
 
 import subprocess as sp
 
+def handle_file(fn, single=None, paired=None):
+    basename = os.path.basename(fn)
+    dirname = os.path.dirname(fn)
+    
+    try:
+        b = is_paired(fn)
+        logging.debug(f'{fn} -> {b}')
+        if b:
+            print(f'{fn} is paired.')
+        else:
+            print(f'{fn} is single.')
+        
+        if single is not None:
+            if not b:
+                os.makedirs(f'{single}', exist_ok = True)
+                logging.info(f'{fn} -> {single}/{basename}')
+                os.rename( fn , f'{single}/{basename}' )
+        
+        if paired is not None:
+            if b:
+                os.makedirs(f'{paired}', exist_ok = True)
+                logging.info(f'{fn} -> {paired}/{basename}')
+                os.rename( fn , f'{paired}/{basename}' )                    
+               
+    except Exception as e:
+        logging.error(f'problem with {fn}')
+        logging.error(traceback.format_exc(None))
+
+
 
 def is_paired(filename):
     filename = os.path.abspath(filename)
@@ -93,29 +122,8 @@ if __name__ == '__main__':
     logging.debug(args)
     
     for fn in args.srafiles:
-        basename = os.path.basename(fn)
-        dirname = os.path.dirname(fn)
-        
-        try:
-            b = is_paired(fn)
-            logging.debug(f'{fn} -> {b}')
-            if b:
-                print(f'{fn} is paired.')
-            else:
-                print(f'{fn} is single.')
-            
-            if args.s is not None:
-                if not b:
-                    logging.info(f'{fn} -> {args.s}/{basename}')
-                    os.rename( fn , f'{args.s}/{basename}' )
-            if args.p is not None:
-                if b:
-                    logging.info(f'{fn} -> {args.p}/{basename}')
-                    os.rename( fn , f'{args.p}/{basename}' )                    
-                   
-        except Exception as e:
-            logging.error(f'problem with {fn}')
-            logging.error(traceback.format_exc(None))
+        handle_file(fn, args.single, args.paired)
+
 
 
 
