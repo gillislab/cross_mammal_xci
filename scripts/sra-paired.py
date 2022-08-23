@@ -82,13 +82,13 @@ if __name__ == '__main__':
                         dest='verbose', 
                         help='verbose logging')
 
-    parser.add_argument('-s', 
+    parser.add_argument('-s','--single', 
                         metavar='single', 
                         type=str,
                         default=None, 
                         help='directory to move single-ended to')
     
-    parser.add_argument('-p', 
+    parser.add_argument('-p', '--paired', 
                         metavar='paired', 
                         type=str,
                         default=None, 
