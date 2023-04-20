@@ -26,10 +26,6 @@ configfile: "workflow/config.yaml"
 
 species = config["species"]
 chr = config["chr"]
-num_workers = config["num_workers"]
-worker_idx = config["worker_idx"]
-sample = config["sample"]
-
 
 genomedir = os.path.expanduser(f'~/data/cross_mammal_xci/genomes/{species}')
 datadir = os.path.expanduser(f'~/data/cross_mammal_xci/sra/{species}.single')
@@ -79,15 +75,6 @@ rule all:
         expand(wdir + "/{sample}.wasp." + chr + ".snps.vcf", sample=SAMPLE),
         expand(wdir + "/{sample}.wasp." + chr + ".snps_filtered.vcf", sample=SAMPLE),
         expand(wdir + "/{sample}.wasp." + chr + ".split.filtered.wig", sample=SAMPLE ),        
-        # FROM GENOME SETUP
-        #gdict = genomedir + "/genome.dict",
-        #gfai = genomedir + "/genome.fa.fai",
-        #gpar = genomedir + "/genomeParameters.txt",
-        
-        # from genome processing
-        #xreg = genomedir + "/" + chr + "label.txt",
-        #yreg = genomedir + "/chrYlabel.txt",
-        #regfa = genomedir + "/" + chr + ".fa",
          
         # testing. 
         #end1 = expand(wdir +  "/{sample}_1.fastq", sample=SAMPLE ),
@@ -137,81 +124,6 @@ rule all:
         # from igvtools7
         #wwig = expand(wdir + "/{sample}.wasp." + chr + ".split.filtered.wig", sample=SAMPLE ),
         
-
-
-rule build_genome_idx:
-    """
-        STAR --runThreadN 16 
-             --runMode genomeGenerate 
-             --genomeDir ~/data/cross_mammal_xci/genomes/Homo_sapiens
-             --genomeFastaFiles ~/data/cross_mammal_xci/genomes/Homo_sapiens/genome.fa
-             --sjdbGTFfile ~/data/cross_mammal_xci/genomes/Homo_sapiens/annotation.gtf  
-            [ --sjdOverhang 100 ]
-        
-        samtools faidx genome.fa
-        samtools dict genome.fa -o genome.dict
-        
-        
-    """    
-    input:
-        gfa = genomedir + "/genome.fa",
-        gtf = genomedir + "/annotation.gtf",
-        arpt = genomedir + "/assembly_report.txt"
-        
-    output:
-        gdict = genomedir + "/genome.dict",
-        gfai = genomedir + "/genome.fa.fai",
-        gpar = genomedir + "/genomeParameters.txt",
-
-    
-    params:
-        gdir= genomedir,
-        chr=chr,
-    
-    resources:
-        mem_mb=2048
-    threads: 16
-    
-    run:
-        star_genome(genomedir=params.gdir, 
-                    nthreads=f"{threads}", 
-                    gtffile=input.gtf, 
-                    infile=input.gfa )
-        samtools_faidx(infile=input.gfa, 
-                       outfile=output.gfai)
-        samtools_dict(infile=input.gfa, 
-                      outfile=output.gdict)
-
-
-rule make_chr_label:
-    input: 
-        arpt = genomedir + "/assembly_report.txt",
-        gfa = genomedir + "/genome.fa",
-        
-    output:
-        xreg = genomedir + "/" + chr + "label.txt",
-        #yreg = genomedir + "/chrYlabel.txt",
-        regfa = genomedir + "/" + chr + ".fa"
-
-    params:
-        gdir= genomedir,
-        chr = chr,
-
-    resources:
-        mem_mb=2048
-    threads: 1
-
-    run:
-        make_chr_label(reportfile=input.arpt,
-                       outfile=output.xreg,
-                       chr=params.chr)
-        #make_chr_label(reportfile=input.arpt,
-        #               outfile=output.yreg,
-        #               chr='chrY')
-        make_chr_index( infile=input.gfa,
-                        genomedir = params.gdir, 
-                        chr = params.chr, 
-                        outfile = output.regfa)
 
 
 rule dump_fastq:
