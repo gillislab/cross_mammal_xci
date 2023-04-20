@@ -26,6 +26,9 @@ configfile: "workflow/config.yaml"
 
 species = config["species"]
 chr = config["chr"]
+num_workers = config["num_workers"]
+worker_idx = config["worker_idx"]
+sample = config["sample"]
 
 genomedir = os.path.expanduser(f'~/data/cross_mammal_xci/genomes/{species}')
 datadir = os.path.expanduser(f'~/data/cross_mammal_xci/sra/{species}.single')
