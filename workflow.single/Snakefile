@@ -25,7 +25,7 @@ from xskew.tools import *
 configfile: "workflow/config.yaml"
 
 species = config["species"]
-chr = config["chr"]
+chr = str(config["chr"])
 num_workers = config["num_workers"]
 worker_idx = config["worker_idx"]
 sample = config["sample"]
