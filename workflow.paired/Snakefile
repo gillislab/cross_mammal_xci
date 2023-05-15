@@ -25,8 +25,8 @@ from xskew.tools import *
 configfile: "workflow/config.yaml"
 
 species = config["species"]
-chr = str(config["chr"])
-#chrs = config['chrs']
+chr = config["chr"]
+chr = str(chr)
 num_workers = config["num_workers"]
 worker_idx = config["worker_idx"]
 sample = config["sample"]
@@ -61,20 +61,20 @@ wildcard_constraints:
 
 rule all:
     input:
-        expand(wdir + "/{sample}." + chr + ".split.filtered.wig", sample=SAMPLE ),
-        expand(wdir + "/{sample}.wasp." + chr + ".snps.vcf", sample=SAMPLE), 
-        expand(wdir + "/{sample}.wasp." + chr + ".filtered.vcf", sample=SAMPLE), 
-        expand(wdir + "/{sample}.wasp." + chr + ".snps_filtered.vcf", sample=SAMPLE),         
-        expand(wdir + "/{sample}." + chr + ".split.filtered.wig", sample=SAMPLE),          
+        expand(wdir + "/{sample}." +  str(chr) + ".split.filtered.wig", sample=SAMPLE ),
+        expand(wdir + "/{sample}.wasp." +  str(chr) + ".snps.vcf", sample=SAMPLE), 
+        expand(wdir + "/{sample}.wasp." +  str(chr) + ".filtered.vcf", sample=SAMPLE), 
+        expand(wdir + "/{sample}.wasp." +  str(chr) + ".snps_filtered.vcf", sample=SAMPLE),         
+        expand(wdir + "/{sample}." +  str(chr) + ".split.filtered.wig", sample=SAMPLE),          
         expand(wdir + "/{sample}.wasp.SJ.out.tab", sample=SAMPLE),
         expand(wdir + "/{sample}.wasp.Log.out", sample=SAMPLE),  
         expand(wdir + "/{sample}.wasp.Log.final.out", sample=SAMPLE),
         expand(wdir + "/{sample}.wasp.Aligned.sortedByCoord.out.bam", sample=SAMPLE),
         expand(wdir + "/{sample}.wasp.Aligned.sortedByCoord.out.bam.bai", sample=SAMPLE),
-        expand(wdir + "/{sample}.wasp." + chr + ".filtered.vcf", sample=SAMPLE),
-        expand(wdir + "/{sample}.wasp." + chr + ".snps.vcf", sample=SAMPLE),
-        expand(wdir + "/{sample}.wasp." + chr + ".snps_filtered.vcf", sample=SAMPLE),
-        expand(wdir + "/{sample}.wasp." + chr + ".split.filtered.wig", sample=SAMPLE ),        
+        expand(wdir + "/{sample}.wasp." +  str(chr) + ".filtered.vcf", sample=SAMPLE),
+        expand(wdir + "/{sample}.wasp." +  str(chr) + ".snps.vcf", sample=SAMPLE),
+        expand(wdir + "/{sample}.wasp." +  str(chr) + ".snps_filtered.vcf", sample=SAMPLE),
+        expand(wdir + "/{sample}.wasp." +  str(chr) + ".split.filtered.wig", sample=SAMPLE ),        
         
         # FROM GENOME SETUP
         #gdict = genomedir + "/genome.dict",
