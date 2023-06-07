@@ -120,13 +120,13 @@ if __name__ == '__main__':
         logging.getLogger().setLevel(logging.INFO)   
 
     logging.debug(args)
-    
+
+    total_files = len(args.srafiles)
+    handled_files = 0    
     for fn in args.srafiles:
+        logging.info(f'handling {handled_files + 1} of {total_files}...')
         handle_file(fn, args.single, args.paired)
-
-
-
-
+        handled_files += 1
        
 
     
