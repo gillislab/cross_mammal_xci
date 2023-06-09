@@ -65,13 +65,12 @@ rule all:
         expand(wdir + "/{sample}." + str(chr) + ".split.filtered.wig", sample=SAMPLE ),
         expand(wdir + "/{sample}.wasp." + str(chr) + ".snps.vcf", sample=SAMPLE), 
         expand(wdir + "/{sample}.wasp." + str(chr) + ".filtered.vcf", sample=SAMPLE), 
-        expand(wdir + "/{sample}.wasp." + str(chr) + ".snps_filtered.vcf", sample=SAMPLE),         
-        expand(wdir + "/{sample}." + str(chr) + ".split.filtered.wig", sample=SAMPLE),          
-        expand(wdir + "/{sample}.wasp.SJ.out.tab", sample=SAMPLE),
-        expand(wdir + "/{sample}.wasp.Log.out", sample=SAMPLE),  
-        expand(wdir + "/{sample}.wasp.Log.final.out", sample=SAMPLE),
-        expand(wdir + "/{sample}.wasp.Aligned.sortedByCoord.out.bam", sample=SAMPLE),
-        expand(wdir + "/{sample}.wasp.Aligned.sortedByCoord.out.bam.bai", sample=SAMPLE),
+        expand(wdir + "/{sample}.wasp." + str(chr) + ".snps_filtered.vcf", sample=SAMPLE),              
+        expand(wdir + "/{sample}.wasp." +  str(chr) + ".SJ.out.tab", sample=SAMPLE),
+        expand(wdir + "/{sample}.wasp." +  str(chr) + ".Log.out", sample=SAMPLE),  
+        expand(wdir + "/{sample}.wasp." +  str(chr) + ".Log.final.out", sample=SAMPLE),
+        expand(wdir + "/{sample}.wasp." +  str(chr) + ".Aligned.sortedByCoord.out.bam", sample=SAMPLE),
+        expand(wdir + "/{sample}.wasp." +  str(chr) + ".Aligned.sortedByCoord.out.bam.bai", sample=SAMPLE),
         expand(wdir + "/{sample}.wasp." + str(chr) + ".filtered.vcf", sample=SAMPLE),
         expand(wdir + "/{sample}.wasp." + str(chr) + ".snps.vcf", sample=SAMPLE),
         expand(wdir + "/{sample}.wasp." + str(chr) + ".snps_filtered.vcf", sample=SAMPLE),
@@ -154,18 +153,18 @@ rule star_nowasp:
         gpar = genomedir + "/genomeParameters.txt",
         
     output:     
-        abam=  temp(wdir + "/{sample}.Aligned.out.bam"),
-        rpg=   temp(wdir + "/{sample}.ReadsPerGene.out.tab"),
-        sjtab= temp(wdir + "/{sample}.SJ.out.tab"),
-        log=   temp(wdir + "/{sample}.Log.out"),        
-        plog=  temp(wdir + "/{sample}.Log.progress.out"),
-        flog=  temp(wdir + "/{sample}.Log.final.out"),
+        abam=  temp(wdir + "/{sample}." +  str(chr) + ".Aligned.out.bam"),
+        rpg=   temp(wdir + "/{sample}." +  str(chr) + ".ReadsPerGene.out.tab"),
+        sjtab= temp(wdir + "/{sample}." +  str(chr) + ".SJ.out.tab"),
+        log=   temp(wdir + "/{sample}." +  str(chr) + ".Log.out"),        
+        plog=  temp(wdir + "/{sample}." +  str(chr) + ".Log.progress.out"),
+        flog=  temp(wdir + "/{sample}." +  str(chr) + ".Log.final.out"),
 
     params:        
         tmpdir = wdir + "/{sample}_starout",
         wdir = wdir + "/",
         gdir= genomedir,
-        outprefix = wdir + "/{sample}."     
+        outprefix = wdir + "/{sample}." +  str(chr) + "."     
     resources:
         mem_mb=3072
     threads: 16
@@ -179,10 +178,10 @@ rule star_nowasp:
 rule samtools1:
     priority: 20 
     input:
-        abam = wdir + "/{sample}.Aligned.out.bam"    
+        abam = wdir + "/{sample}." +  str(chr) + ".Aligned.out.bam"    
     output:
-        sbam = temp(wdir + "/{sample}.Aligned.sortedByCoord.out.bam"),
-        sbai = temp(wdir + "/{sample}.Aligned.sortedByCoord.out.bam.bai")
+        sbam = temp(wdir + "/{sample}." +  str(chr) + ".Aligned.sortedByCoord.out.bam"),
+        sbai = temp(wdir + "/{sample}." +  str(chr) + ".Aligned.sortedByCoord.out.bam.bai")
     resources:
         mem_mb=3072
     threads: 16
@@ -199,8 +198,8 @@ rule samtools1:
 rule samtools2:
     priority: 25 
     input:
-        bam= wdir + "/{sample}.Aligned.sortedByCoord.out.bam",
-        sbai = wdir + "/{sample}.Aligned.sortedByCoord.out.bam.bai",
+        bam= wdir + "/{sample}." +  str(chr) + ".Aligned.sortedByCoord.out.bam",
+        sbai = wdir + "/{sample}." +  str(chr) + ".Aligned.sortedByCoord.out.bam.bai",
         xreg = genomedir + "/" + chr + "label.txt",
             
     output:
@@ -301,18 +300,18 @@ rule star_wasp:
         gpar = genomedir + "/genomeParameters.txt",
         
     output:     
-        wabam=  temp(wdir + "/{sample}.wasp.Aligned.out.bam"),
-        wrpg=   wdir + "/{sample}.wasp.ReadsPerGene.out.tab",
-        wsjtab= wdir + "/{sample}.wasp.SJ.out.tab",
-        wlog=   wdir + "/{sample}.wasp.Log.out",        
-        wplog=  temp(wdir + "/{sample}.wasp.Log.progress.out"),
-        wflog=  wdir + "/{sample}.wasp.Log.final.out",
+        wabam=  temp(wdir + "/{sample}.wasp." +  str(chr) + ".Aligned.out.bam"),
+        wrpg=   wdir + "/{sample}.wasp." +  str(chr) + ".ReadsPerGene.out.tab",
+        wsjtab= wdir + "/{sample}.wasp." +  str(chr) + ".SJ.out.tab",
+        wlog=   wdir + "/{sample}.wasp." +  str(chr) + ".Log.out",        
+        wplog=  temp(wdir + "/{sample}.wasp." +  str(chr) + ".Log.progress.out"),
+        wflog=  wdir + "/{sample}.wasp." +  str(chr) + ".Log.final.out",
 
     params:        
         tmpdir = wdir + "/{sample}_starout",
         wdir = wdir + "/",
         gdir = genomedir ,
-        outprefix = wdir + "/{sample}.wasp."
+        outprefix = wdir + "/{sample}.wasp." +  str(chr) + "."
     resources:
         mem_mb=3072
     threads: 16
@@ -328,10 +327,10 @@ rule star_wasp:
 rule samtools3: 
     priority: 40 
     input:         
-        wabam = wdir + "/{sample}.wasp.Aligned.out.bam"
+        wabam = wdir + "/{sample}.wasp." +  str(chr) + ".Aligned.out.bam"
     output:        
-        wsbam = wdir + "/{sample}.wasp.Aligned.sortedByCoord.out.bam",
-        wsbai = wdir + "/{sample}.wasp.Aligned.sortedByCoord.out.bam.bai"
+        wsbam = wdir + "/{sample}.wasp." +  str(chr) + ".Aligned.sortedByCoord.out.bam",
+        wsbai = wdir + "/{sample}.wasp." +  str(chr) + ".Aligned.sortedByCoord.out.bam.bai"
     
     resources:
         mem_mb=3072
@@ -348,8 +347,8 @@ rule samtools3:
 rule samtools4:
     priority: 45 
     input:
-        wbam= wdir + "/{sample}.wasp.Aligned.sortedByCoord.out.bam",
-        wsbai = wdir + "/{sample}.wasp.Aligned.sortedByCoord.out.bam.bai",
+        wbam= wdir + "/{sample}.wasp." +  str(chr) + ".Aligned.sortedByCoord.out.bam",
+        wsbai = wdir + "/{sample}.wasp." +  str(chr) + ".Aligned.sortedByCoord.out.bam.bai",
         xreg = genomedir + "/" + chr + "label.txt",    
     output:
         wxbam= temp(wdir + "/{sample}.wasp."+ chr +".bam"),    
