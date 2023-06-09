@@ -190,10 +190,10 @@ rule star_nowasp:
 rule samtools1:
     priority: 20 
     input:
-        abam = wdir + "/{sample}.Aligned.out.bam"    
+        abam = wdir + "/{sample}." +  str(chr) + ".Aligned.out.bam"    
     output:
-        sbam = temp(wdir + "/{sample}.Aligned.sortedByCoord.out.bam"),
-        sbai = temp(wdir + "/{sample}.Aligned.sortedByCoord.out.bam.bai")
+        sbam = temp(wdir + "/{sample}." +  str(chr) + ".Aligned.sortedByCoord.out.bam"),
+        sbai = temp(wdir + "/{sample}." +  str(chr) + ".Aligned.sortedByCoord.out.bam.bai")
     resources:
         mem_mb=3072
     threads: 16
