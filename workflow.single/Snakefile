@@ -37,20 +37,19 @@ homedir = os.path.expanduser("~/")
 wdir = f"{homedir}work/cmxci.single/{species}"
 
 setup_logging(logging.DEBUG)
-
+logging.debug(f'config/CLI sample = {sample}')
 logging.debug(f"HOME={homedir} WORKDIR={wdir} CHR={chr} GENOMEDIR={genomedir}")
 logging.debug(f"NUM_WORKERS={num_workers} WORKER_IDX={worker_idx}")
 
 # Collect samples and optionally filter across hosts.
-(SAMPLE,) = glob_wildcards(datadir + "/{sample}.sra")
-logging.debug(f'Initial sample number = {len(SAMPLE)}. Filtering...')
-SAMPLE = modulo_filter(SAMPLE, num_workers, worker_idx)
-
-
 # check for an explicit input sample
 if len(sample) > 2:
-    logging.debug(f'explicity sample given: {sample}')
-    SAMPLE = [sample]
+    logging.debug(f'explicit sample given: {sample}')
+    SAMPLE = sample
+else:
+    (SAMPLE,) = glob_wildcards(datadir + "/{sample}.sra")
+    logging.debug(f'Initial sample number = {len(SAMPLE)}. Filtering...')
+    SAMPLE = modulo_filter(SAMPLE, num_workers, worker_idx)
 
 
 logging.debug(f"SAMPLE={SAMPLE}")

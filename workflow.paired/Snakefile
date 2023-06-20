@@ -47,7 +47,7 @@ logging.debug(f'Initial sample number = {len(SAMPLE)}. Filtering...')
 SAMPLE = modulo_filter(SAMPLE, num_workers, worker_idx)
 
 # check for an explicit input sample
-if len(sample) > 2:
+if len(sample) < 2:
     logging.debug(f'explicity sample given: {sample}')
     SAMPLE = [sample]
 
