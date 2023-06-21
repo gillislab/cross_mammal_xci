@@ -169,7 +169,7 @@ rule star_nowasp:
         flog=  temp(wdir + "/{sample}." +  str(chr) + ".Log.final.out"),
 
     params:        
-        tmpdir = wdir + "/{sample}_starout",
+        tmpdir = wdir + "/{sample}." +  str(chr) + "_starout",
         wdir = wdir + "/",
         gdir= genomedir,
         outprefix = wdir + "/{sample}." +  str(chr) + "."  
