@@ -50,7 +50,8 @@ def run_snake_batch(mode, samples, species, chromosome, numjobs, latency ):
     try:
         cmdstr = ' '.join(cmd)
         logging.info(f'    Running command: {cmdstr}')
-        run_command(cmd)
+        cp = run_command(cmd)
+        logging.info(f'got rc={cp.returncode}')
     except NonZeroReturnException as nzre:
         logging.error(traceback.format_exc(None))
 
