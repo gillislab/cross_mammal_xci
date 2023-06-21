@@ -40,7 +40,7 @@ def run_snake_batch(mode, samples, species, chromosome, numjobs ):
             'snakemake',
             '--keep-going',
             '--rerun-incomplete',
-            '--latency-wait', '10',
+            '--latency-wait', '20',
             '--config', f'species={species}',f'chr={chromosome}',f'sample={sampstr}', 
             '--jobs', str(numjobs),
             '--cluster-status', STATUS,
