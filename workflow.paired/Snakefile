@@ -177,7 +177,7 @@ rule star_nowasp:
         
     resources:
         mem_mb=3072
-        disk_mb=51200
+
     threads: 16
     
     run:
