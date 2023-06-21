@@ -41,6 +41,7 @@ def run_snake_batch(mode, samples, species, chromosome, numjobs, latency ):
             '--keep-going',
             '--rerun-incomplete',
             '--latency-wait', str(latency) ,
+            ' --skip-script-cleanup',
             '--config', f'species={species}',f'chr={chromosome}',f'sample={sampstr}', 
             '--jobs', str(numjobs),
             '--cluster-status', STATUS,
