@@ -141,7 +141,7 @@ if __name__ == '__main__':
         batchno += 1
         logging.debug(f'executing w/ mode={args.mode} species={args.species} chr={args.chromosome} numjobs={args.numjobs}')
         logging.info(f'executing batch [{batchno}/{len(batchlist)}] w/ samples={batch}')
-        run_snake_batch(args.mode, batch, args.species, args.chromosome, args.numjobs )
+        run_snake_batch(args.mode, batch, args.species, args.chromosome, args.numjobs, args.latency )
         logging.info(f'finished invocation of snakemake...') 
     
       
