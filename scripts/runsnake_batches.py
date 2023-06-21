@@ -29,7 +29,7 @@ def get_pathinfo(filepath):
     return (dir, base, ext)
     
 
-def run_snake_batch(mode, samples, species, chromosome, numjobs ):
+def run_snake_batch(mode, samples, species, chromosome, numjobs, latency ):
     STATUS="/grid/gillis/home/hover/git/elzar-example/snakemake/status-sge.py"
     proj=f"cmxci.{mode}.{species}"
     datestr = dt.datetime.now().strftime("%Y%m%d%H%M")
@@ -40,12 +40,12 @@ def run_snake_batch(mode, samples, species, chromosome, numjobs ):
             'snakemake',
             '--keep-going',
             '--rerun-incomplete',
-            '--latency-wait', '20',
+            '--latency-wait', str(latency) ,
             '--config', f'species={species}',f'chr={chromosome}',f'sample={sampstr}', 
             '--jobs', str(numjobs),
             '--cluster-status', STATUS,
             '--cluster-cancel','qdel',
-            '--cluster', f'qsub -N {proj} -pe threads {{threads}} -wd /grid/gillis/home/hover/work/cmxci.{mode} -l m_mem_free={{resources.mem_mb}}M'
+            '--cluster', f'qsub -N {proj} -pe threads {{threads}} -wd /grid/gillis/home/hover/work/cmxci.{mode} -l m_mem_free={{resources.mem_mb}}M '
           ]
     try:
         cmdstr = ' '.join(cmd)
@@ -104,6 +104,13 @@ if __name__ == '__main__':
                         default=2,
                         type=int, 
                         help='Number of samples per batch.')
+
+    parser.add_argument('-L','--latency', 
+                        metavar='latency',
+                        required=False,
+                        default=15,
+                        type=int, 
+                        help='Seconds to wait for output files.')
 
     parser.add_argument('infiles', 
                         metavar='infiles', 
