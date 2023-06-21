@@ -175,7 +175,7 @@ rule star_nowasp:
         outprefix = wdir + "/{sample}." +  str(chr) + "."  
         
     resources:
-        mem_mb=3072
+        mem_mb=9216
     threads: 16
     
     run:
