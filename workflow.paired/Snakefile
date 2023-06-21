@@ -134,7 +134,7 @@ rule all:
 
 
 rule dump_fastq:
-    priority: 5
+    priority: 1
     input:
         sra = datadir + "/{sample}.sra"
     output:
@@ -152,7 +152,7 @@ rule dump_fastq:
         
         
 rule star_nowasp:
-    priority: 10
+    priority: 2
     input:
         end1= wdir + "/{sample}_1.fastq",   
         end2= wdir + "/{sample}_2.fastq",
@@ -186,7 +186,7 @@ rule star_nowasp:
                      end2=input.end2, )
 
 rule samtools1:
-    priority: 20 
+    priority: 3 
     input:
         abam = wdir + "/{sample}." +  str(chr) + ".Aligned.out.bam"    
     output:
@@ -206,7 +206,7 @@ rule samtools1:
 
 
 rule samtools2:
-    priority: 25 
+    priority: 4 
     input:
         bam= wdir + "/{sample}." +  str(chr) + ".Aligned.sortedByCoord.out.bam",
         sbai = wdir + "/{sample}." +  str(chr) + ".Aligned.sortedByCoord.out.bam.bai",
@@ -234,7 +234,7 @@ rule samtools2:
 
 
 rule gatk1:
-    priority: 30         
+    priority: 5         
     input: 
         xfiltbam= wdir + "/{sample}."+ chr +".filt.bam",
         gdict = genomedir + "/genome.dict",
@@ -282,7 +282,7 @@ rule gatk1:
 
 
 rule igvtools6:
-    priority: 52     
+    priority: 6     
     input:
         sfbam= wdir + "/{sample}." + chr + ".split.filtered.bam",
         regfa = genomedir + "/" + chr + ".fa"
@@ -301,7 +301,7 @@ rule igvtools6:
 
 
 rule star_wasp:
-    priority: 35 
+    priority: 7 
     input:
         end1= wdir + "/{sample}_1.fastq",   
         end2= wdir + "/{sample}_2.fastq",
@@ -338,7 +338,7 @@ rule star_wasp:
 
 
 rule samtools3: 
-    priority: 40 
+    priority: 8 
     input:         
         wabam = wdir + "/{sample}.wasp." +  str(chr) + ".Aligned.out.bam"
     output:        
@@ -358,7 +358,7 @@ rule samtools3:
                        nthreads=f"{threads}")
         
 rule samtools4:
-    priority: 45 
+    priority: 9 
     input:
         wbam= wdir + "/{sample}.wasp." +  str(chr) + ".Aligned.sortedByCoord.out.bam",
         wsbai = wdir + "/{sample}.wasp." +  str(chr) + ".Aligned.sortedByCoord.out.bam.bai",
@@ -383,7 +383,7 @@ rule samtools4:
                               quality=f'{params.qual}')
      
 rule gatk2:
-    priority: 50         
+    priority: 10         
     input:   
         wxfiltbam= wdir + "/{sample}.wasp."+ chr +".filt.bam",
         gdict = genomedir + "/genome.dict",
@@ -430,7 +430,7 @@ rule gatk2:
 
 
 rule igvtools7:
-    priority: 55     
+    priority: 11     
     input:
         wsfbam= wdir + "/{sample}.wasp." + chr + ".split.filtered.bam",
         regfa = genomedir + "/" + chr + ".fa"
