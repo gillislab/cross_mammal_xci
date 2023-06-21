@@ -54,6 +54,8 @@ def run_snake_batch(mode, samples, species, chromosome, numjobs, latency ):
         logging.info(f'got rc={cp.returncode}')
     except NonZeroReturnException as nzre:
         logging.error(traceback.format_exc(None))
+    except Exception as e:
+        logging.error(traceback.format_exc(None))
 
 
 if __name__ == '__main__':
