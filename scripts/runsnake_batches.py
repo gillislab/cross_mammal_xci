@@ -29,7 +29,7 @@ def get_pathinfo(filepath):
     return (dir, base, ext)
     
 
-def run_snake_batch(mode, samples, species, chromosome, numjobs, latency ):
+def run_snake_batch(mode, samples, species, chromosome, numjobs, latency):
     STATUS="/grid/gillis/home/hover/git/elzar-example/snakemake/status-sge.py"
     proj=f"cmxci.{mode}.{species}"
     datestr = dt.datetime.now().strftime("%Y%m%d%H%M")
@@ -41,6 +41,7 @@ def run_snake_batch(mode, samples, species, chromosome, numjobs, latency ):
             '--keep-going',
             '--rerun-incomplete',
             '--skip-script-cleanup',
+            '--profile', 'sge',
             '--latency-wait', str(latency) ,
             '--config', f'species={species}',f'chr={chromosome}',f'sample={sampstr}', 
             '--jobs', str(numjobs),
