@@ -128,7 +128,7 @@ rule bam_fastq:
         #bam = datadir + "/{sample}.Aligned.sortedByCoord.out.patched.md.bam"
         #sra = datadir + "/{sample}.sra"
     output:
-        qbam = temp(wdir + "/{sample}.Aligned.qsort.bam"), 
+        qbam = wdir + "/{sample}.Aligned.qsort.bam", 
         end1 = wdir + "/{sample}_1.fastq",    
         end2 = wdir + "/{sample}_2.fastq"    
     resources:
