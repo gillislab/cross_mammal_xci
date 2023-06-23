@@ -41,8 +41,8 @@ else:
 logging.debug(f"SAMPLE={SAMPLE}")
 
 # Needed to avoid matching anything past the '.', e.g. XYZ.wasp.<sufficx> 
-#wildcard_constraints:
-#    sample="\w+"
+wildcard_constraints:
+    sample="\w+"
 
 # localrules: dump_fastq
 
