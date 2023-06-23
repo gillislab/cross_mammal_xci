@@ -45,7 +45,10 @@ rule all:
     input:
         expand(wdir + "/{sample}.wasp." +  str(chr) + ".snps.vcf", sample=SAMPLE),
         expand(wdir + "/{sample}.wasp." +  str(chr) + ".snps_filtered.vcf", sample=SAMPLE),
-        expand(wdir + "/{sample}.wasp." +  str(chr) + ".split.filtered.wig", sample=SAMPLE )
+        expand(wdir + "/{sample}.wasp." +  str(chr) + ".split.filtered.wig", sample=SAMPLE ),
+        # from bam_fastq. 
+        expand(wdir +  "/{sample}_1.fastq", sample=SAMPLE ),
+        expand(wdir +  "/{sample}_2.fastq", sample=SAMPLE )
         
         
 rule samsort1:
