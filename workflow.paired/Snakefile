@@ -162,18 +162,18 @@ rule star_nowasp:
         gpar = genomedir + "/genomeParameters.txt",
         
     output:     
-        abam=  temp(wdir + "/{sample}." +  str(chr) + ".Aligned.out.bam"),
-        rpg=   temp(wdir + "/{sample}." +  str(chr) + ".ReadsPerGene.out.tab"),
-        sjtab= temp(wdir + "/{sample}." +  str(chr) + ".SJ.out.tab"),
-        log=   temp(wdir + "/{sample}." +  str(chr) + ".Log.out"),        
-        plog=  temp(wdir + "/{sample}." +  str(chr) + ".Log.progress.out"),
-        flog=  temp(wdir + "/{sample}." +  str(chr) + ".Log.final.out"),
+        abam=  temp(wdir + "/{sample}.Aligned.out.bam"),
+        rpg=   temp(wdir + "/{sample}.ReadsPerGene.out.tab"),
+        sjtab= temp(wdir + "/{sample}.SJ.out.tab"),
+        log=   temp(wdir + "/{sample}.Log.out"),        
+        plog=  temp(wdir + "/{sample}.Log.progress.out"),
+        flog=  temp(wdir + "/{sample}.Log.final.out"),
 
     params:        
-        tmpdir = wdir + "/{sample}." +  str(chr) + "_starout",
+        tmpdir = wdir + "/{sample}_starout",
         wdir = wdir + "/",
         gdir= genomedir,
-        outprefix = wdir + "/{sample}." +  str(chr) + "."  
+        outprefix = wdir + "/{sample}."  
         
     resources:
         mem_mb=3072
@@ -190,10 +190,10 @@ rule star_nowasp:
 rule samtools1:
     priority: 3 
     input:
-        abam = wdir + "/{sample}." +  str(chr) + ".Aligned.out.bam"    
+        abam = wdir + "/{sample}.Aligned.out.bam"    
     output:
-        sbam = temp(wdir + "/{sample}." +  str(chr) + ".Aligned.sortedByCoord.out.bam"),
-        sbai = temp(wdir + "/{sample}." +  str(chr) + ".Aligned.sortedByCoord.out.bam.bai")
+        sbam = temp(wdir + "/{sample}.Aligned.sortedByCoord.out.bam"),
+        sbai = temp(wdir + "/{sample}.Aligned.sortedByCoord.out.bam.bai")
     resources:
         mem_mb=3072
     threads: 16
@@ -208,6 +208,9 @@ rule samtools1:
 
 
 rule samtools2:
+    #
+    # This seems like it might be the first chromosome-specific step?
+    #
     priority: 4 
     input:
         bam= wdir + "/{sample}." +  str(chr) + ".Aligned.sortedByCoord.out.bam",
