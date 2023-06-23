@@ -73,8 +73,8 @@ rule all:
         #regfa = genomedir + "/" + chr + ".fa",
          
         # from bam extraction. 
-        end1 = expand(wdir +  "/{sample}_1.fastq", sample=SAMPLE ),
-        end2 = expand(wdir +  "/{sample}_2.fastq", sample=SAMPLE ),   
+        expand(wdir +  "/{sample}_1.fastq", sample=SAMPLE ),
+        expand(wdir +  "/{sample}_2.fastq", sample=SAMPLE ),   
        
        
         # from STAR
