@@ -41,12 +41,12 @@ def run_snake_batch(mode, samples, species, chromosome, numjobs, latency):
             '--keep-going',
             '--rerun-incomplete',
             '--skip-script-cleanup',
-            #'--profile', 'sge',
+            #'--profile', 'sge',   # Only valid w/ snakemake 7.x
             '--latency-wait', str(latency) ,
             '--config', f'species={species}',f'chr={chromosome}',f'sample={sampstr}', 
             '--jobs', str(numjobs),
-            #'--cluster-status', STATUS,
-            #'--cluster-cancel','qdel',
+            #'--cluster-status', STATUS,   # Only valid w/ snakemake 7.x
+            #'--cluster-cancel','qdel',     # Only valid w/ snakemake 7.x 
             '--cluster', f'qsub -N {proj} -pe threads {{threads}} -wd /grid/gillis/home/hover/work/cmxci.{mode} -l m_mem_free={{resources.mem_mb}}M '
           ]
     try:
