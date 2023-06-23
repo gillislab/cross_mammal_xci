@@ -44,8 +44,6 @@ logging.debug(f"SAMPLE={SAMPLE}")
 wildcard_constraints:
     sample="\w+"
 
-# localrules: dump_fastq
-
 rule all:
     input:
         #expand(wdir + "/{sample}." +  str(chr) + ".split.filtered.wig", sample=SAMPLE ),
@@ -72,7 +70,7 @@ rule all:
         #yreg = genomedir + "/chrYlabel.txt",
         #regfa = genomedir + "/" + chr + ".fa",
          
-        # from bam extraction. 
+        # from bam_fastq. 
         expand(wdir +  "/{sample}_1.fastq", sample=SAMPLE ),
         expand(wdir +  "/{sample}_2.fastq", sample=SAMPLE ),   
        
@@ -125,7 +123,8 @@ rule all:
 rule bam_fastq:
     priority: 1
     input:
-        bam = datadir + "/{sample}.Aligned.sortedByCoord.out.patched.md.bam"
+        #bam = datadir + "/{sample}.Aligned.sortedByCoord.out.patched.md.bam"
+        bam = datadir + "/{sample}.input"  # avoiding long input for wildcard globbing
         #sra = datadir + "/{sample}.sra"
     output:
         qbam = temp(wdir + "/{sample}.Aligned.qsort.bam"), 
@@ -149,6 +148,7 @@ rule bam_fastq:
                              end1 =  output.end1, 
                              end2 =  output.end2)
         
+
         
 rule star_nowasp:
     priority: 2
