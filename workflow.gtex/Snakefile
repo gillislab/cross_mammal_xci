@@ -122,12 +122,10 @@ rule all:
 
         # from igvtools7
         #wwig = expand(wdir + "/{sample}.wasp." + chr + ".split.filtered.wig", sample=SAMPLE ),
-        
-
 rule bam_fastq:
     priority: 1
     input:
-        bam = datadir + "/{sample}.input"  # avoiding long input for wildcard globbing
+        bam = datadir + "/{sample}.input",  # avoiding long input for wildcard globbing
         #bam = datadir + "/{sample}.Aligned.sortedByCoord.out.patched.md.bam"
         #sra = datadir + "/{sample}.sra"
     output:
