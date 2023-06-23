@@ -195,9 +195,7 @@ rule samtools1:
 
 
 rule samtools2:
-    # This seems like it might be the first chromosome-specific step?
-
-    priority: 4 
+    priority: 4
     input:
         bam= wdir + "/{sample}." +  str(chr) + ".Aligned.sortedByCoord.out.bam",
         sbai = wdir + "/{sample}." +  str(chr) + ".Aligned.sortedByCoord.out.bam.bai",
