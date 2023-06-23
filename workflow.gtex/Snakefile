@@ -64,11 +64,10 @@ rule samsort1:
                                memory=resources.mem_mb, 
                                nthreads=f"{threads}")
 
-
 rule bam_fastq:
     priority: 1
     input:
-        qbam = wdir + "/{sample}.Aligned.qsort.bam"
+        qbam = wdir + "/{sample}.qsort.bam"
     output:         
         end1 = wdir + "/{sample}_1.fastq",    
         end2 = wdir + "/{sample}_2.fastq"
