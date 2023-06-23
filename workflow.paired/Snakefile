@@ -51,7 +51,7 @@ else:
 
 logging.debug(f"SAMPLE={SAMPLE}")
 
-# Needed to avoid matching anything past the '.', e.g. XYZ.wasp.<sufficx> 
+# Needed to avoid matching anything past the '.', e.g. XYZ.wasp.<suffix> 
 wildcard_constraints:
     sample="\w+"
 
