@@ -44,9 +44,10 @@ logging.debug(f"SAMPLE={SAMPLE}")
 wildcard_constraints:
     sample="\w+"
 
+
 rule all:
     input:
-        expand(wdir + "/{sample}.Aligned.qsort.bam", sample=SAMPLE ),
+        expand(wdir + "/{sample}.qsort.bam", sample=SAMPLE ),
         #expand(wdir +  "/{sample}_1.fastq", sample=SAMPLE ),
         #expand(wdir +  "/{sample}_2.fastq", sample=SAMPLE ),
         
@@ -129,7 +130,7 @@ rule samsort1:
     input:
         bam = datadir + "/{sample}.input",  # avoiding long input for wildcard globbing
     output:
-        qbam = wdir + "/{sample}.Aligned.qsort.bam"
+        qbam = wdir + "/{sample}.qsort.bam"
     resources:
         mem_mb=2048 
     threads: 12
