@@ -47,8 +47,8 @@ wildcard_constraints:
 rule all:
     input:
         expand(wdir + "/{sample}.Aligned.qsort.bam", sample=SAMPLE ),
-        expand(wdir +  "/{sample}_1.fastq", sample=SAMPLE ),
-        expand(wdir +  "/{sample}_2.fastq", sample=SAMPLE ),
+        #expand(wdir +  "/{sample}_1.fastq", sample=SAMPLE ),
+        #expand(wdir +  "/{sample}_2.fastq", sample=SAMPLE ),
         
         #expand(wdir + "/{sample}." +  str(chr) + ".split.filtered.wig", sample=SAMPLE ),
         #expand(wdir + "/{sample}.wasp." +  str(chr) + ".snps.vcf", sample=SAMPLE), 
@@ -122,14 +122,29 @@ rule all:
 
         # from igvtools7
         #wwig = expand(wdir + "/{sample}.wasp." + chr + ".split.filtered.wig", sample=SAMPLE ),
-rule bam_fastq:
+
+
+rule samsort1:
     priority: 1
     input:
         bam = datadir + "/{sample}.input",  # avoiding long input for wildcard globbing
-        #bam = datadir + "/{sample}.Aligned.sortedByCoord.out.patched.md.bam"
-        #sra = datadir + "/{sample}.sra"
     output:
-        qbam = wdir + "/{sample}.Aligned.qsort.bam", 
+        qbam = wdir + "/{sample}.Aligned.qsort.bam"
+    resources:
+        mem_mb=2048 
+    threads: 12
+    
+    run:
+        samtools_sort_readname( infile=input.bam, 
+                                 outfile=output.qbam,
+                                 memory=resources.mem_mb, 
+                                 nthreads=f"{threads}")
+
+rule bam_fastq:
+    priority: 1
+    input:
+        qbam = wdir + "/{sample}.Aligned.qsort.bam"
+    output:         
         end1 = wdir + "/{sample}_1.fastq",    
         end2 = wdir + "/{sample}_2.fastq"
      
@@ -139,19 +154,10 @@ rule bam_fastq:
     threads: 12
 
     run:
-        #fasterq_dump( infile=input.sra, 
-        #              outdir=wdir, 
-        #              nthreads=f"{threads}", 
-        #              tempdir =wdir)
-        samtools_sort_readname( infile=input.bam, 
-                                 outfile=output.qbam,
-                                 memory=resources.mem_mb, 
-                                 nthreads=f"{threads}")
-        bedtools_bamtofastq( infile= output.qbam, 
+        bedtools_bamtofastq( infile= input.qbam, 
                               end1 =  output.end1, 
                               end2 =  output.end2)
         
-
         
 rule star_nowasp:
     priority: 2
