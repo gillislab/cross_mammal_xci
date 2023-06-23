@@ -42,6 +42,8 @@ def run_snake_batch(mode, samples, species, chromosome, numjobs, latency):
             '--keep-going',
             '--rerun-incomplete',
             '--skip-script-cleanup',
+            '--verbose', 
+            '--debug-dag',
             #'--profile', 'sge',   # Only valid w/ snakemake 7.x
             '--latency-wait', str(latency) ,
             '--config', f'species={species}',f'chr={chromosome}',f'sample={sampstr}', 
