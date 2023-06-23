@@ -13,7 +13,6 @@ gitpath = os.path.expanduser("~/git/cshlwork")
 sys.path.append(gitpath)
 
 from cshlwork.utils import *
-
 #
 #  MODE="single"
 #  SPECIES="Ovis_aries"
@@ -35,8 +34,7 @@ def run_snake_batch(mode, samples, species, chromosome, numjobs, latency):
     proj=f"cmxci.{mode}.{species}"
     datestr = dt.datetime.now().strftime("%Y%m%d%H%M")
     sampstr = str(samples).replace(' ','')
-    
-
+   
     cmd = [ 
             'snakemake',
             '--keep-going',

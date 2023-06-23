@@ -23,7 +23,7 @@ sample = config["sample"]
 genomedir = os.path.expanduser(f'~/data/cross_mammal_xci/genomes/{species}')
 datadir = os.path.expanduser(f'~/data/cross_mammal_xci/gtex/')
 homedir = os.path.expanduser("~/")
-wdir = f"{homedir}work/cmxci.gtex/Homo_sapiens"
+wdir = f"{homedir}work/cmxci.gtex/{species}"
 
 setup_logging(logging.DEBUG)
 logging.debug(f'config/CLI sample = {sample}')
@@ -46,8 +46,10 @@ wildcard_constraints:
 
 rule all:
     input:
+        expand(wdir + "/{sample}.Aligned.qsort.bam", sample=SAMPLE ),
         expand(wdir +  "/{sample}_1.fastq", sample=SAMPLE ),
         expand(wdir +  "/{sample}_2.fastq", sample=SAMPLE ),
+        
         #expand(wdir + "/{sample}." +  str(chr) + ".split.filtered.wig", sample=SAMPLE ),
         #expand(wdir + "/{sample}.wasp." +  str(chr) + ".snps.vcf", sample=SAMPLE), 
         #expand(wdir + "/{sample}.wasp." +  str(chr) + ".filtered.vcf", sample=SAMPLE), 
@@ -130,7 +132,8 @@ rule bam_fastq:
     output:
         qbam = wdir + "/{sample}.Aligned.qsort.bam", 
         end1 = wdir + "/{sample}_1.fastq",    
-        end2 = wdir + "/{sample}_2.fastq"    
+        end2 = wdir + "/{sample}_2.fastq"
+     
     resources:
         mem_mb=2048
         
@@ -145,9 +148,9 @@ rule bam_fastq:
                                  outfile=output.qbam,
                                  memory=resources.mem_mb, 
                                  nthreads=f"{threads}")
-        bedtools_bamtofastq( output.qbam, 
-                             end1 =  output.end1, 
-                             end2 =  output.end2)
+        bedtools_bamtofastq( infile= output.qbam, 
+                              end1 =  output.end1, 
+                              end2 =  output.end2)
         
 
         
