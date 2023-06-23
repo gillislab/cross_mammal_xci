@@ -26,7 +26,8 @@ def get_pathinfo(filepath):
     file_name = os.path.basename(abspath)
     (base, ext) = os.path.splitext(file_name)
     ext = ext[1:] # remove dot
-    return (dir, base, ext)
+    prefix = file_name.split('.')[0]
+    return (dirpath, prefix, base, ext)
     
 
 def run_snake_batch(mode, samples, species, chromosome, numjobs, latency):
@@ -135,8 +136,8 @@ if __name__ == '__main__':
 
     samplelist = []
     for filename in args.infiles:
-        (dir, base, ext) = get_pathinfo(filename)
-        samplelist.append(base)
+        (dirpath, prefix, base, ext) = get_pathinfo(filename)
+        samplelist.append(prefix)
     
     batchlist = [samplelist[i:i + args.batchsize] for i in range(0, len(samplelist), args.batchsize)]
     logging.debug(f'batchlist= {batchlist}')
