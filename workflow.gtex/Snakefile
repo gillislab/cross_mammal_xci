@@ -123,15 +123,14 @@ rule all:
         
 
 rule bam_fastq:
-    priority: 1
     input:
-        #bam = datadir + "/{sample}.Aligned.sortedByCoord.out.patched.md.bam"
         bam = datadir + "/{sample}.input"  # avoiding long input for wildcard globbing
+        #bam = datadir + "/{sample}.Aligned.sortedByCoord.out.patched.md.bam"
         #sra = datadir + "/{sample}.sra"
     output:
         qbam = temp(wdir + "/{sample}.Aligned.qsort.bam"), 
-        end1 = temp(wdir + "/{sample}_1.fastq"),    
-        end2 = temp(wdir + "/{sample}_2.fastq")    
+        end1 = wdir + "/{sample}_1.fastq",    
+        end2 = wdir + "/{sample}_2.fastq"    
     resources:
         mem_mb=2048
         
