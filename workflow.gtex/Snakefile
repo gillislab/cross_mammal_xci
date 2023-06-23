@@ -1,17 +1,6 @@
 #
-# Genomes in /data/johlee/cross_mammal_xci/genomes
-# Data in /data/johlee/cross_mammal_xci/temp/sra
-# #  snakemake --jobs 20 --cluster "qsub -N cmxci1 -pe threads {threads} -wd ~/work/cmxci1 -l m_mem_free={resources.mem_mb}M 
-#
-# Cluster w/ batches 
-# 
-#  time snakemake --keep-going --batch all=1/10 --config species=Bos_taurus --jobs 20 --cluster "qsub -N cmxci1 -pe threads {threads} -wd ~/work/cmxci1 -l m_mem_free={resources.mem_mb}M" > smlog.2.txt 2>&1
-
-# Interactive invocation:
-#  time snakemake -c16 --keep-going  --config species=Bos_taurus num_workers=2 worker_idx=1 > log.7.txt 2>&1
-#
-#  
-#
+# Snakefile for processing human GTEx samples.   
+# Need to re-create read1 and read2 files
 
 import os
 import sys
@@ -45,7 +34,7 @@ if len(sample) >  0:
     logging.debug(f'explicit sample given: {sample}')
     SAMPLE = sample
 else:
-    (SAMPLE,) = glob_wildcards(datadir + "/{sample}.sra")
+    (SAMPLE,) = glob_wildcards(datadir + "/{sample}.Aligned.sortedByCoord.out.patched.md.bam")
     logging.debug(f'Initial sample number = {len(SAMPLE)}. Filtering...')
     SAMPLE = modulo_filter(SAMPLE, num_workers, worker_idx)
 
@@ -59,16 +48,16 @@ wildcard_constraints:
 
 rule all:
     input:
-        expand(wdir + "/{sample}." +  str(chr) + ".split.filtered.wig", sample=SAMPLE ),
-        expand(wdir + "/{sample}.wasp." +  str(chr) + ".snps.vcf", sample=SAMPLE), 
-        expand(wdir + "/{sample}.wasp." +  str(chr) + ".filtered.vcf", sample=SAMPLE), 
-        expand(wdir + "/{sample}.wasp." +  str(chr) + ".snps_filtered.vcf", sample=SAMPLE),                  
-        expand(wdir + "/{sample}.wasp." +  str(chr) + ".SJ.out.tab", sample=SAMPLE),
-        expand(wdir + "/{sample}.wasp." +  str(chr) + ".Log.out", sample=SAMPLE),  
-        expand(wdir + "/{sample}.wasp." +  str(chr) + ".Log.final.out", sample=SAMPLE),
-        expand(wdir + "/{sample}.wasp." +  str(chr) + ".Aligned.sortedByCoord.out.bam", sample=SAMPLE),
-        expand(wdir + "/{sample}.wasp." +  str(chr) + ".Aligned.sortedByCoord.out.bam.bai", sample=SAMPLE),
-        expand(wdir + "/{sample}.wasp." +  str(chr) + ".filtered.vcf", sample=SAMPLE),
+        #expand(wdir + "/{sample}." +  str(chr) + ".split.filtered.wig", sample=SAMPLE ),
+        #expand(wdir + "/{sample}.wasp." +  str(chr) + ".snps.vcf", sample=SAMPLE), 
+        #expand(wdir + "/{sample}.wasp." +  str(chr) + ".filtered.vcf", sample=SAMPLE), 
+        #expand(wdir + "/{sample}.wasp." +  str(chr) + ".snps_filtered.vcf", sample=SAMPLE),                  
+        #expand(wdir + "/{sample}.wasp." +  str(chr) + ".SJ.out.tab", sample=SAMPLE),
+        #expand(wdir + "/{sample}.wasp." +  str(chr) + ".Log.out", sample=SAMPLE),  
+        #expand(wdir + "/{sample}.wasp." +  str(chr) + ".Log.final.out", sample=SAMPLE),
+        #expand(wdir + "/{sample}.wasp." +  str(chr) + ".Aligned.sortedByCoord.out.bam", sample=SAMPLE),
+        #expand(wdir + "/{sample}.wasp." +  str(chr) + ".Aligned.sortedByCoord.out.bam.bai", sample=SAMPLE),
+        #expand(wdir + "/{sample}.wasp." +  str(chr) + ".filtered.vcf", sample=SAMPLE),
         expand(wdir + "/{sample}.wasp." +  str(chr) + ".snps.vcf", sample=SAMPLE),
         expand(wdir + "/{sample}.wasp." +  str(chr) + ".snps_filtered.vcf", sample=SAMPLE),
         expand(wdir + "/{sample}.wasp." +  str(chr) + ".split.filtered.wig", sample=SAMPLE ),        
@@ -133,23 +122,32 @@ rule all:
         
 
 
-rule dump_fastq:
+rule bam_fastq:
     priority: 1
     input:
-        sra = datadir + "/{sample}.sra"
+        bam = datadir + "/{sample}.Aligned.sortedByCoord.out.patched.md.bam"
+        #sra = datadir + "/{sample}.sra"
     output:
-        end1= temp(wdir + "/{sample}_1.fastq"),    
-        end2= temp(wdir + "/{sample}_2.fastq")    
+        qbam = temp(wdir + "/{sample}.Aligned.qsort.bam") 
+        end1 = temp(wdir + "/{sample}_1.fastq"),    
+        end2 = temp(wdir + "/{sample}_2.fastq")    
     resources:
-        mem_mb=8192
+        mem_mb=2048
         
-    threads: 6
+    threads: 12
 
     run:
-        fasterq_dump( infile=input.sra, 
-                      outdir=wdir, 
-                      nthreads=f"{threads}", 
-                      tempdir =wdir)
+        #fasterq_dump( infile=input.sra, 
+        #              outdir=wdir, 
+        #              nthreads=f"{threads}", 
+        #              tempdir =wdir)
+        samtools_sort_readname(  infile=input.bam, 
+                                 outfile=output.qbam,
+                                 memory=resources.mem_mb, 
+                                 nthreads=f"{threads}")
+        bedtools_bamtofastq( output.qbam, 
+                            end1 =  output.end1, 
+                            end2 = output.end2)
         
         
 rule star_nowasp:
@@ -195,7 +193,7 @@ rule samtools1:
         sbam = temp(wdir + "/{sample}.Aligned.sortedByCoord.out.bam"),
         sbai = temp(wdir + "/{sample}.Aligned.sortedByCoord.out.bam.bai")
     resources:
-        mem_mb=3072
+        mem_mb=2048
     threads: 16
     
     run:
@@ -226,7 +224,7 @@ rule samtools2:
         #region = get_chr_label(genomedir, chr),
         qual = 10,
     resources:
-        mem_mb=3072  
+        mem_mb=4096  
     threads: 1        
 
     run:
