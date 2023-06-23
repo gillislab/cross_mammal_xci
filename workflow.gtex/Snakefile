@@ -44,7 +44,6 @@ logging.debug(f"SAMPLE={SAMPLE}")
 wildcard_constraints:
     sample="\w+"
 
-
 rule all:
     input:
         expand(wdir + "/{sample}.qsort.bam", sample=SAMPLE ),
@@ -123,7 +122,6 @@ rule all:
 
         # from igvtools7
         #wwig = expand(wdir + "/{sample}.wasp." + chr + ".split.filtered.wig", sample=SAMPLE ),
-
 
 rule samsort1:
     priority: 1
