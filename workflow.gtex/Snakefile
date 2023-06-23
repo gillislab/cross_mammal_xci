@@ -8,18 +8,15 @@ import logging
 
 gitpath=os.path.expanduser("~/git/xskew")
 sys.path.append(gitpath)
-
 from xskew.tools import *
 
 configfile: "workflow/config.yaml"
-
 species = config["species"]
 chr = config["chr"]
 chr = str(chr)
 num_workers = config["num_workers"]
 worker_idx = config["worker_idx"]
 sample = config["sample"]
-
 genomedir = os.path.expanduser(f'~/data/cross_mammal_xci/genomes/{species}')
 datadir = os.path.expanduser(f'~/data/cross_mammal_xci/gtex/')
 homedir = os.path.expanduser("~/")
@@ -40,7 +37,7 @@ else:
 
 logging.debug(f"SAMPLE={SAMPLE}")
 
-# Needed to avoid matching anything past the '.', e.g. XYZ.wasp.<sufficx> 
+# Needed to avoid matching anything past the '.', e.g. XYZ.wasp.<suffix> 
 wildcard_constraints:
     sample="\w+"
 
@@ -126,7 +123,7 @@ rule all:
 rule samsort1:
     priority: 1
     input:
-        bam = datadir + "/{sample}.input",  # avoiding long input for wildcard globbing
+        bam = datadir + "/{sample}.input"
     output:
         qbam = wdir + "/{sample}.qsort.bam"
     resources:
@@ -134,10 +131,11 @@ rule samsort1:
     threads: 12
     
     run:
-        samtools_sort_readname( infile=input.bam, 
-                                 outfile=output.qbam,
-                                 memory=resources.mem_mb, 
-                                 nthreads=f"{threads}")
+        samtools_sort_readname(infile=input.bam, 
+                               outfile=output.qbam,
+                               memory=resources.mem_mb, 
+                               nthreads=f"{threads}")
+
 
 rule bam_fastq:
     priority: 1
