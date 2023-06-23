@@ -44,9 +44,10 @@ wildcard_constraints:
 rule all:
     input:
         expand(wdir + "/{sample}.qsort.bam", sample=SAMPLE )
+        
+        
         #expand(wdir +  "/{sample}_1.fastq", sample=SAMPLE ),
         #expand(wdir +  "/{sample}_2.fastq", sample=SAMPLE ),
-        
         #expand(wdir + "/{sample}." +  str(chr) + ".split.filtered.wig", sample=SAMPLE ),
         #expand(wdir + "/{sample}.wasp." +  str(chr) + ".snps.vcf", sample=SAMPLE), 
         #expand(wdir + "/{sample}.wasp." +  str(chr) + ".filtered.vcf", sample=SAMPLE), 
@@ -118,8 +119,10 @@ rule all:
         #wmetrics = expand(wdir + "/{sample}.wasp." + chr + ".output.metrics", sample=SAMPLE), 
 
         # from igvtools7
-        #wwig = expand(wdir + "/{sample}.wasp." + chr + ".split.filtered.wig", sample=SAMPLE ),
-
+        #wwig = expand(wdir + "/{sample}.wasp." + chr + ".split.filtered.wig", sample=SAMPLE )
+        
+        
+        
 rule samsort1:
     priority: 1
     input:
