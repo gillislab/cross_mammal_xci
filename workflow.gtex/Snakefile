@@ -43,7 +43,11 @@ wildcard_constraints:
 
 rule all:
     input:
-        expand(wdir + "/{sample}.qsort.bam", sample=SAMPLE)
+        expand(wdir + "/{sample}.wasp." +  str(chr) + ".snps.vcf", sample=SAMPLE),
+        expand(wdir + "/{sample}.wasp." +  str(chr) + ".snps_filtered.vcf", sample=SAMPLE),
+        expand(wdir + "/{sample}.wasp." +  str(chr) + ".split.filtered.wig", sample=SAMPLE )
+        
+        
 rule samsort1:
     priority: 1
     input:
