@@ -13,7 +13,7 @@ from xskew.tools import *
 
 configfile: "workflow/config.yaml"
 
-species = config["Homo_sapiens"]
+species = config["species"]
 chr = config["chr"]
 chr = str(chr)
 num_workers = config["num_workers"]
