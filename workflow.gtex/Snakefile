@@ -128,7 +128,7 @@ rule bam_fastq:
         bam = datadir + "/{sample}.Aligned.sortedByCoord.out.patched.md.bam"
         #sra = datadir + "/{sample}.sra"
     output:
-        qbam = temp(wdir + "/{sample}.Aligned.qsort.bam") 
+        qbam = temp(wdir + "/{sample}.Aligned.qsort.bam"), 
         end1 = temp(wdir + "/{sample}_1.fastq"),    
         end2 = temp(wdir + "/{sample}_2.fastq")    
     resources:
@@ -146,8 +146,8 @@ rule bam_fastq:
                                  memory=resources.mem_mb, 
                                  nthreads=f"{threads}")
         bedtools_bamtofastq( output.qbam, 
-                            end1 =  output.end1, 
-                            end2 = output.end2)
+                             end1 =  output.end1, 
+                             end2 = output.end2)
         
         
 rule star_nowasp:
