@@ -50,8 +50,7 @@ rule all:
         expand(wdir +  "/{sample}_2.fastq", sample=SAMPLE )
         
         
-rule samsort1:
-    priority: 1
+rule samsort: 
     input:
         bam = datadir + "/{sample}.input"
     output:
