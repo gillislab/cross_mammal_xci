@@ -43,86 +43,7 @@ wildcard_constraints:
 
 rule all:
     input:
-        expand(wdir + "/{sample}.qsort.bam", sample=SAMPLE )
-        
-        
-        #expand(wdir +  "/{sample}_1.fastq", sample=SAMPLE ),
-        #expand(wdir +  "/{sample}_2.fastq", sample=SAMPLE ),
-        #expand(wdir + "/{sample}." +  str(chr) + ".split.filtered.wig", sample=SAMPLE ),
-        #expand(wdir + "/{sample}.wasp." +  str(chr) + ".snps.vcf", sample=SAMPLE), 
-        #expand(wdir + "/{sample}.wasp." +  str(chr) + ".filtered.vcf", sample=SAMPLE), 
-        #expand(wdir + "/{sample}.wasp." +  str(chr) + ".snps_filtered.vcf", sample=SAMPLE),                  
-        #expand(wdir + "/{sample}.wasp." +  str(chr) + ".SJ.out.tab", sample=SAMPLE),
-        #expand(wdir + "/{sample}.wasp." +  str(chr) + ".Log.out", sample=SAMPLE),  
-        #expand(wdir + "/{sample}.wasp." +  str(chr) + ".Log.final.out", sample=SAMPLE),
-        #expand(wdir + "/{sample}.wasp." +  str(chr) + ".Aligned.sortedByCoord.out.bam", sample=SAMPLE),
-        #expand(wdir + "/{sample}.wasp." +  str(chr) + ".Aligned.sortedByCoord.out.bam.bai", sample=SAMPLE),
-        #expand(wdir + "/{sample}.wasp." +  str(chr) + ".filtered.vcf", sample=SAMPLE),
-        #expand(wdir + "/{sample}.wasp." +  str(chr) + ".snps.vcf", sample=SAMPLE),
-        #expand(wdir + "/{sample}.wasp." +  str(chr) + ".snps_filtered.vcf", sample=SAMPLE),
-        #expand(wdir + "/{sample}.wasp." +  str(chr) + ".split.filtered.wig", sample=SAMPLE )        
-        
-        # FROM GENOME SETUP
-        #gdict = genomedir + "/genome.dict",
-        #gfai = genomedir + "/genome.fa.fai",
-        #gpar = genomedir + "/genomeParameters.txt",
-        
-        # from genome processing
-        #xreg = genomedir + "/" + chr + "label.txt",
-        #yreg = genomedir + "/chrYlabel.txt",
-        #regfa = genomedir + "/" + chr + ".fa",
-         
-        # from bam_fastq. 
-        #expand(wdir +  "/{sample}_1.fastq", sample=SAMPLE ),
-        #expand(wdir +  "/{sample}_2.fastq", sample=SAMPLE ),   
-       
-       
-        # from STAR
-        #abam = expand(wdir + "/{sample}.Aligned.out.bam", sample=SAMPLE ),
-        # from SAMTOOLS1
-        #sbam = expand(wdir + "/{sample}.Aligned.sortedByCoord.out.bam", sample=SAMPLE ),
-        #sbam = expand(wdir + "/{sample}.Aligned.sortedByCoord.out.bam", sample=SAMPLE ),  
-        #xbam = expand(wdir + "/{sample}." + chr + ".bam", sample=SAMPLE ),
-        #xfiltbam = expand(wdir + "/{sample}." + chr + ".filt.bam", sample=SAMPLE ),
-
-        # from GATK1
-        #rgbam = expand(wdir + "/{sample}." + chr + ".rg.bam", sample=SAMPLE),
-        #sfbam = expand(wdir + "/{sample}." + chr + ".split.filtered.bam", sample=SAMPLE),
-        #svcf =  expand(wdir + "/{sample}." + chr + ".snps.vcf", sample=SAMPLE), 
-        #xfvcf = expand(wdir + "/{sample}." + chr + ".filtered.vcf", sample=SAMPLE),
-        # sfvcf = expand(wdir + "/{sample}." + chr + ".snps_filtered.vcf",  sample=SAMPLE ),
-        #ddbam = expand(wdir + "/{sample}." + chr + ".dedupped.bam", sample=SAMPLE), 
-        #metrics = expand(wdir + "/{sample}." + chr + ".output.metrics", sample=SAMPLE),
-
-        # from igvtools6
-        #sfwig = expand(wdir + "/{sample}." + chr + ".split.filtered.wig", sample=SAMPLE ),
-        
-        # from STAR wasp
-        #wabam= expand(wdir + "/{sample}.wasp.Aligned.out.bam",  sample=SAMPLE), 
-        #wlog = expand(wdir + "/{sample}.wasp.Log.out", sample=SAMPLE ),        
-        #wflog= expand(wdir +"/{sample}.wasp.Log.final.out", sample=SAMPLE),
-        #wrpg=  expand(wdir +"/{sample}.wasp.ReadsPerGene.out.tab",    sample=SAMPLE),        
-
-        # from SAMTOOLS2
-
-        #wsbam = expand(wdir + "/{sample}.wasp.Aligned.sortedByCoord.out.bam",sample=SAMPLE ),
-        #wsbai = expand(wdir + "/{sample}.wasp.Aligned.sortedByCoord.out.bam.bai",sample=SAMPLE ),
-        #wxfiltbam = expand(wdir + "/{sample}.wasp." + chr + ".filt.bam", sample=SAMPLE ),
-
-        # from GATK2
-        #wrgbam = expand(wdir + "/{sample}.wasp." + chr + ".rg.bam", sample=SAMPLE), 
-        #wsfbam = expand(wdir + "/{sample}.wasp." + chr + ".split.filtered.bam",  sample=SAMPLE), 
-        #wsvcf =  expand(wdir + "/{sample}.wasp." + chr + ".snps.vcf", sample=SAMPLE), 
-        #wxfvcf = expand(wdir + "/{sample}.wasp." + chr + ".filtered.vcf", sample=SAMPLE), 
-        #wsfvcf = expand(wdir + "/{sample}.wasp." + chr + ".snps_filtered.vcf", sample=SAMPLE), 
-        #wddbam = expand(wdir + "/{sample}.wasp." + chr + ".dedupped.bam", sample=SAMPLE), 
-        #wmetrics = expand(wdir + "/{sample}.wasp." + chr + ".output.metrics", sample=SAMPLE), 
-
-        # from igvtools7
-        #wwig = expand(wdir + "/{sample}.wasp." + chr + ".split.filtered.wig", sample=SAMPLE )
-        
-        
-        
+        expand(wdir + "/{sample}.qsort.bam", sample=SAMPLE)
 rule samsort1:
     priority: 1
     input:
@@ -458,3 +379,86 @@ rule igvtools7:
         igvtools_count(infile=input.wsfbam, 
                        outfile=output.wwig, 
                        reg_fa=input.regfa)      
+
+
+
+
+        
+        
+ #expand(wdir +  "/{sample}_1.fastq", sample=SAMPLE ),
+ #expand(wdir +  "/{sample}_2.fastq", sample=SAMPLE ),
+ #expand(wdir + "/{sample}." +  str(chr) + ".split.filtered.wig", sample=SAMPLE ),
+ #expand(wdir + "/{sample}.wasp." +  str(chr) + ".snps.vcf", sample=SAMPLE), 
+ #expand(wdir + "/{sample}.wasp." +  str(chr) + ".filtered.vcf", sample=SAMPLE), 
+ #expand(wdir + "/{sample}.wasp." +  str(chr) + ".snps_filtered.vcf", sample=SAMPLE),                  
+ #expand(wdir + "/{sample}.wasp." +  str(chr) + ".SJ.out.tab", sample=SAMPLE),
+ #expand(wdir + "/{sample}.wasp." +  str(chr) + ".Log.out", sample=SAMPLE),  
+ #expand(wdir + "/{sample}.wasp." +  str(chr) + ".Log.final.out", sample=SAMPLE),
+ #expand(wdir + "/{sample}.wasp." +  str(chr) + ".Aligned.sortedByCoord.out.bam", sample=SAMPLE),
+ #expand(wdir + "/{sample}.wasp." +  str(chr) + ".Aligned.sortedByCoord.out.bam.bai", sample=SAMPLE),
+ #expand(wdir + "/{sample}.wasp." +  str(chr) + ".filtered.vcf", sample=SAMPLE),
+ #expand(wdir + "/{sample}.wasp." +  str(chr) + ".snps.vcf", sample=SAMPLE),
+ #expand(wdir + "/{sample}.wasp." +  str(chr) + ".snps_filtered.vcf", sample=SAMPLE),
+ #expand(wdir + "/{sample}.wasp." +  str(chr) + ".split.filtered.wig", sample=SAMPLE )        
+ 
+ # FROM GENOME SETUP
+ #gdict = genomedir + "/genome.dict",
+ #gfai = genomedir + "/genome.fa.fai",
+ #gpar = genomedir + "/genomeParameters.txt",
+ 
+ # from genome processing
+ #xreg = genomedir + "/" + chr + "label.txt",
+ #yreg = genomedir + "/chrYlabel.txt",
+ #regfa = genomedir + "/" + chr + ".fa",
+  
+ # from bam_fastq. 
+ #expand(wdir +  "/{sample}_1.fastq", sample=SAMPLE ),
+ #expand(wdir +  "/{sample}_2.fastq", sample=SAMPLE ),   
+
+
+ # from STAR
+ #abam = expand(wdir + "/{sample}.Aligned.out.bam", sample=SAMPLE ),
+ # from SAMTOOLS1
+ #sbam = expand(wdir + "/{sample}.Aligned.sortedByCoord.out.bam", sample=SAMPLE ),
+ #sbam = expand(wdir + "/{sample}.Aligned.sortedByCoord.out.bam", sample=SAMPLE ),  
+ #xbam = expand(wdir + "/{sample}." + chr + ".bam", sample=SAMPLE ),
+ #xfiltbam = expand(wdir + "/{sample}." + chr + ".filt.bam", sample=SAMPLE ),
+
+ # from GATK1
+ #rgbam = expand(wdir + "/{sample}." + chr + ".rg.bam", sample=SAMPLE),
+ #sfbam = expand(wdir + "/{sample}." + chr + ".split.filtered.bam", sample=SAMPLE),
+ #svcf =  expand(wdir + "/{sample}." + chr + ".snps.vcf", sample=SAMPLE), 
+ #xfvcf = expand(wdir + "/{sample}." + chr + ".filtered.vcf", sample=SAMPLE),
+ # sfvcf = expand(wdir + "/{sample}." + chr + ".snps_filtered.vcf",  sample=SAMPLE ),
+ #ddbam = expand(wdir + "/{sample}." + chr + ".dedupped.bam", sample=SAMPLE), 
+ #metrics = expand(wdir + "/{sample}." + chr + ".output.metrics", sample=SAMPLE),
+
+ # from igvtools6
+ #sfwig = expand(wdir + "/{sample}." + chr + ".split.filtered.wig", sample=SAMPLE ),
+ 
+ # from STAR wasp
+ #wabam= expand(wdir + "/{sample}.wasp.Aligned.out.bam",  sample=SAMPLE), 
+ #wlog = expand(wdir + "/{sample}.wasp.Log.out", sample=SAMPLE ),        
+ #wflog= expand(wdir +"/{sample}.wasp.Log.final.out", sample=SAMPLE),
+ #wrpg=  expand(wdir +"/{sample}.wasp.ReadsPerGene.out.tab",    sample=SAMPLE),        
+
+ # from SAMTOOLS2
+
+ #wsbam = expand(wdir + "/{sample}.wasp.Aligned.sortedByCoord.out.bam",sample=SAMPLE ),
+ #wsbai = expand(wdir + "/{sample}.wasp.Aligned.sortedByCoord.out.bam.bai",sample=SAMPLE ),
+ #wxfiltbam = expand(wdir + "/{sample}.wasp." + chr + ".filt.bam", sample=SAMPLE ),
+
+ # from GATK2
+ #wrgbam = expand(wdir + "/{sample}.wasp." + chr + ".rg.bam", sample=SAMPLE), 
+ #wsfbam = expand(wdir + "/{sample}.wasp." + chr + ".split.filtered.bam",  sample=SAMPLE), 
+ #wsvcf =  expand(wdir + "/{sample}.wasp." + chr + ".snps.vcf", sample=SAMPLE), 
+ #wxfvcf = expand(wdir + "/{sample}.wasp." + chr + ".filtered.vcf", sample=SAMPLE), 
+ #wsfvcf = expand(wdir + "/{sample}.wasp." + chr + ".snps_filtered.vcf", sample=SAMPLE), 
+ #wddbam = expand(wdir + "/{sample}.wasp." + chr + ".dedupped.bam", sample=SAMPLE), 
+ #wmetrics = expand(wdir + "/{sample}.wasp." + chr + ".output.metrics", sample=SAMPLE), 
+
+ # from igvtools7
+ #wwig = expand(wdir + "/{sample}.wasp." + chr + ".split.filtered.wig", sample=SAMPLE )
+        
+        
+        
