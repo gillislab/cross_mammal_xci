@@ -53,9 +53,9 @@ rule all:
         
 rule samsort: 
     input:
-        bam = datadir + "/{sample}.input"
+        bam = "/grid/gillis/home/hover/data/cross_mammal_xci/gtex/{sample}.input"
     output:
-        qbam = wdir + "/{sample}.qsort.bam"
+        qbam = "/grid/gillis/home/hover/work/cmxci.gtex/Homo_sapiens/{sample}.qsort.bam"
     resources:
         mem_mb=2048 
     threads: 12
@@ -68,10 +68,10 @@ rule samsort:
 
 rule bam_fastq:
     input:
-        qbam = wdir + "/{sample}.qsort.bam"
+        qbam = "/grid/gillis/home/hover/work/cmxci.gtex/Homo_sapiens/{sample}.qsort.bam"
     output:         
-        end1 = wdir + "/{sample}_1.fastq",    
-        end2 = wdir + "/{sample}_2.fastq"
+        end1 = "/grid/gillis/home/hover/work/cmxci.gtex/Homo_sapiens/{sample}_1.fastq",    
+        end2 = "/grid/gillis/home/hover/work/cmxci.gtex/Homo_sapiens/{sample}_2.fastq"
      
     resources:
         mem_mb=2048
