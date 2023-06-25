@@ -138,8 +138,8 @@ rule dump_fastq:
     input:
         sra = datadir + "/{sample}.sra"
     output:
-        end1= temp(wdir + "/{sample}_1.fastq"),    
-        end2= temp(wdir + "/{sample}_2.fastq")    
+        end1= wdir + "/{sample}_1.fastq",    
+        end2= wdir + "/{sample}_2.fastq"    
     resources:
         mem_mb=8192
         
@@ -162,12 +162,12 @@ rule star_nowasp:
         gpar = genomedir + "/genomeParameters.txt",
         
     output:     
-        abam=  temp(wdir + "/{sample}.Aligned.out.bam"),
-        rpg=   temp(wdir + "/{sample}.ReadsPerGene.out.tab"),
-        sjtab= temp(wdir + "/{sample}.SJ.out.tab"),
-        log=   temp(wdir + "/{sample}.Log.out"),        
-        plog=  temp(wdir + "/{sample}.Log.progress.out"),
-        flog=  temp(wdir + "/{sample}.Log.final.out"),
+        abam=  wdir + "/{sample}.Aligned.out.bam",
+        rpg=   wdir + "/{sample}.ReadsPerGene.out.tab",
+        sjtab= wdir + "/{sample}.SJ.out.tab",
+        log=   wdir + "/{sample}.Log.out",        
+        plog=  wdir + "/{sample}.Log.progress.out",
+        flog=  wdir + "/{sample}.Log.final.out",
 
     params:        
         tmpdir = wdir + "/{sample}_starout",
@@ -192,8 +192,8 @@ rule samtools1:
     input:
         abam = wdir + "/{sample}.Aligned.out.bam"    
     output:
-        sbam = temp(wdir + "/{sample}.Aligned.sortedByCoord.out.bam"),
-        sbai = temp(wdir + "/{sample}.Aligned.sortedByCoord.out.bam.bai")
+        sbam = wdir + "/{sample}.Aligned.sortedByCoord.out.bam",
+        sbai = wdir + "/{sample}.Aligned.sortedByCoord.out.bam.bai"
     resources:
         mem_mb=3072
     threads: 16
