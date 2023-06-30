@@ -29,7 +29,7 @@ def get_pathinfo(filepath):
     return (dirpath, prefix, base, ext)
     
 
-def run_snake_batch(mode, samples, species, chromosome, numjobs, latency):
+def run_snake_batch(mode, samples, species, chromosome, numjobs, latency, max_rt_hrs):
     STATUS="/grid/gillis/home/hover/git/elzar-example/snakemake/status-sge.py"
     proj=f"cmxci.{mode}.{species}"
     datestr = dt.datetime.now().strftime("%Y%m%d%H%M")
@@ -48,7 +48,7 @@ def run_snake_batch(mode, samples, species, chromosome, numjobs, latency):
             '--jobs', str(numjobs),
             #'--cluster-status', STATUS,   # Only valid w/ snakemake 7.x
             #'--cluster-cancel','qdel',     # Only valid w/ snakemake 7.x 
-            '--cluster', f'qsub -N {proj} -pe threads {{threads}} -wd /grid/gillis/home/hover/work/cmxci.{mode} -l m_mem_free={{resources.mem_mb}}M '
+            '--cluster', f'qsub -N {proj} -pe threads {{threads}} -wd /grid/gillis/home/hover/work/cmxci.{mode} -l m_mem_free={{resources.mem_mb}}M -l h_rt={max_rt_hrs}:0:0 '
           ]
     try:
         cmdstr = ' '.join(cmd)
@@ -104,6 +104,13 @@ if __name__ == '__main__':
                         type=int, 
                         help='Max simultaneous jobs.')
 
+    parser.add_argument('-t','--max_rt_hrs', 
+                        metavar='max_rt_hrs',
+                        required=False,
+                        default=2,
+                        type=int, 
+                        help='Limit job length. Hours.')
+
     parser.add_argument('-b','--batchsize', 
                         metavar='batchsize',
                         required=False,
@@ -147,7 +154,7 @@ if __name__ == '__main__':
         batchno += 1
         logging.debug(f'executing w/ mode={args.mode} species={args.species} chr={args.chromosome} numjobs={args.numjobs}')
         logging.info(f'executing batch [{batchno}/{len(batchlist)}] w/ samples={batch}')
-        run_snake_batch(args.mode, batch, args.species, args.chromosome, args.numjobs, args.latency )
+        run_snake_batch(args.mode, batch, args.species, args.chromosome, args.numjobs, args.latency, args.max_rt_hrs )
         logging.info(f'finished invocation of snakemake...') 
     
       
