@@ -61,18 +61,18 @@ wildcard_constraints:
 rule all:
     input:
         #expand(wdir + "/{sample}." + str(chr) + ".split.filtered.wig", sample=SAMPLE ),
-        #expand(wdir + "/{sample}.wasp." + str(chr) + ".snps.vcf", sample=SAMPLE), 
-        #expand(wdir + "/{sample}.wasp." + str(chr) + ".filtered.vcf", sample=SAMPLE), 
-        #expand(wdir + "/{sample}.wasp." + str(chr) + ".snps_filtered.vcf", sample=SAMPLE),              
-        #expand(wdir + "/{sample}.wasp." +  str(chr) + ".SJ.out.tab", sample=SAMPLE),
-        #expand(wdir + "/{sample}.wasp." +  str(chr) + ".Log.out", sample=SAMPLE),  
-        #expand(wdir + "/{sample}.wasp." +  str(chr) + ".Log.final.out", sample=SAMPLE),
-        #expand(wdir + "/{sample}.wasp." +  str(chr) + ".Aligned.sortedByCoord.out.bam", sample=SAMPLE),
-        #expand(wdir + "/{sample}.wasp." +  str(chr) + ".Aligned.sortedByCoord.out.bam.bai", sample=SAMPLE),
-        #expand(wdir + "/{sample}.wasp." + str(chr) + ".filtered.vcf", sample=SAMPLE),
-        expand(wdir + "/{sample}.wasp." + str(chr) + ".snps.vcf", sample=SAMPLE),
-        expand(wdir + "/{sample}.wasp." + str(chr) + ".snps_filtered.vcf", sample=SAMPLE),
-        expand(wdir + "/{sample}.wasp." + str(chr) + ".split.filtered.wig", sample=SAMPLE )        
+        #expand(wdir + "/{sample}.wasp." + chr + ".snps.vcf", sample=SAMPLE), 
+        #expand(wdir + "/{sample}.wasp." + chr + ".filtered.vcf", sample=SAMPLE), 
+        #expand(wdir + "/{sample}.wasp." + chr + ".snps_filtered.vcf", sample=SAMPLE),              
+        #expand(wdir + "/{sample}.wasp." +  chr + ".SJ.out.tab", sample=SAMPLE),
+        #expand(wdir + "/{sample}.wasp." +  chr + ".Log.out", sample=SAMPLE),  
+        #expand(wdir + "/{sample}.wasp." +  chr + ".Log.final.out", sample=SAMPLE),
+        #expand(wdir + "/{sample}.wasp." +  chr + ".Aligned.sortedByCoord.out.bam", sample=SAMPLE),
+        #expand(wdir + "/{sample}.wasp." +  chr + ".Aligned.sortedByCoord.out.bam.bai", sample=SAMPLE),
+        #expand(wdir + "/{sample}.wasp." + chr + ".filtered.vcf", sample=SAMPLE),
+        expand(wdir + "/{sample}.wasp." + chr + ".snps.vcf", sample=SAMPLE),
+        expand(wdir + "/{sample}.wasp." + chr + ".snps_filtered.vcf", sample=SAMPLE),
+        expand(wdir + "/{sample}.wasp." + chr + ".split.filtered.wig", sample=SAMPLE )        
          
         # testing. 
         #end1 = expand(wdir +  "/{sample}_1.fastq", sample=SAMPLE ),
@@ -300,18 +300,18 @@ rule star_wasp:
         gpar = genomedir + "/genomeParameters.txt",
         
     output:     
-        wabam=  temp(wdir + "/{sample}.wasp." +  str(chr) + ".Aligned.out.bam"),
-        wrpg=   wdir + "/{sample}.wasp." +  str(chr) + ".ReadsPerGene.out.tab",
-        wsjtab= wdir + "/{sample}.wasp." +  str(chr) + ".SJ.out.tab",
-        wlog=   wdir + "/{sample}.wasp." +  str(chr) + ".Log.out",        
-        wplog=  temp(wdir + "/{sample}.wasp." +  str(chr) + ".Log.progress.out"),
-        wflog=  wdir + "/{sample}.wasp." +  str(chr) + ".Log.final.out",
+        wabam=  temp(wdir + "/{sample}.wasp." +  chr + ".Aligned.out.bam"),
+        wrpg=   wdir + "/{sample}.wasp." +  chr + ".ReadsPerGene.out.tab",
+        wsjtab= wdir + "/{sample}.wasp." +  chr + ".SJ.out.tab",
+        wlog=   wdir + "/{sample}.wasp." +  chr + ".Log.out",        
+        wplog=  temp(wdir + "/{sample}.wasp." +  chr + ".Log.progress.out"),
+        wflog=  wdir + "/{sample}.wasp." +  chr + ".Log.final.out",
 
     params:        
         tmpdir = wdir + "/{sample}_starout",
         wdir = wdir + "/",
         gdir = genomedir ,
-        outprefix = wdir + "/{sample}.wasp." +  str(chr) + "."
+        outprefix = wdir + "/{sample}.wasp." +  chr + "."
     resources:
         mem_mb=3072
     threads: 16
@@ -327,10 +327,10 @@ rule star_wasp:
 rule samtools3: 
     priority: 8 
     input:         
-        wabam = wdir + "/{sample}.wasp." +  str(chr) + ".Aligned.out.bam"
+        wabam = wdir + "/{sample}.wasp." +  chr + ".Aligned.out.bam"
     output:        
-        wsbam = wdir + "/{sample}.wasp." +  str(chr) + ".Aligned.sortedByCoord.out.bam",
-        wsbai = wdir + "/{sample}.wasp." +  str(chr) + ".Aligned.sortedByCoord.out.bam.bai"
+        wsbam = wdir + "/{sample}.wasp." +  chr + ".Aligned.sortedByCoord.out.bam",
+        wsbai = wdir + "/{sample}.wasp." +  chr + ".Aligned.sortedByCoord.out.bam.bai"
     
     resources:
         mem_mb=3072
@@ -347,8 +347,8 @@ rule samtools3:
 rule samtools4:
     priority: 9 
     input:
-        wbam= wdir + "/{sample}.wasp." +  str(chr) + ".Aligned.sortedByCoord.out.bam",
-        wsbai = wdir + "/{sample}.wasp." +  str(chr) + ".Aligned.sortedByCoord.out.bam.bai",
+        wbam= wdir + "/{sample}.wasp." +  chr + ".Aligned.sortedByCoord.out.bam",
+        wsbai = wdir + "/{sample}.wasp." +  chr + ".Aligned.sortedByCoord.out.bam.bai",
         xreg = genomedir + "/" + chr + "label.txt",    
     output:
         wxbam= temp(wdir + "/{sample}.wasp."+ chr +".bam"),    
