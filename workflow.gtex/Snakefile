@@ -55,7 +55,7 @@ rule samsort:
     input:
         bam = expand(datadir + "/{sample}.input", sample=SAMPLE)
     output:
-        qbam = expand(workdir + "/{sample}.qsort.bam", sample=SAMPLE)
+        qbam = expand(wdir + "/{sample}.qsort.bam", sample=SAMPLE)
     resources:
         mem_mb=2048 
     threads: 12
@@ -68,10 +68,10 @@ rule samsort:
 
 rule bam_fastq:
     input:
-        qbam = expand(workdir + "/{sample}.qsort.bam", sample=SAMPLE)
+        qbam = expand(wdir + "/{sample}.qsort.bam", sample=SAMPLE)
     output:         
-        end1 = expand(workdir + "/{sample}_1.fastq", sample=SAMPLE),   
-        end2 = expand(workdir + "/{sample}_2.fastq", sample=SAMPLE)
+        end1 = expand(wdir + "/{sample}_1.fastq", sample=SAMPLE),   
+        end2 = expand(wdir + "/{sample}_2.fastq", sample=SAMPLE)
      
     resources:
         mem_mb=2048
