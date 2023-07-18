@@ -53,7 +53,7 @@ rule all:
         
 rule samsort: 
     input:
-        bam = expand(datadir + "/{sample}.input", sample=SAMPLE)
+        bam = expand(datadir + "/{sample}.Aligned.sortedByCoord.out.patched.md.bam", sample=SAMPLE)
     output:
         qbam = expand(wdir + "/{sample}.qsort.bam", sample=SAMPLE)
     resources:
