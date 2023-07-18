@@ -207,6 +207,7 @@ rule samtools1:
                        nthreads=f"{threads}")
 
 
+
 rule samtools2:
     #
     # This seems like it might be the first chromosome-specific step?

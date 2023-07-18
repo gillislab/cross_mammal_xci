@@ -31,7 +31,7 @@ if len(sample) >  0:
     logging.debug(f'explicit sample given: {sample}')
     SAMPLE = sample
 else:
-    (SAMPLE,) = glob_wildcards(datadir + "/{sample}.input")
+    (SAMPLE,) = glob_wildcards(datadir + "/{sample}.Aligned.sortedByCoord.out.patched.md.bam")
     logging.debug(f'Initial sample number = {len(SAMPLE)}. Filtering...')
     SAMPLE = modulo_filter(SAMPLE, num_workers, worker_idx)
 
@@ -53,9 +53,9 @@ rule all:
         
 rule samsort: 
     input:
-        bam = "/grid/gillis/home/hover/data/cross_mammal_xci/gtex/{sample}.input"
+        bam = expand(datadir + "/{sample}.input", sample=SAMPLE)
     output:
-        qbam = "/grid/gillis/home/hover/work/cmxci.gtex/Homo_sapiens/{sample}.qsort.bam"
+        qbam = expand(workdir + "/{sample}.qsort.bam", sample=SAMPLE)
     resources:
         mem_mb=2048 
     threads: 12
@@ -68,10 +68,10 @@ rule samsort:
 
 rule bam_fastq:
     input:
-        qbam = "/grid/gillis/home/hover/work/cmxci.gtex/Homo_sapiens/{sample}.qsort.bam"
+        qbam = expand(workdir + "/{sample}.qsort.bam", sample=SAMPLE)
     output:         
-        end1 = "/grid/gillis/home/hover/work/cmxci.gtex/Homo_sapiens/{sample}_1.fastq",    
-        end2 = "/grid/gillis/home/hover/work/cmxci.gtex/Homo_sapiens/{sample}_2.fastq"
+        end1 = expand(workdir + "/{sample}_1.fastq", sample=SAMPLE),   
+        end2 = expand(workdir + "/{sample}_2.fastq", sample=SAMPLE)
      
     resources:
         mem_mb=2048
