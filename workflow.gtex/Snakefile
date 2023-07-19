@@ -47,11 +47,29 @@ rule all:
         expand(wdir + "/{sample}.qsort.bam", sample=SAMPLE),
         expand(wdir +  "/{sample}_1.fastq", sample=SAMPLE ),
         expand(wdir +  "/{sample}_2.fastq", sample=SAMPLE ),
+        # star_nowasp
         expand(wdir + "/{sample}.Aligned.out.bam", sample=SAMPLE),
+        # samtools1
         expand(wdir + "/{sample}.Aligned.sortedByCoord.out.bam", sample=SAMPLE),
-        #expand(wdir + "/{sample}.wasp." +  str(chr) + ".snps.vcf", sample=SAMPLE),
-        #expand(wdir + "/{sample}.wasp." +  str(chr) + ".snps_filtered.vcf", sample=SAMPLE),
-        #expand(wdir + "/{sample}.wasp." +  str(chr) + ".split.filtered.wig", sample=SAMPLE ), 
+        # samtools2
+        expand(wdir + "/{sample}."+ chr +".bam", sample=SAMPLE),
+        # gatk1
+        expand(wdir + "/{sample}." + chr + ".split.filtered.bam", sample=SAMPLE),
+        expand(wdir + "/{sample}." + chr + ".snps_filtered.vcf", sample=SAMPLE),
+        # igvtools6
+        expand(wdir + "/{sample}." + chr + ".split.filtered.wig", sample=SAMPLE),
+        # star_wasp
+        expand(wdir + "/{sample}.wasp." + chr + ".Aligned.out.bam", sample=SAMPLE),
+        #samtools3
+        expand(wdir + "/{sample}.wasp." +  str(chr) + ".Aligned.sortedByCoord.out.bam", sample=SAMPLE),
+        #samtools4
+        expand(wdir + "/{sample}.wasp."+ chr +".filt.bam", sample=SAMPLE),
+        #gatk2
+        expand(wdir + "/{sample}.wasp." + chr + ".split.filtered.bam", sample=SAMPLE),
+        # igvtools7
+        expand(wdir + "/{sample}.wasp." +  str(chr) + ".snps.vcf", sample=SAMPLE),
+        expand(wdir + "/{sample}.wasp." +  str(chr) + ".snps_filtered.vcf", sample=SAMPLE),
+        expand(wdir + "/{sample}.wasp." +  str(chr) + ".split.filtered.wig", sample=SAMPLE ) 
 
 rule star_nowasp:
     input:
@@ -128,7 +146,7 @@ rule samtools1:
     output:
         sbam = wdir + "/{sample}.Aligned.sortedByCoord.out.bam",
         sbai = wdir + "/{sample}.Aligned.sortedByCoord.out.bam.bai"
-    wildcard_constraints: sample="\w+"
+    #wildcard_constraints: sample="\w+"
     resources:
         mem_mb=2048
     threads: 16
@@ -251,7 +269,7 @@ rule star_wasp:
         gpar = genomedir + "/genomeParameters.txt",
         
     output:     
-        wabam=  temp(wdir + "/{sample}.wasp." + chr + ".Aligned.out.bam"),
+        wabam=  wdir + "/{sample}.wasp." + chr + ".Aligned.out.bam",
         wrpg=   wdir + "/{sample}.wasp." + chr + ".ReadsPerGene.out.tab",
         wsjtab= wdir + "/{sample}.wasp." + chr + ".SJ.out.tab",
         wlog=   wdir + "/{sample}.wasp." + chr + ".Log.out",        
@@ -304,8 +322,8 @@ rule samtools4:
         wsbai = wdir + "/{sample}.wasp." +  str(chr) + ".Aligned.sortedByCoord.out.bam.bai",
         xreg = genomedir + "/" + chr + "label.txt",    
     output:
-        wxbam= temp(wdir + "/{sample}.wasp."+ chr +".bam"),    
-        wxfiltbam= temp(wdir + "/{sample}.wasp."+ chr +".filt.bam")    
+        wxbam= wdir + "/{sample}.wasp."+ chr +".bam",    
+        wxfiltbam= wdir + "/{sample}.wasp."+ chr +".filt.bam"    
     params:
         qual = 10,
         tag = 'vW:1'
