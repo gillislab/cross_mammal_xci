@@ -52,7 +52,6 @@ rule all:
         #expand(wdir + "/{sample}.wasp." +  str(chr) + ".split.filtered.wig", sample=SAMPLE ), 
 
 rule star_nowasp:
-    priority: 2
     input:
         end1= wdir + "/{sample}_1.fastq",   
         end2= wdir + "/{sample}_2.fastq",
@@ -61,12 +60,12 @@ rule star_nowasp:
         gpar = genomedir + "/genomeParameters.txt",
         
     output:     
-        abam=  wdir + "/{sample}.Aligned.out.bam",
-        rpg=   wdir + "/{sample}.ReadsPerGene.out.tab",
-        sjtab= wdir + "/{sample}.SJ.out.tab",
-        log=   wdir + "/{sample}.Log.out",        
-        plog=  wdir + "/{sample}.Log.progress.out",
-        flog=  wdir + "/{sample}.Log.final.out",
+        abam = wdir + "/{sample}.Aligned.out.bam",
+        rpg = wdir + "/{sample}.ReadsPerGene.out.tab",
+        sjtab = wdir + "/{sample}.SJ.out.tab",
+        log =  wdir + "/{sample}.Log.out",        
+        plog = wdir + "/{sample}.Log.progress.out",
+        flog = wdir + "/{sample}.Log.final.out",
 
     params:        
         tmpdir = wdir + "/{sample}_starout",
