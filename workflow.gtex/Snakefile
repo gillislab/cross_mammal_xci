@@ -53,9 +53,9 @@ rule all:
         
 rule samsort: 
     input:
-        bam = expand(datadir + "/{sample}.Aligned.sortedByCoord.out.patched.md.bam", sample=SAMPLE)
+        bam = datadir + "/{sample}.Aligned.sortedByCoord.out.patched.md.bam"
     output:
-        qbam = expand(wdir + "/{sample}.qsort.bam", sample=SAMPLE)
+        qbam = wdir + "/{sample}.qsort.bam"
     resources:
         mem_mb=2048 
     threads: 12
@@ -68,10 +68,10 @@ rule samsort:
 
 rule bam_fastq:
     input:
-        qbam = expand(wdir + "/{sample}.qsort.bam", sample=SAMPLE)
+        qbam = wdir + "/{sample}.qsort.bam"
     output:         
-        end1 = expand(wdir + "/{sample}_1.fastq", sample=SAMPLE),   
-        end2 = expand(wdir + "/{sample}_2.fastq", sample=SAMPLE)
+        end1 = wdir + "/{sample}_1.fastq",   
+        end2 = wdir + "/{sample}_2.fastq"
      
     resources:
         mem_mb=2048
