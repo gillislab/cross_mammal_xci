@@ -89,6 +89,7 @@ rule all:
        
         # from STAR
         #abam = expand(wdir + "/{sample}.Aligned.out.bam", sample=SAMPLE ),
+        
         # from SAMTOOLS1
         #sbam = expand(wdir + "/{sample}.Aligned.sortedByCoord.out.bam", sample=SAMPLE ),
         #sbam = expand(wdir + "/{sample}.Aligned.sortedByCoord.out.bam", sample=SAMPLE ),  
