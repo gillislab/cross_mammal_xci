@@ -43,9 +43,9 @@ wildcard_constraints:
 
 rule all:
     input:
-        expand(wdir + "/{sample}.qsort.bam", sample=SAMPLE),
-        expand(wdir +  "/{sample}_1.fastq", sample=SAMPLE ),
-        expand(wdir +  "/{sample}_2.fastq", sample=SAMPLE ),
+        #expand(wdir + "/{sample}.qsort.bam", sample=SAMPLE),
+        #expand(wdir +  "/{sample}_1.fastq", sample=SAMPLE ),
+        #expand(wdir +  "/{sample}_2.fastq", sample=SAMPLE ),
         expand(wdir + "/{sample}.Aligned.out.bam", sample=SAMPLE)
         #expand(wdir + "/{sample}.wasp." +  str(chr) + ".snps.vcf", sample=SAMPLE),
         #expand(wdir + "/{sample}.wasp." +  str(chr) + ".snps_filtered.vcf", sample=SAMPLE),
