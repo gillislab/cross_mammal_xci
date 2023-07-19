@@ -42,6 +42,10 @@ logging.debug(f"SAMPLE={SAMPLE}")
 #wildcard_constraints:
 #    sample="\w+"
 
+wildcard_constraints:
+    sample="[\w_-]+"
+
+
 rule all:
     input:
         expand(wdir + "/{sample}.qsort.bam", sample=SAMPLE),
