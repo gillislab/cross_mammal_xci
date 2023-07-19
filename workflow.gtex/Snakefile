@@ -42,8 +42,8 @@ logging.debug(f"SAMPLE={SAMPLE}")
 #wildcard_constraints:
 #    sample="\w+"
 
-#wildcard_constraints:
-#    sample="[\w_-]+"
+wildcard_constraints:
+    sample="[\w_-]+"
 
 
 rule all:
@@ -150,9 +150,7 @@ rule samtools1:
     output:
         sbam = wdir + "/{sample}.Aligned.sortedByCoord.out.bam",
         sbai = wdir + "/{sample}.Aligned.sortedByCoord.out.bam.bai"
-    
-    wildcard_constraints: sample="[\w_-]+" 
-    
+      
     resources:
         mem_mb=2048
     threads: 16
@@ -181,7 +179,7 @@ rule samtools2:
     output:
         xbam=      wdir + "/{sample}."+ chr +".bam",    
         xfiltbam=  wdir + "/{sample}."+ chr +".filt.bam"
-    wildcard_constraints: sample="[\w_-]+"        
+        
     params:
         #region=f"{chr}",
         #region = get_chr_label(genomedir, chr),
