@@ -164,11 +164,11 @@ rule star_nowasp:
         
     output:     
         abam=  wdir + "/{sample}.Aligned.out.bam",
-        rpg=   wdir + "/{sample}.ReadsPerGene.out.tab",
-        sjtab= wdir + "/{sample}.SJ.out.tab",
-        log=   wdir + "/{sample}.Log.out",        
-        plog=  wdir + "/{sample}.Log.progress.out",
-        flog=  wdir + "/{sample}.Log.final.out",
+        rpg=   temp(wdir + "/{sample}.ReadsPerGene.out.tab"),
+        sjtab= temp(wdir + "/{sample}.SJ.out.tab"),
+        log=   temp(wdir + "/{sample}.Log.out"),        
+        plog=  temp(wdir + "/{sample}.Log.progress.out"),
+        flog=  temp(wdir + "/{sample}.Log.final.out"),
 
     params:        
         tmpdir = wdir + "/{sample}_starout",
@@ -367,12 +367,12 @@ rule samtools3:
 rule samtools4:
     priority: 9 
     input:
-        wbam= wdir + "/{sample}.wasp." +  chr + ".Aligned.sortedByCoord.out.bam",
+        wbam=   wdir + "/{sample}.wasp." +  chr + ".Aligned.sortedByCoord.out.bam",
         wsbai = wdir + "/{sample}.wasp." +  chr + ".Aligned.sortedByCoord.out.bam.bai",
-        xreg = genomedir + "/" + chr + "label.txt",    
+        xreg =  genomedir + "/" + chr + "label.txt",    
     output:
-        wxbam= temp(wdir + "/{sample}.wasp."+ chr +".bam"),    
-        wxfiltbam= temp(wdir + "/{sample}.wasp."+ chr +".filt.bam")    
+        wxbam=      temp(wdir + "/{sample}.wasp."+ chr +".bam"),    
+        wxfiltbam=  temp(wdir + "/{sample}.wasp."+ chr +".filt.bam")    
     params:
         qual = 10,
         tag = 'vW:1'
