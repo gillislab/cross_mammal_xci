@@ -105,65 +105,6 @@ wasp_wig_files
 
 
 
-###########################
-Screen for male samples using XIST and SRY expression from the STAR output
-###########################
-
-Macaca mulatta annotations dont have XIST? 
-Seems like we don't know where the XIST gene is in Macaca
-
-
-
-```{r}
-
-star_output = paste(wig_samples, '.wasp.ReadsPerGene.out.tab', sep = '')
-star_output = paste("/grid/gillis/home/hover/work/cmxci.paired/Macaca_mulatta.X/", star_output, sep = '')
-star_output
-```
-
-
-
-```{r}
-
-star_output = paste(wig_samples, '.wasp.ReadsPerGene.out.tab', sep = '')
-star_output = paste("/grid/gillis/home/hover/work/cmxci.single/Macaca_mulatta.X/", star_output, sep = '')
-star_output
-```
-
-
-
-
-```{r}
-test_star_output = read.table(star_output[1], skip = 4)
-test_star_output[grepl('XI', test_star_output$V1), ]
-
-```
-
-
-
-
-```{r}
-
-xist_reads = vector(mode = 'numeric', length = length(star_output))
-
-
-for(i in 1:length(star_output)){
-  
-  temp_star_mapped_genes = read.table(star_output[i], skip = 4)  
-  xist_reads[i] = temp_star_mapped_genes$V2[temp_star_mapped_genes$V1 == "SRY"]
-}
-
-
-hist(xist_reads)
-
-
-```
-
-
-
-
-
-
 Function for merging the wig and vcf info, filtering for heterozygous SNPs with 2 alleles and a minimum of 10 reads per allele
 
 ```{r}

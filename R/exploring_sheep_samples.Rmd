@@ -98,21 +98,6 @@ length(wasp_vcf_files)
 
 ```
 
-###########################
-Screen for male samples using XIST and SRY expression from the STAR output
-###########################
-
-For cow, we used a female genome, so no SRY gene to map too. Start by looking at the distribution of XIST mapped reads
-
-
-
-```{r}
-
-star_output = paste(wig_samples, '.wasp.ReadsPerGene.out.tab', sep = '')
-star_output = paste("/grid/gillis/home/hover/work/cmxci.paired/Ovis_aries/", star_output, sep = '')
-star_output
-```
-
 
 Getting the genome annotations
 
@@ -131,40 +116,6 @@ sheep_x_genenames = unique(sheep_x_gtf$gene)
 length(sheep_x_genenames)
 ```
 
-
-
-
-
-check out the gene annotations from a sample first
-```{r}
-temp_star_mapped_genes = read.table(star_output[1], skip = 4) 
-
-table(grepl('XIST', temp_star_mapped_genes$V1))
-
-```
-
-
-```{r}
-
-xist_reads = vector(mode = 'numeric', length = length(star_output))
-
-
-for(i in 1:length(star_output)){
-  
-  temp_star_mapped_genes = read.table(star_output[i], skip = 4)  
-  xist_reads[i] = temp_star_mapped_genes$V2[temp_star_mapped_genes$V1 == "XIST"]
-}
-
-
-hist(xist_reads)
-
-
-```
-```{r}
-hist(xist_reads[xist_reads <= 2000], breaks = seq(0, 2000, 5))
-potential_male = which(xist_reads == 0)
-
-```
 
 
 
