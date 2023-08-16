@@ -1,0 +1,188 @@
+
+
+Miscellaneous graphs for schematics and examples in the cross-species XCI analysis
+
+```{r}
+library(ggplot2)
+
+
+```
+
+
+```{r}
+# Functions to fold and unfold ratios 
+folded <- function(x) { apply( cbind(x,1-x), 1, max)} 
+unfold <- function(x) { c(x,1-x) } 
+
+```
+
+```{r}
+p = .5
+
+theoretical_norms = list()
+n = c(8, 32)
+for(i in 1:length(n)){ 
+  sigma_t = sqrt(p*(1-p)/n[i])
+  theoretical_norms[[i]] = sigma_t
+}
+
+theoretical_norms
+```
+
+
+Make binomial distributions from 2, 4, 8, 16 cells
+
+
+```{r}
+
+p = .5
+
+n = 2
+y_binom = dbinom(0:n, n, prob = p)
+x_data = (0:n) / n
+df = data.frame(xci_ratio = x_data, probability = y_binom)
+ggplot(df, aes(x= xci_ratio, y = probability)) + geom_bar(stat = 'identity', width = .125, color = 'black')  +
+   scale_x_continuous(breaks=c(0, 0.25, 0.50, 0.75, 1.00)) + xlab('XCI ratio') + ylab('probability') +
+    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
+          panel.background = element_rect(fill = 'white'), panel.border = element_rect(color = "black", fill=NA),  
+          axis.text.y = element_text(size=12), axis.text.x = element_text(size=12),
+          axis.title.y = element_text(size=12), axis.title.x = element_text(size=12)) 
+ggsave(filename ='cellnum2_binomial.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/schematic_plots/', 
+       device = 'pdf', useDingbats = F, width = 6, height = 4)
+
+n = 4
+y_binom = dbinom(0:n, n, prob = p)
+x_data = (0:n) / n
+df = data.frame(xci_ratio = x_data, probability = y_binom)
+ggplot(df, aes(x= xci_ratio, y = probability)) + geom_bar(stat = 'identity', width = .125, color = 'black')  +
+   scale_x_continuous(breaks=c(0, 0.25, 0.50, 0.75, 1.00)) + xlab('XCI ratio') + ylab('probability') +
+    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
+          panel.background = element_rect(fill = 'white'), panel.border = element_rect(color = "black", fill=NA),  
+          axis.text.y = element_text(size=12), axis.text.x = element_text(size=12),
+          axis.title.y = element_text(size=12), axis.title.x = element_text(size=12)) 
+ggsave(filename ='cellnum4_binomial.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/schematic_plots/', 
+       device = 'pdf', useDingbats = F, width = 6, height = 4)
+
+n = 8
+y_binom = dbinom(0:n, n, prob = p)
+x_data = (0:n) / n
+df = data.frame(xci_ratio = x_data, probability = y_binom)
+ggplot(df, aes(x= xci_ratio, y = probability)) + geom_bar(stat = 'identity', width = .112, color = 'black')  +
+   scale_x_continuous(breaks=c(0, 0.25, 0.50, 0.75, 1.00)) + xlab('XCI ratio') + ylab('probability') +
+    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
+          panel.background = element_rect(fill = 'white'), panel.border = element_rect(color = "black", fill=NA),  
+          axis.text.y = element_text(size=12), axis.text.x = element_text(size=12),
+          axis.title.y = element_text(size=12), axis.title.x = element_text(size=12)) 
+ggsave(filename ='cellnum8_binomial.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/schematic_plots/', 
+       device = 'pdf', useDingbats = F, width = 6, height = 4)
+
+n = 16
+y_binom = dbinom(0:n, n, prob = p)
+x_data = (0:n) / n
+df = data.frame(xci_ratio = x_data, probability = y_binom)
+ggplot(df, aes(x= xci_ratio, y = probability)) + geom_bar(stat = 'identity', width = .056, color = 'black')  +
+   scale_x_continuous(breaks=c(0, 0.25, 0.50, 0.75, 1.00)) + xlab('XCI ratio') + ylab('probability') +
+    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
+          panel.background = element_rect(fill = 'white'), panel.border = element_rect(color = "black", fill=NA),  
+          axis.text.y = element_text(size=12), axis.text.x = element_text(size=12),
+          axis.title.y = element_text(size=12), axis.title.x = element_text(size=12)) 
+ggsave(filename ='cellnum16_binomial.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/schematic_plots/', 
+       device = 'pdf', useDingbats = F, width = 6, height = 4)
+
+
+
+
+```
+
+Make an example population distribution for 16 cells with normal fits at 8, 16, and 32 cells
+```{r}
+num_bins = 25
+p = .5
+norm_sd = sqrt( (p*(1-p)) / 16)
+skews = rnorm(n = 100000, mean = p, sd = norm_sd)
+
+
+df = data.frame(skews = skews)
+ggplot(df, aes(x = skews)) + geom_histogram(aes(y = ..density..), fill = 'white', color = 'grey50', binwidth = 1/num_bins) + xlim(0,1) +
+  stat_function(fun = dnorm, args = list(mean = .5, sd = norm_sd), n = num_bins, size = 1, aes(linetype = 'solid')) +
+  stat_function(fun = dnorm, args = list(mean = .5, sd = theoretical_norms[[1]]), n = num_bins, size = 1, alpha = .5, aes(linetype = 'dashed')) +
+  stat_function(fun = dnorm, args = list(mean = .5, sd = theoretical_norms[[2]]), n = num_bins, size = 1, alpha = .5, aes(linetype = 'dotted')) + 
+  scale_linetype_manual(name="Estimated cell number",values=c('dashed','solid','dotted'),
+                        labels = c('8 cells','16 cells','32 cells'),
+                        breaks=c('dashed','solid','dotted'), 
+                        guide = guide_legend(override.aes = list(size = c(.5, .5, 2)))) +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
+          panel.background = element_rect(fill = 'white'), panel.border = element_rect(color = "black", fill=NA, size=1),  
+          axis.text.y = element_text(size=12), axis.text.x = element_text(size=12),
+          axis.title.y = element_text(size=12), axis.title.x = element_text(size=12)) 
+ggsave(filename = 'normfitted_16cell_populationDist_example.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/schematic_plots/', 
+       useDingbats = F, device = 'pdf', height = 4, width = 6)
+
+#Folded distribution of skews
+ggplot(df, aes(x = folded(skews))) + geom_histogram(fill = 'white', color = 'grey50', binwidth = 1/num_bins) + xlim(.5,1) +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
+          panel.background = element_rect(fill = 'white'), panel.border = element_rect(color = "black", fill=NA, size=1),  
+          axis.text.y = element_text(size=12), axis.text.x = element_text(size=12),
+          axis.title.y = element_text(size=12), axis.title.x = element_text(size=12)) 
+ggsave(filename = 'folded_16cell_populationDist_example.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/schematic_plots/', 
+       useDingbats = F, device = 'pdf', height = 4, width = 6)
+
+
+```
+
+
+Make an example unfolded allelic expression histogram with a folded distribution and a fitted normal
+
+```{r}
+mat_skew = .75
+pat_skew = 1 - mat_skew
+sd_skew = .05
+num_genes = 10000
+
+mat_skews = rnorm(n = num_genes, mean = mat_skew, sd = sd_skew)
+pat_skews = rnorm(n = num_genes, mean = pat_skew, sd = sd_skew)
+
+
+
+df = data.frame(allelic_exp = c(pat_skews, mat_skews))
+ggplot(df, aes(x = allelic_exp)) + geom_histogram(binwidth = .05, color = 'black', fill = 'cyan3') + geom_vline(xintercept = .5, color = 'red', linetype = 'dashed', size = 2) +
+  xlim(0,1) + xlab('Reference allelic expression ratios') + ylab('# of SNPs') +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
+        panel.background = element_rect(fill = 'white'), panel.border = element_rect(color = "black", fill=NA, size=1),  
+        axis.text.y = element_text(size=12), axis.text.x = element_text(size=12),
+        axis.title.y = element_text(size=12), axis.title.x = element_text(size=12)) 
+ggsave(filename = 'unfolded_ref_allelic_SNP_ratios_example.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/schematic_plots/', 
+       useDingbats = F, device = 'pdf', height = 4, width = 6)
+
+
+df = data.frame(allelic_exp = folded(c(pat_skews, mat_skews)))
+ggplot(df, aes(x=allelic_exp)) + geom_histogram(binwidth = .025, colour="black", fill = 'white', aes(y=..density..)) + geom_vline(xintercept = .5, linetype="dashed", color = "red", size=2) +
+  stat_function(fun=VGAM::dfoldnorm, color="red", args=list(mean=mat_skew, sd=sd_skew), size = 1) +
+  xlab('Folded reference allelic expression ratios') + scale_x_continuous(limits = c(.499, 1.01)) + 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
+        panel.background = element_rect(fill = 'white'), panel.border = element_rect(color = "black", fill=NA, size=1),  
+        axis.text.y = element_text(size=12), axis.text.x = element_text(size=12),
+        axis.title.y = element_text(size=12), axis.title.x = element_text(size=12)) 
+ggsave(filename = 'folded_ref_allelic_SNP_ratios_example.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/schematic_plots/', 
+       useDingbats = F, device = 'pdf', height = 4, width = 6)
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

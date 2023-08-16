@@ -1,0 +1,1343 @@
+
+
+
+samples are here
+
+/grid/gillis/home/hover/work/cmxci.paired/Capra_hircus
+/grid/gillis/home/hover/work/cmxci.single/Capra_hircus
+
+
+
+```{r}
+library(ggplot2)
+library(ggExtra)
+library(stringr)
+library(parallel)
+library(dplyr)
+library(ggridges)
+library(MetBrewer)
+
+
+```
+
+```{r}
+
+processed_files = list.files('/grid/gillis/home/hover/work/cmxci.paired/Capra_hircus')
+wasp_vcf_files_paired = processed_files[grepl('.wasp.18.snps_filtered.vcf',processed_files  )]
+#Ignore the .vcf.idx files
+wasp_vcf_files_paired = wasp_vcf_files_paired[!grepl('.idx',wasp_vcf_files_paired )]
+wasp_wig_files_paired = processed_files[grepl('.wasp.18.split.filtered.wig',processed_files  )]
+
+length(wasp_vcf_files_paired)
+length(wasp_wig_files_paired)
+
+head(wasp_vcf_files_paired)
+
+#Currently no single ended data
+#processed_files = list.files('/grid/gillis/home/hover/work/cmxci.single/Capra_hircus')
+#wasp_vcf_files_single = processed_files[grepl('.wasp.18.snps_filtered.vcf',processed_files  )]
+#Ignore the .vcf.idx files
+#wasp_vcf_files_single = wasp_vcf_files_single[!grepl('.idx',wasp_vcf_files_single )]
+#wasp_wig_files_single = processed_files[grepl('.wasp.18.split.filtered.wig',processed_files  )]
+
+#length(wasp_vcf_files_single)
+#length(wasp_wig_files_single)
+
+
+wig_samples_18 = sapply(strsplit(wasp_wig_files_paired, split = '.', fixed = T), '[[', 1)
+#wig_samples_18 = c(wig_samples_18, sapply(strsplit(wasp_wig_files_single, split = '.', fixed = T), '[[', 1) ) #Add the single samples 
+vcf_samples_18 = sapply(strsplit(wasp_vcf_files_paired, split = '.', fixed = T), '[[', 1)
+#vcf_samples_18 = c(vcf_samples_18, sapply(strsplit(wasp_vcf_files_single, split = '.', fixed = T), '[[', 1) )
+table(wig_samples_18 == vcf_samples_18)
+
+
+wasp_vcf_files_paired = paste('/grid/gillis/home/hover/work/cmxci.paired/Capra_hircus/',wasp_vcf_files_paired, sep = '')
+#wasp_vcf_files_single = paste('/grid/gillis/home/hover/work/cmxci.single/Capra_hircus/',wasp_vcf_files_single, sep = '')
+
+wasp_wig_files_paired = paste('/grid/gillis/home/hover/work/cmxci.paired/Capra_hircus/',wasp_wig_files_paired, sep = '')
+#wasp_wig_files_single = paste('/grid/gillis/home/hover/work/cmxci.single/Capra_hircus/',wasp_wig_files_single, sep = '')
+
+wasp_vcf_files_chr18 = wasp_vcf_files_paired
+wasp_wig_files_chr18 = wasp_wig_files_paired
+
+#wasp_vcf_files_chr18 = c(wasp_vcf_files_paired, wasp_vcf_files_single)
+#wasp_wig_files_chr18 = c(wasp_wig_files_paired, wasp_wig_files_single)
+
+
+length(wasp_vcf_files_chr18)
+
+```
+
+
+```{r}
+
+processed_files = list.files('/grid/gillis/home/hover/work/cmxci.paired/Capra_hircus')
+wasp_vcf_files_paired = processed_files[grepl('.wasp.19.snps_filtered.vcf',processed_files  )]
+#Ignore the .vcf.idx files
+wasp_vcf_files_paired = wasp_vcf_files_paired[!grepl('.idx',wasp_vcf_files_paired )]
+wasp_wig_files_paired = processed_files[grepl('.wasp.19.split.filtered.wig',processed_files  )]
+
+length(wasp_vcf_files_paired)
+length(wasp_wig_files_paired)
+
+head(wasp_vcf_files_paired)
+
+#processed_files = list.files('/grid/gillis/home/hover/work/cmxci.single/Capra_hircus')
+#wasp_vcf_files_single = processed_files[grepl('.wasp.19.snps_filtered.vcf',processed_files  )]
+#Ignore the .vcf.idx files
+#wasp_vcf_files_single = wasp_vcf_files_single[!grepl('.idx',wasp_vcf_files_single )]
+#wasp_wig_files_single = processed_files[grepl('.wasp.19.split.filtered.wig',processed_files  )]
+
+#length(wasp_vcf_files_single)
+#length(wasp_wig_files_single)
+
+
+wig_samples_19 = sapply(strsplit(wasp_wig_files_paired, split = '.', fixed = T), '[[', 1)
+#wig_samples_19 = c(wig_samples_19, sapply(strsplit(wasp_wig_files_single, split = '.', fixed = T), '[[', 1) ) #Add the single samples 
+vcf_samples_19 = sapply(strsplit(wasp_vcf_files_paired, split = '.', fixed = T), '[[', 1)
+#vcf_samples_19 = c(vcf_samples_19, sapply(strsplit(wasp_vcf_files_single, split = '.', fixed = T), '[[', 1) )
+table(wig_samples_19 == vcf_samples_19)
+
+
+wasp_vcf_files_paired = paste('/grid/gillis/home/hover/work/cmxci.paired/Capra_hircus/',wasp_vcf_files_paired, sep = '')
+#wasp_vcf_files_single = paste('/grid/gillis/home/hover/work/cmxci.single/Capra_hircus/',wasp_vcf_files_single, sep = '')
+
+wasp_wig_files_paired = paste('/grid/gillis/home/hover/work/cmxci.paired/Capra_hircus/',wasp_wig_files_paired, sep = '')
+#wasp_wig_files_single = paste('/grid/gillis/home/hover/work/cmxci.single/Capra_hircus/',wasp_wig_files_single, sep = '')
+
+
+wasp_vcf_files_chr19 = wasp_vcf_files_paired
+wasp_wig_files_chr19 = wasp_wig_files_paired
+
+#wasp_vcf_files_chr19 = c(wasp_vcf_files_paired, wasp_vcf_files_single)
+#wasp_wig_files_chr19 = c(wasp_wig_files_paired, wasp_wig_files_single)
+
+length(wasp_vcf_files_chr19)
+```
+
+
+Function for merging the wig and vcf info, filtering for heterozygous SNPs with 2 alleles and a minimum of 10 reads per allele
+
+```{r}
+source('get_exp_vcf.R')
+source('get_exp_vcf_v2.R')
+
+```
+
+
+
+```{r}
+temp_1_vcf = get_exp_vcf(wasp_vcf_files_chr18[2], wasp_wig_files_chr18[2])
+
+ref_ratios = temp_1_vcf$ref_counts / (temp_1_vcf$ref_counts + temp_1_vcf$alt_counts)
+hist(ref_ratios, xlim = c(0,1), breaks = seq(0,1,.025))
+
+temp_2_vcf = get_exp_vcf_v2(wasp_vcf_files_chr18[2], wasp_wig_files_chr18[2])
+
+ref_ratios = temp_2_vcf$ref_counts / (temp_2_vcf$ref_counts + temp_2_vcf$alt_counts)
+hist(ref_ratios, xlim = c(0,1), breaks = seq(0,1,.025))
+
+table(temp_1_vcf$Pos == temp_2_vcf$Pos)
+table(temp_1_vcf$ref_counts == temp_2_vcf$ref_counts)
+table(temp_1_vcf$alt_counts == temp_2_vcf$alt_counts)
+table(temp_1_vcf$A == temp_2_vcf$A)
+table(temp_1_vcf$C == temp_2_vcf$C)
+table(temp_1_vcf$G == temp_2_vcf$G)
+table(temp_1_vcf$`T` == temp_2_vcf$`T`)
+table(temp_1_vcf$ref == temp_2_vcf$ref)
+table(temp_1_vcf$alt == temp_2_vcf$alt)
+```
+
+
+```{r}
+Sys.time()
+wasp_filt_vcf_chr18 = mclapply(1:length(wasp_vcf_files_chr18), function(i) get_exp_vcf(vcf_file_path = wasp_vcf_files_chr18[i], 
+                                                                           wig_file_path = wasp_wig_files_chr18[i]), mc.cores = 10)
+Sys.time()
+
+head(wasp_filt_vcf_chr18)
+length(wasp_filt_vcf_chr18)
+
+```
+
+
+```{r}
+Sys.time()
+wasp_filt_vcf_chr18_v2 = mclapply(1:length(wasp_vcf_files_chr18), function(i) get_exp_vcf_v2(vcf_file_path = wasp_vcf_files_chr18[i], 
+                                                                           wig_file_path = wasp_wig_files_chr18[i]), mc.cores = 10)
+Sys.time()
+```
+
+Check it's the same
+
+```{r}
+
+mistake_vec = vector(mode = 'numeric', length = length(wasp_filt_vcf_chr18) )
+for(i in 1:length(wasp_filt_vcf_chr18)){
+  
+ mistake_vec[i] =  sum(wasp_filt_vcf_chr18[[i]] != wasp_filt_vcf_chr18_v2[[i]])
+}
+sum(mistake_vec)
+```
+
+
+```{r}
+Sys.time()
+wasp_filt_vcf_chr19 = mclapply(1:length(wasp_vcf_files_chr19), function(i) get_exp_vcf(vcf_file_path = wasp_vcf_files_chr19[i], 
+                                                                           wig_file_path = wasp_wig_files_chr19[i]), mc.cores = 10)
+Sys.time()
+
+head(wasp_filt_vcf_chr19)
+length(wasp_filt_vcf_chr19)
+
+
+
+Sys.time()
+wasp_filt_vcf_chr19_v2 = mclapply(1:length(wasp_vcf_files_chr19), function(i) get_exp_vcf_v2(vcf_file_path = wasp_vcf_files_chr19[i], 
+                                                                           wig_file_path = wasp_wig_files_chr19[i]), mc.cores = 10)
+Sys.time()
+```
+
+Check it's the same
+```{r}
+
+mistake_vec = vector(mode = 'numeric', length = length(wasp_filt_vcf_chr19) )
+for(i in 1:length(wasp_filt_vcf_chr19)){
+  
+ mistake_vec[i] =  sum(wasp_filt_vcf_chr19[[i]] != wasp_filt_vcf_chr19_v2[[i]])
+}
+sum(mistake_vec)
+```
+
+
+
+
+
+Number of filtered SNPs kept
+```{r}
+
+num_snps = vector(mode = 'numeric', length = length(wasp_filt_vcf_chr18))
+
+for(i in 1:length(wasp_filt_vcf_chr18)){
+  data = wasp_filt_vcf_chr18[[i]]
+  
+  if(is.null(dim(data))){
+    num_snps[i] = 0
+  }else{num_snps[i] = dim(data)[1]}
+}
+
+hist(num_snps)
+
+
+num_snps = vector(mode = 'numeric', length = length(wasp_filt_vcf_chr19))
+
+for(i in 1:length(wasp_filt_vcf_chr19)){
+  data = wasp_filt_vcf_chr19[[i]]
+  
+  if(is.null(dim(data))){
+    num_snps[i] = 0
+  }else{num_snps[i] = dim(data)[1]}
+}
+
+hist(num_snps)
+
+
+```
+
+
+Getting the genome annotations
+
+
+```{r}
+
+goat_gtf = rtracklayer::import('/home/werner/projects/cross_species_XCI/genomes/Capra_hircus_auto/refseq/annotation.gtf')
+goat_gtf = as.data.frame(goat_gtf)
+
+#Genome specific 18 chromosome name
+goat_18_chrom_name = readLines('/home/werner/projects/cross_species_XCI/genomes/Capra_hircus_auto/refseq/18label.txt', n = 1)
+
+goat_18_gtf = goat_gtf[goat_gtf$seqnames == goat_18_chrom_name, ]
+
+goat_18_genenames = unique(goat_18_gtf$gene)
+length(goat_18_genenames)
+
+#Genome specific 1 chromosome name
+goat_19_chrom_name = readLines('/home/werner/projects/cross_species_XCI/genomes/Capra_hircus_auto/refseq/19label.txt', n = 1)
+
+goat_19_gtf = goat_gtf[goat_gtf$seqnames == goat_19_chrom_name, ]
+
+goat_19_genenames = unique(goat_19_gtf$gene)
+length(goat_19_genenames)
+```
+
+
+
+Adding gene annotations to each sample
+
+
+```{r}
+goat_18_meta = goat_18_gtf[goat_18_gtf$gbkey == 'Gene',]
+goat_18_meta = goat_18_meta[!is.na(goat_18_meta$gbkey), ] #A lot of NA entries in the goat GTF file
+goat_18_meta = goat_18_meta[!duplicated(goat_18_meta$gene), ]
+gene_starts_18 = goat_18_meta$start
+gene_ends_18 = goat_18_meta$end
+
+
+annot_goat_vcfs_chr18 = wasp_filt_vcf_chr18
+
+for(j in 1:length(annot_goat_vcfs_chr18)){
+  test = annot_goat_vcfs_chr18[[j]]
+  if(is.null(dim(test))){next}
+  
+  
+  gene_annots = vector(mode = 'character', length = length(test$Pos))
+  gene_biotype = vector(mode = 'character', length = length(test$Pos))
+  for( i in 1:dim(test)[1]){
+  
+    test_gene_start = test$Pos[i]
+    test_gene_start = test$Pos[i]
+    gene_index = findInterval(test_gene_start, gene_starts_18)
+    if(gene_index == 0){next}
+    
+    if(test_gene_start <= gene_ends_18[gene_index]){
+      
+      gene_annots[i] = goat_18_meta$gene[gene_index]
+      gene_biotype[i] = goat_18_meta$gene_biotype[gene_index]
+    }
+  }
+  
+  test$gene = gene_annots
+  test$gene_biotype = gene_biotype
+  annot_goat_vcfs_chr18[[j]] = test
+}
+
+head(annot_goat_vcfs_chr18)
+
+```
+
+
+
+```{r}
+
+save(annot_goat_vcfs_chr18, file = '/home/werner/projects/cross_species_XCI/data/species_data_analysis/capra_hircus/chr18/all_snp_vcf_7_11_23.Rdata')
+```
+
+
+
+```{r}
+goat_19_meta = goat_19_gtf[goat_19_gtf$gbkey == 'Gene',]
+goat_19_meta = goat_19_meta[!is.na(goat_19_meta$gbkey), ] #A lot of NA entries in the goat GTF file
+goat_19_meta = goat_19_meta[!duplicated(goat_19_meta$gene), ]
+gene_starts_19 = goat_19_meta$start
+gene_ends_19 = goat_19_meta$end
+
+
+annot_goat_vcfs_chr19 = wasp_filt_vcf_chr19
+
+for(j in 1:length(annot_goat_vcfs_chr19)){
+  test = annot_goat_vcfs_chr19[[j]]
+  if(is.null(dim(test))){next}
+  
+  
+  gene_annots = vector(mode = 'character', length = length(test$Pos))
+  gene_biotype = vector(mode = 'character', length = length(test$Pos))
+  for( i in 1:dim(test)[1]){
+  
+    test_gene_start = test$Pos[i]
+    test_gene_start = test$Pos[i]
+    gene_index = findInterval(test_gene_start, gene_starts_19)
+    if(gene_index == 0){next}
+    
+    if(test_gene_start <= gene_ends_19[gene_index]){
+      
+      gene_annots[i] = goat_19_meta$gene[gene_index]
+      gene_biotype[i] = goat_19_meta$gene_biotype[gene_index]
+    }
+  }
+  
+  test$gene = gene_annots
+  test$gene_biotype = gene_biotype
+  annot_goat_vcfs_chr19[[j]] = test
+}
+
+head(annot_goat_vcfs_chr19)
+
+```
+
+
+```{r}
+save(annot_goat_vcfs_chr19, file = '/home/werner/projects/cross_species_XCI/data/species_data_analysis/capra_hircus/chr19/all_snp_vcf_7_11_23.Rdata')
+```
+
+
+
+
+
+
+
+
+Looking at global distribution of reference ratios versus read counts for all SNPs
+```{r}
+all_total_counts = c()
+all_ref_ratios = c()
+
+for(i in 1:length(annot_goat_vcfs_chr18)){
+
+  data = annot_goat_vcfs_chr18[[i]]
+  if(is.null(dim(data))){next}
+  total_counts = data$ref_counts + data$alt_counts
+  ref_ratios = data$ref_counts / total_counts
+  
+  all_total_counts = c(all_total_counts, total_counts)
+  all_ref_ratios = c(all_ref_ratios, ref_ratios)
+
+}
+
+length(all_total_counts)
+
+
+plot(all_ref_ratios, log10(all_total_counts), cex = .5)
+
+
+all_total_counts = c()
+all_ref_ratios = c()
+
+for(i in 1:length(annot_goat_vcfs_chr19)){
+
+  data = annot_goat_vcfs_chr19[[i]]
+  if(is.null(dim(data))){next}
+  total_counts = data$ref_counts + data$alt_counts
+  ref_ratios = data$ref_counts / total_counts
+  
+  all_total_counts = c(all_total_counts, total_counts)
+  all_ref_ratios = c(all_ref_ratios, ref_ratios)
+
+}
+
+length(all_total_counts)
+
+
+plot(all_ref_ratios, log10(all_total_counts), cex = .5)
+
+
+```
+
+
+Looking at gene specific expression 
+
+
+```{r}
+
+captured_genes = c()
+for( i in 1:length(annot_goat_vcfs_chr18)){
+  suppressWarnings(if(is.null(dim(annot_goat_vcfs_chr18[[i]]))){next})
+  captured_genes = c(captured_genes, annot_goat_vcfs_chr18[[i]]$gene)
+}
+
+captured_genes = unique(captured_genes)
+captured_genes = captured_genes[captured_genes != ""]
+
+length(captured_genes)
+```
+
+
+```{r}
+for(i in 1:100){
+  
+  current_gene = captured_genes[i]
+  
+  gene_ref_exp = c()
+  for(j in 1:length(annot_goat_vcfs_chr18)){
+    suppressWarnings(if(is.null(dim(annot_goat_vcfs_chr18[[j]]))){next})
+    gene_index = annot_goat_vcfs_chr18[[j]]$gene == current_gene
+    ref_counts = annot_goat_vcfs_chr18[[j]]$ref_counts[gene_index]
+    alt_counts = annot_goat_vcfs_chr18[[j]]$alt_counts[gene_index]
+    total_counts = ref_counts + alt_counts
+    gene_ref_exp = c(gene_ref_exp, ref_counts / total_counts )
+
+  }
+  
+  
+  hist(gene_ref_exp, main = current_gene, xlim = c(0,1), breaks = seq(0,1, .025))  
+  
+}
+
+```
+
+
+chr19
+
+
+```{r}
+
+captured_genes = c()
+for( i in 1:length(annot_goat_vcfs_chr19)){
+  suppressWarnings(if(is.null(dim(annot_goat_vcfs_chr19[[i]]))){next})
+  captured_genes = c(captured_genes, annot_goat_vcfs_chr19[[i]]$gene)
+}
+
+captured_genes = unique(captured_genes)
+captured_genes = captured_genes[captured_genes != ""]
+
+length(captured_genes)
+```
+
+
+```{r}
+for(i in 1:100){
+  
+  current_gene = captured_genes[i]
+  
+  gene_ref_exp = c()
+  for(j in 1:length(annot_goat_vcfs_chr19)){
+    suppressWarnings(if(is.null(dim(annot_goat_vcfs_chr19[[j]]))){next})
+    gene_index = annot_goat_vcfs_chr19[[j]]$gene == current_gene
+    ref_counts = annot_goat_vcfs_chr19[[j]]$ref_counts[gene_index]
+    alt_counts = annot_goat_vcfs_chr19[[j]]$alt_counts[gene_index]
+    total_counts = ref_counts + alt_counts
+    gene_ref_exp = c(gene_ref_exp, ref_counts / total_counts )
+
+  }
+  
+  
+  hist(gene_ref_exp, main = current_gene, xlim = c(0,1), breaks = seq(0,1, .025))  
+  
+}
+
+```
+
+
+
+chr1
+
+```{r}
+
+captured_SNPs = c()
+for( i in 1:length(annot_goat_vcfs_chr18)){
+  suppressWarnings(if(is.null(dim(annot_goat_vcfs_chr18[[i]]))){next})
+  captured_SNPs = c(captured_SNPs, annot_goat_vcfs_chr18[[i]]$Pos)
+}
+
+captured_SNPs = unique(captured_SNPs)
+captured_SNPs = captured_SNPs[captured_SNPs != ""]
+
+length(captured_SNPs)
+```
+
+
+```{r}
+
+snp_stat_df_chr18 = data.frame(snp_pos = integer(length(captured_SNPs)), num_samples_present = integer(length(captured_SNPs)), 
+                         mean_ref_ratio = integer(length(captured_SNPs)), mean_total_counts = integer(length(captured_SNPs)), sd_total_counts = integer(length(captured_SNPs)))
+
+
+
+for(i in 1:length(captured_SNPs)){
+
+  if(i %% 1000 == 0){print(i)}
+  current_SNP = captured_SNPs[i]
+  
+  snp_ref_exp = c()
+  snp_total_reads = c()
+  for(j in 1:length(annot_goat_vcfs_chr18)){
+    suppressWarnings(if(is.null(dim(annot_goat_vcfs_chr18[[j]]))){next})
+    gene_index = annot_goat_vcfs_chr18[[j]]$Pos == current_SNP
+    ref_counts = annot_goat_vcfs_chr18[[j]]$ref_counts[gene_index]
+    alt_counts = annot_goat_vcfs_chr18[[j]]$alt_counts[gene_index]
+    total_counts = ref_counts + alt_counts
+    snp_ref_exp = c(snp_ref_exp, ref_counts / total_counts )
+    snp_total_reads = c(snp_total_reads, total_counts)
+    
+    
+  }
+  
+  snp_stat_df_chr18$snp_pos[i] = current_SNP
+  snp_stat_df_chr18$num_samples_present[i] = length(snp_ref_exp)
+  snp_stat_df_chr18$mean_ref_ratio[i] = mean(snp_ref_exp)
+  snp_stat_df_chr18$mean_total_counts[i] = mean(snp_total_reads)
+  snp_stat_df_chr18$sd_total_counts[i] = sd(snp_total_reads)
+}
+
+```
+
+
+
+```{r}
+hist(snp_stat_df_chr18$mean_ref_ratio, breaks = seq(0,1,.01))
+hist(snp_stat_df_chr18$num_samples_present)
+par(pty = 's')
+plot(snp_stat_df_chr18$mean_ref_ratio,snp_stat_df_chr18$num_samples_present, cex = .25, xlab = 'Mean reference ratio', 
+     ylab = '# of samples SNP is detected', main = 'Capra hircus Het SNPs')
+abline(v = .5, col = 'red')
+abline(v = .4, col = 'blue')
+abline(v = .6, col = 'blue')
+```
+
+```{r}
+
+
+snp_stat_df_chr18$filter = !(snp_stat_df_chr18$mean_ref_ratio < .4 | snp_stat_df_chr18$mean_ref_ratio > .6)
+table(snp_stat_df_chr18$filter)
+
+
+```
+
+
+Save the SNP dataframe
+
+```{r}
+
+save(snp_stat_df_chr18, file = '/home/werner/projects/cross_species_XCI/data/species_data_analysis/capra_hircus/chr18/detected_het_snps_df_7_11_23.Rdata')
+```
+
+```{r}
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/capra_hircus/chr18/detected_het_snps_df_7_11_23.Rdata')
+
+```
+
+
+
+chr19
+
+```{r}
+
+captured_SNPs = c()
+for( i in 1:length(annot_goat_vcfs_chr19)){
+  suppressWarnings(if(is.null(dim(annot_goat_vcfs_chr19[[i]]))){next})
+  captured_SNPs = c(captured_SNPs, annot_goat_vcfs_chr19[[i]]$Pos)
+}
+
+captured_SNPs = unique(captured_SNPs)
+captured_SNPs = captured_SNPs[captured_SNPs != ""]
+
+length(captured_SNPs)
+```
+
+
+```{r}
+
+snp_stat_df_chr19 = data.frame(snp_pos = integer(length(captured_SNPs)), num_samples_present = integer(length(captured_SNPs)), 
+                         mean_ref_ratio = integer(length(captured_SNPs)), mean_total_counts = integer(length(captured_SNPs)), sd_total_counts = integer(length(captured_SNPs)))
+
+
+
+for(i in 1:length(captured_SNPs)){
+
+  if(i %% 1000 == 0){print(i)}
+  current_SNP = captured_SNPs[i]
+  
+  snp_ref_exp = c()
+  snp_total_reads = c()
+  for(j in 1:length(annot_goat_vcfs_chr19)){
+    suppressWarnings(if(is.null(dim(annot_goat_vcfs_chr19[[j]]))){next})
+    gene_index = annot_goat_vcfs_chr19[[j]]$Pos == current_SNP
+    ref_counts = annot_goat_vcfs_chr19[[j]]$ref_counts[gene_index]
+    alt_counts = annot_goat_vcfs_chr19[[j]]$alt_counts[gene_index]
+    total_counts = ref_counts + alt_counts
+    snp_ref_exp = c(snp_ref_exp, ref_counts / total_counts )
+    snp_total_reads = c(snp_total_reads, total_counts)
+    
+    
+  }
+  
+  snp_stat_df_chr19$snp_pos[i] = current_SNP
+  snp_stat_df_chr19$num_samples_present[i] = length(snp_ref_exp)
+  snp_stat_df_chr19$mean_ref_ratio[i] = mean(snp_ref_exp)
+  snp_stat_df_chr19$mean_total_counts[i] = mean(snp_total_reads)
+  snp_stat_df_chr19$sd_total_counts[i] = sd(snp_total_reads)
+}
+
+```
+
+
+
+```{r}
+hist(snp_stat_df_chr19$mean_ref_ratio, breaks = seq(0,1,.01))
+hist(snp_stat_df_chr19$num_samples_present)
+par(pty = 's')
+plot(snp_stat_df_chr19$mean_ref_ratio,snp_stat_df_chr19$num_samples_present, cex = .25, xlab = 'Mean reference ratio', 
+     ylab = '# of samples SNP is detected', main = 'Canis lupus familiaris Het SNPs')
+abline(v = .5, col = 'red')
+abline(v = .4, col = 'blue')
+abline(v = .6, col = 'blue')
+```
+
+```{r}
+
+
+snp_stat_df_chr19$filter = !(snp_stat_df_chr19$mean_ref_ratio < .4 | snp_stat_df_chr19$mean_ref_ratio > .6)
+table(snp_stat_df_chr19$filter)
+
+
+```
+
+
+Save the SNP dataframe
+
+```{r}
+
+save(snp_stat_df_chr19, file = '/home/werner/projects/cross_species_XCI/data/species_data_analysis/capra_hircus/chr19/detected_het_snps_df_7_11_23.Rdata')
+```
+
+```{r}
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/capra_hircus/chr19/detected_het_snps_df_7_11_23.Rdata')
+
+```
+
+
+
+
+
+
+
+
+Filtering the vcfs for only annotated genes and the max powered SNP per gene
+chr18
+
+```{r}
+filt_goat_vcfs_chr18 = annot_goat_vcfs_chr18
+
+for(i in 1:length(filt_goat_vcfs_chr18)){
+  test = filt_goat_vcfs_chr18[[i]]
+  suppressWarnings(if(is.null(dim(test))){next})
+  #Get rid of SNPs in nonannotated genes
+  test = test[test$gene != "", ]
+  suppressWarnings(if(dim(test)[1] == 0){filt_goat_vcfs_chr18[[i]] = NA; next})
+
+  #Get the unique number of genes
+  sample_genes = unique(test$gene)
+  test_2 = data.frame(matrix(NA, 
+                             nrow = length(sample_genes), 
+                             ncol = dim(test)[2]))
+  colnames(test_2) = colnames(test)
+  
+  
+  for(j in 1:length(sample_genes)){
+    
+    current_gene_data = test[test$gene == sample_genes[j], ]
+    if(dim(current_gene_data)[1] == 1){
+      test_2[j, ] = current_gene_data
+    }else{
+      
+      current_tot_exp = current_gene_data$ref_counts + current_gene_data$alt_counts
+      test_2[j, ] = current_gene_data[which.max(current_tot_exp), ]
+    }
+  }
+
+  filt_goat_vcfs_chr18[[i]] = test_2
+}
+
+```
+
+
+
+save the filtered vcf list
+
+```{r}
+
+save(filt_goat_vcfs_chr18, file = '/home/werner/projects/cross_species_XCI/data/species_data_analysis/capra_hircus/chr18/max_snp_vcf_7_11_23.Rdata')
+
+```
+
+```{r}
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/capra_hircus/chr18/max_snp_vcf_7_11_23.Rdata')
+
+```
+
+
+chr 19
+```{r}
+filt_goat_vcfs_chr19 = annot_goat_vcfs_chr19
+
+for(i in 1:length(filt_goat_vcfs_chr19)){
+  test = filt_goat_vcfs_chr19[[i]]
+  suppressWarnings(if(is.null(dim(test))){next})
+  #Get rid of SNPs in nonannotated genes
+  test = test[test$gene != "", ]
+  suppressWarnings(if(dim(test)[1] == 0){filt_goat_vcfs_chr19[[i]] = NA; next})
+
+  #Get the unique number of genes
+  sample_genes = unique(test$gene)
+  test_2 = data.frame(matrix(NA, 
+                             nrow = length(sample_genes), 
+                             ncol = dim(test)[2]))
+  colnames(test_2) = colnames(test)
+  
+  
+  for(j in 1:length(sample_genes)){
+    
+    current_gene_data = test[test$gene == sample_genes[j], ]
+    if(dim(current_gene_data)[1] == 1){
+      test_2[j, ] = current_gene_data
+    }else{
+      
+      current_tot_exp = current_gene_data$ref_counts + current_gene_data$alt_counts
+      test_2[j, ] = current_gene_data[which.max(current_tot_exp), ]
+    }
+  }
+
+  filt_goat_vcfs_chr19[[i]] = test_2
+}
+
+```
+
+
+
+save the filtered vcf list
+
+```{r}
+
+save(filt_goat_vcfs_chr19, file = '/home/werner/projects/cross_species_XCI/data/species_data_analysis/capra_hircus/chr19/max_snp_vcf_7_11_23.Rdata')
+
+```
+
+```{r}
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/capra_hircus/chr19/max_snp_vcf_7_11_23.Rdata')
+
+```
+
+
+
+
+
+
+
+```{r}
+num_filt_genes = vector(mode = 'numeric', length = length(filt_goat_vcfs_chr18))
+for(i in 1:length(filt_goat_vcfs_chr18)){
+  
+  suppressWarnings(if(is.null(dim(filt_goat_vcfs_chr18[[i]]))){
+    num_filt_genes[i] = 0
+    next
+    
+  })
+  
+  num_filt_genes[i] = sum(filt_goat_vcfs_chr18[[i]]$Pos %in% snp_stat_df_chr18$snp_pos[snp_stat_df_chr18$filter])
+
+}
+
+hist(num_filt_genes)
+sum(num_filt_genes >= 10)
+
+
+num_filt_genes = vector(mode = 'numeric', length = length(filt_goat_vcfs_chr19))
+for(i in 1:length(filt_goat_vcfs_chr19)){
+  
+  suppressWarnings(if(is.null(dim(filt_goat_vcfs_chr19[[i]]))){
+    num_filt_genes[i] = 0
+    next
+    
+  })
+  
+  num_filt_genes[i] = sum(filt_goat_vcfs_chr19[[i]]$Pos %in% snp_stat_df_chr19$snp_pos[snp_stat_df_chr19$filter])
+
+}
+
+hist(num_filt_genes)
+sum(num_filt_genes >= 10)
+
+```
+
+
+
+
+look at the SNP distributions, with and without including the potentially reference biased SNPs
+
+
+```{r}
+
+
+index_num_samps = which(num_filt_genes >= 30)
+length(index_num_samps)
+
+
+for(i in 1:length(index_num_samps)){
+
+  data = filt_goat_vcfs_chr18[[index_num_samps[i]]]
+  
+  snp_filter = data$Pos %in% snp_stat_df_chr18$snp_pos[snp_stat_df_chr18$filter]
+  
+  total_exp = data$ref_counts + data$alt_counts
+  ref_ratios_filt = data$ref_counts[snp_filter] / total_exp[snp_filter]
+  ref_ratios = data$ref_counts / total_exp
+
+  
+  hist(ref_ratios, xlim = c(0,1), breaks = seq(0,1, .025))
+  abline(v = .5, col = 'red')
+  hist(ref_ratios_filt, xlim = c(0,1), breaks = seq(0,1, .025), main = index_num_samps[i])
+  abline(v = .5, col = 'red')
+
+}
+```
+
+
+
+chr19
+
+
+```{r}
+
+
+index_num_samps = which(num_filt_genes >= 30)
+length(index_num_samps)
+
+
+for(i in 1:length(index_num_samps)){
+
+  data = filt_goat_vcfs_chr19[[index_num_samps[i]]]
+  
+  snp_filter = data$Pos %in% snp_stat_df_chr19$snp_pos[snp_stat_df_chr19$filter]
+  
+  total_exp = data$ref_counts + data$alt_counts
+  ref_ratios_filt = data$ref_counts[snp_filter] / total_exp[snp_filter]
+  ref_ratios = data$ref_counts / total_exp
+
+  
+  hist(ref_ratios, xlim = c(0,1), breaks = seq(0,1, .025))
+  abline(v = .5, col = 'red')
+  hist(ref_ratios_filt, xlim = c(0,1), breaks = seq(0,1, .025), main = index_num_samps[i])
+  abline(v = .5, col = 'red')
+
+}
+```
+
+
+
+
+
+```{r}
+
+
+# Functions to fold and unfold ratios 
+folded <- function(x) { apply( cbind(x,1-x), 1, max)} 
+unfold <- function(x) { c(x,1-x) } 
+
+
+mle_folded <- function(x){ 
+  mus = seq(0.5,1, by = 0.001)
+  sigmas = seq(0,0.5, by = 0.01)
+  
+  mles = sapply(mus, function(mu)
+    sapply(sigmas, function(sigma)
+      -sum( log(dnorm( x,   mean = mu, sd = sigma )
+                + dnorm( x,   mean = 1-mu, sd = sigma ) )  )))
+  mles[!is.finite(mles)] = NA
+  coefs = which(mles==min(mles, na.rm=T), arr.ind=T)
+  return (list( mus[coefs[2]] , sigmas[coefs[1]]))
+} 
+
+```
+
+
+```{r}
+
+est_skew_func = function(list.skew.max, Ns, ratios.max, snp_stat_df, filter_snps = T){
+  
+  #If there's only 1 or 0 SNPs, don't estimate a skew
+  if(Ns <= 0){return(NA)}
+  
+  #Filter for the good snps
+  if(filter_snps){
+    snp_index = list.skew.max$Pos %in% snp_stat_df$snp_pos[snp_stat_df$filter]
+    #Fold the reference skews
+    folded_ref_skews = folded(ratios.max[snp_index])
+  }else{
+    folded_ref_skews = folded(ratios.max)
+  }
+  #return the mean and sigma estimates
+  return(mle_folded(folded_ref_skews))
+}
+
+
+Ns = vector(mode='numeric', length = length(filt_goat_vcfs_chr18))
+
+for(i in 1:length(filt_goat_vcfs_chr18)){
+  
+  suppressWarnings(if(is.null(dim(filt_goat_vcfs_chr18[[i]]))){Ns[i] = 0}
+  else{Ns[i] = dim(filt_goat_vcfs_chr18[[i]])[1]})
+  
+}
+
+
+ratios.max = list()
+for(i in 1: length(filt_goat_vcfs_chr18)){
+  
+  if(Ns[i] == 0){next}
+  
+  total_exp = filt_goat_vcfs_chr18[[i]]$ref_counts + filt_goat_vcfs_chr18[[i]]$alt_counts
+  ref_ratios = filt_goat_vcfs_chr18[[i]]$ref_counts / total_exp
+  ratios.max[[i]] = ref_ratios
+
+}
+
+
+
+```
+
+```{r}
+
+Sys.time()
+folded_norm_fits = mclapply(1:length(filt_goat_vcfs_chr18), function(i) est_skew_func(filt_goat_vcfs_chr18[[i]], Ns[i], ratios.max[[i]], snp_stat_df_chr18), mc.cores = 20)
+Sys.time()
+
+Sys.time()
+folded_norm_fits_bad_snps = mclapply(1:length(filt_goat_vcfs_chr18), function(i) est_skew_func(filt_goat_vcfs_chr18[[i]], Ns[i], ratios.max[[i]], snp_stat_df_chr18, filter_snps = F), mc.cores = 20)
+Sys.time()
+
+#Grab the skew and variance estimates
+est_skew_chr18 = vector(mode = 'numeric', length = length(folded_norm_fits))
+est_var_chr18 = vector(mode = 'numeric', length = length(folded_norm_fits))
+for(i in 1:length(folded_norm_fits)){
+  
+  if(is.na(folded_norm_fits[i])){
+    est_skew_chr18[i] = NA
+    est_var_chr18[i] = NA
+    next
+  }
+  
+  est_skew_chr18[i] = folded_norm_fits[[i]][[1]]
+  est_var_chr18[i] = folded_norm_fits[[i]][[2]]
+}
+
+#Grab the skew and variance estimates
+est_skew_bad_snps_chr18 = vector(mode = 'numeric', length = length(folded_norm_fits_bad_snps))
+est_var_bad_snps_chr18 = vector(mode = 'numeric', length = length(folded_norm_fits_bad_snps))
+for(i in 1:length(folded_norm_fits_bad_snps)){
+  
+  if(is.na(folded_norm_fits_bad_snps[i])){
+    est_skew_bad_snps_chr18[i] = NA
+    est_var_bad_snps_chr18[i] = NA
+    next
+  }
+  
+  est_skew_bad_snps_chr18[i] = folded_norm_fits_bad_snps[[i]][[1]]
+  est_var_bad_snps_chr18[i] = folded_norm_fits_bad_snps[[i]][[2]]
+}
+
+hist(est_skew_chr18, main = 'goat skew estimates filtering out bad SNPs', breaks=seq(.5, 1, .005))
+hist(est_skew_bad_snps_chr18, main = 'goat skew estimates filtering out bad SNPs', breaks=seq(.5, 1, .005))
+hist(est_var_chr18, main = 'Variance estimates', breaks = 32)
+plot(est_skew_chr18, est_var_chr18)
+```
+
+
+```{r}
+par(pty = 's')
+plot(est_skew_chr18, est_skew_bad_snps_chr18, cex = .5)
+abline(a = 0, b = 1, col = 'red')
+```
+
+Make a dataframe from with the estimated skew stats
+
+```{r}
+
+num_good_snps_chr18 = vector(length = length(filt_goat_vcfs_chr18), mode = 'numeric')
+total_snps_chr18 = vector(length = length(filt_goat_vcfs_chr18), mode = 'numeric')
+
+for(i in 1:length(filt_goat_vcfs_chr18)){
+  
+  data = filt_goat_vcfs_chr18[[i]]
+  suppressWarnings(if(is.null(dim(data))){num_good_snps[i] = 0; total_snps[i] = 0; next})
+  
+  snp_filter = data$Pos %in% snp_stat_df_chr18$snp_pos[snp_stat_df_chr18$filter]
+  
+  total_snps_chr18[i] = length(data$Pos)
+  num_good_snps_chr18[i] = length(data$Pos[snp_filter])
+}
+
+plot(total_snps_chr18, num_good_snps_chr18)
+
+```
+
+
+```{r}
+plot(est_skew_chr18, num_good_snps_chr18)
+abline(h = 10, col = 'red')
+
+
+hist(unfold(est_skew_chr18[num_good_snps_chr18 >= 10]), breaks = seq(0,1,.01), xlab = 'Estimated sample skew', main = 'goat chromosome 18')
+```
+
+
+
+chr19
+
+
+```{r}
+Ns = vector(mode='numeric', length = length(filt_goat_vcfs_chr19))
+
+for(i in 1:length(filt_goat_vcfs_chr19)){
+  
+  suppressWarnings(if(is.null(dim(filt_goat_vcfs_chr19[[i]]))){Ns[i] = 0}
+  else{Ns[i] = dim(filt_goat_vcfs_chr19[[i]])[1]})
+  
+}
+
+
+ratios.max = list()
+for(i in 1: length(filt_goat_vcfs_chr19)){
+  
+  if(Ns[i] == 0){next}
+  
+  total_exp = filt_goat_vcfs_chr19[[i]]$ref_counts + filt_goat_vcfs_chr19[[i]]$alt_counts
+  ref_ratios = filt_goat_vcfs_chr19[[i]]$ref_counts / total_exp
+  ratios.max[[i]] = ref_ratios
+
+}
+
+
+```
+
+
+```{r}
+
+Sys.time()
+folded_norm_fits = mclapply(1:length(filt_goat_vcfs_chr19), function(i) est_skew_func(filt_goat_vcfs_chr19[[i]], Ns[i], ratios.max[[i]], snp_stat_df_chr19), mc.cores = 20)
+Sys.time()
+
+Sys.time()
+folded_norm_fits_bad_snps = mclapply(1:length(filt_goat_vcfs_chr19), function(i) est_skew_func(filt_goat_vcfs_chr19[[i]], Ns[i], ratios.max[[i]], snp_stat_df_chr19, filter_snps = F), mc.cores = 20)
+Sys.time()
+
+#Grab the skew and variance estimates
+est_skew_chr19 = vector(mode = 'numeric', length = length(folded_norm_fits))
+est_var_chr19 = vector(mode = 'numeric', length = length(folded_norm_fits))
+for(i in 1:length(folded_norm_fits)){
+  
+  if(is.na(folded_norm_fits[i])){
+    est_skew_chr19[i] = NA
+    est_var_chr19[i] = NA
+    next
+  }
+  
+  est_skew_chr19[i] = folded_norm_fits[[i]][[1]]
+  est_var_chr19[i] = folded_norm_fits[[i]][[2]]
+}
+
+#Grab the skew and variance estimates
+est_skew_bad_snps_chr19 = vector(mode = 'numeric', length = length(folded_norm_fits_bad_snps))
+est_var_bad_snps_chr19 = vector(mode = 'numeric', length = length(folded_norm_fits_bad_snps))
+for(i in 1:length(folded_norm_fits_bad_snps)){
+  
+  if(is.na(folded_norm_fits_bad_snps[i])){
+    est_skew_bad_snps_chr19[i] = NA
+    est_var_bad_snps_chr19[i] = NA
+    next
+  }
+  
+  est_skew_bad_snps_chr19[i] = folded_norm_fits_bad_snps[[i]][[1]]
+  est_var_bad_snps_chr19[i] = folded_norm_fits_bad_snps[[i]][[2]]
+}
+
+hist(est_skew_chr19, main = 'goat skew estimates filtering out bad SNPs', breaks=seq(.5, 1, .005))
+hist(est_skew_bad_snps_chr19, main = 'goat skew estimates filtering out bad SNPs', breaks=seq(.5, 1, .005))
+hist(est_var_chr19, main = 'Variance estimates', breaks = 32)
+plot(est_skew_chr19, est_var_chr19)
+```
+
+```{r}
+par(pty = 's')
+plot(est_skew_chr19, est_skew_bad_snps_chr19, cex = .5)
+abline(a = 0, b = 1, col = 'red')
+```
+
+Make a dataframe from with the estimated skew stats
+
+```{r}
+
+num_good_snps_chr19 = vector(length = length(filt_goat_vcfs_chr19), mode = 'numeric')
+total_snps_chr19 = vector(length = length(filt_goat_vcfs_chr19), mode = 'numeric')
+
+for(i in 1:length(filt_goat_vcfs_chr19)){
+  
+  data = filt_goat_vcfs_chr19[[i]]
+  suppressWarnings(if(is.null(dim(data))){num_good_snps[i] = 0; total_snps[i] = 0; next})
+  
+  snp_filter = data$Pos %in% snp_stat_df_chr19$snp_pos[snp_stat_df_chr19$filter]
+  
+  total_snps_chr19[i] = length(data$Pos)
+  num_good_snps_chr19[i] = length(data$Pos[snp_filter])
+}
+
+plot(total_snps_chr19, num_good_snps_chr19)
+
+```
+
+
+
+```{r}
+plot(est_skew_chr19, num_good_snps_chr19)
+abline(h = 10, col = 'red')
+
+length(est_skew_chr19[num_good_snps_chr19 >= 10])
+hist(unfold(est_skew_chr19[num_good_snps_chr19 >= 10]), breaks = seq(0,1,.01), xlab = 'Estimated sample skew', main = 'goat chromosome 19')
+```
+
+
+######################################
+Looking at the chromosome 18 samples that are supposedly skewed
+What's going on
+
+######################################
+
+
+```{r}
+
+chr18_skewed_index = which(est_skew_chr18 >= .6 & num_good_snps_chr18 >= 10)
+
+all_chr18_skewed_snps = c()
+for(i in 1:length(chr18_skewed_index)){
+  
+  data = filt_goat_vcfs_chr18[[chr18_skewed_index[i]]]
+  #data = data[data$Pos %in% snp_stat_df$snp_pos[snp_stat_df$filter], ]
+  ref_ratios = data$ref_counts / (data$ref_counts + data$alt_counts)
+  hist(ref_ratios, breaks = seq(0,1,.025), main = sprintf('Sample index: %i est skew: %0.3f',chr18_skewed_index[i], est_skew_chr18[chr18_skewed_index[i]]))
+  all_chr18_skewed_snps = c(all_chr18_skewed_snps, ref_ratios)
+  
+}
+
+hist(all_chr18_skewed_snps, breaks = seq(0,1,.025), main = 'All compiled SNPs')
+
+
+chr18_Nonskewed_index = which(est_skew_chr18 < .6 & num_good_snps_chr18 >= 10)
+
+all_chr18_Nonskewed_snps = c()
+for(i in 1:length(chr18_Nonskewed_index)){
+  
+  data = filt_goat_vcfs_chr18[[chr18_Nonskewed_index[i]]]
+  #data = data[data$Pos %in% snp_stat_df$snp_pos[snp_stat_df$filter], ]
+  ref_ratios = data$ref_counts / (data$ref_counts + data$alt_counts)
+  all_chr18_Nonskewed_snps = c(all_chr18_Nonskewed_snps, ref_ratios)
+  
+}
+
+hist(all_chr18_Nonskewed_snps, breaks = seq(0,1,.025), main = 'All compiled SNPs')
+
+```
+
+
+
+```{r}
+goat_chr18_skew_and_stats_df = data.frame(sample_id = wig_samples_18, 
+                                   est_skew = est_skew_chr18, est_var = est_var_chr18,  #Skew estimates filtering out bad genes
+                                   est_skew_total_snps = est_skew_bad_snps_chr18, est_var_total_snps = est_var_bad_snps_chr18,   #Skew estimates with all genes 
+                                   num_good_snps = num_good_snps_chr18, total_snps = total_snps_chr18)
+
+goat_chr18_skew_and_stats_df
+```
+
+
+```{r}
+
+save(goat_chr18_skew_and_stats_df, file = '/home/werner/projects/cross_species_XCI/data/species_data_analysis/capra_hircus/chr18/goat_chr18_skew_and_stats_df_7_11_23.Rdata')
+```
+
+```{r}
+
+load( '/home/werner/projects/cross_species_XCI/data/species_data_analysis/capra_hircus/chr18/goat_chr18_skew_and_stats_df_7_11_23.Rdata')
+
+```
+
+
+
+
+##################################
+
+Looking at chromosome 3 now
+
+check if the same samples that were skewed on chromosome 1 anre skewed on chromosome 3
+
+#################################
+
+
+```{r}
+
+chr19_skewed_index = which(est_skew_chr19 >= .6 & num_good_snps_chr19 >= 10)
+
+all_chr19_skewed_snps = c()
+for(i in 1:length(chr19_skewed_index)){
+  
+  data = filt_goat_vcfs_chr19[[chr19_skewed_index[i]]]
+  data = data[data$Pos %in% snp_stat_df_chr19$snp_pos[snp_stat_df_chr19$filter], ]
+  ref_ratios = data$ref_counts / (data$ref_counts + data$alt_counts)
+  hist(ref_ratios, breaks = seq(0,1,.025), main = sprintf('Sample index: %i est skew: %0.3f',chr19_skewed_index[i], est_skew_chr19[chr19_skewed_index[i]]))
+  all_chr19_skewed_snps = c(all_chr19_skewed_snps, ref_ratios)
+  
+}
+
+hist(all_chr19_skewed_snps, breaks = seq(0,1,.025), main = 'All compiled SNPs')
+
+
+chr19_Nonskewed_index = which(est_skew_chr19 < .6 & num_good_snps_chr19 >= 10)
+
+all_chr19_Nonskewed_snps = c()
+for(i in 1:length(chr19_Nonskewed_index)){
+  
+  data = filt_goat_vcfs_chr19[[chr19_Nonskewed_index[i]]]
+  data = data[data$Pos %in% snp_stat_df_chr19$snp_pos[snp_stat_df_chr19$filter], ]
+  ref_ratios = data$ref_counts / (data$ref_counts + data$alt_counts)
+  all_chr19_Nonskewed_snps = c(all_chr19_Nonskewed_snps, ref_ratios)
+  
+}
+
+hist(all_chr19_Nonskewed_snps, breaks = seq(0,1,.025), main = 'All compiled SNPs')
+
+```
+
+
+```{r}
+goat_chr19_skew_and_stats_df = data.frame(sample_id = wig_samples_19, 
+                                   est_skew = est_skew_chr19, est_var = est_var_chr19,  #Skew estimates filtering out bad genes
+                                   est_skew_total_snps = est_skew_bad_snps_chr19, est_var_total_snps = est_var_bad_snps_chr19,   #Skew estimates with all genes 
+                                   num_good_snps = num_good_snps_chr19, total_snps = total_snps_chr19)
+
+goat_chr19_skew_and_stats_df
+```
+
+
+```{r}
+
+save(goat_chr19_skew_and_stats_df, file = '/home/werner/projects/cross_species_XCI/data/species_data_analysis/capra_hircus/chr19/goat_chr19_skew_and_stats_df_7_11_23.Rdata')
+```
+
+```{r}
+
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/capra_hircus/chr19/goat_chr19_skew_and_stats_df_7_11_23.Rdata')
+
+```
+
+
+################################
+Compare across the chromosomes and see if the same samples are throwing the skewed estimates
+################################
+
+
+
+```{r}
+
+chr18_weird_samps = goat_chr18_skew_and_stats_df$sample_id[goat_chr18_skew_and_stats_df$est_skew >= .6 & goat_chr18_skew_and_stats_df$num_good_snps >= 10]
+
+chr19_weird_samps = goat_chr19_skew_and_stats_df$sample_id[goat_chr19_skew_and_stats_df$est_skew >= .6 & goat_chr19_skew_and_stats_df$num_good_snps >= 10]
+
+
+index = match(goat_chr19_skew_and_stats_df$sample_id, goat_chr18_skew_and_stats_df$sample_id )
+#Reorder to match chromosome 19
+goat_chr18_skew_and_stats_df = goat_chr18_skew_and_stats_df[index, ]
+```
+
+
+```{r}
+par(pty = 's')
+plot(goat_chr18_skew_and_stats_df$est_skew, goat_chr19_skew_and_stats_df$est_skew)
+abline(a = 0, b = 1, col ='red' )
+
+
+num_snp_index = goat_chr18_skew_and_stats_df$num_good_snps >= 10 & goat_chr19_skew_and_stats_df$num_good_snps >= 10
+plot(goat_chr18_skew_and_stats_df$est_skew[num_snp_index], goat_chr19_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chr18 estimated skew', 
+     ylab = 'chr19 estimated skew', main = 'goat autosome skew estimates')
+abline(a = 0, b = 1, col ='red' )
+```
+
+
+
+

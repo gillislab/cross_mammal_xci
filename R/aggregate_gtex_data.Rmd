@@ -1,0 +1,408 @@
+
+
+Aggregating the allelic ratios across tissues for individual GTEx donors
+
+
+
+```{r}
+
+library(dplyr)
+library(parallel)
+library(MetBrewer)
+library(ggplot2)
+
+```
+
+get colors for the species
+
+```{r}
+
+
+species_colors = met.brewer("Tiepolo", n=9,type="continuous")
+
+#Going by the ranking of estimated cell counts
+species_palette = c('Macaca' = species_colors[1], 'Rat' = species_colors[2], 'Pig' = species_colors[3],
+                    'Goat' = species_colors[4], 'Horse' = species_colors[5], 'Sheep' = species_colors[6],
+                    'Human' = species_colors[7], 'Cow' = species_colors[8], 'Dog' = species_colors[9])
+
+species_palette
+```
+
+
+human data
+
+```{r}
+x = load("PATH_TO_HUMAN_SKEW_AND_STATS_DF")
+human_skew_and_stats_df = get(x)
+human_skew_and_stats_df
+```
+
+
+```{r}
+
+#All the detected snps from the GTEx data
+#in the list.vcf object
+load('PATH_TO_HUMAN_VCFS')
+head(list.vcf)
+
+```
+
+human
+
+get the per variant reference bias classification. We used a gene level approach in the original GTEx analysis
+
+```{r}
+
+#First go through and get all the variants
+captured_SNPs = c()
+for( i in 1:length(list.vcf)){
+  suppressWarnings(if(is.null(dim(list.vcf[[i]]))){next})
+  data = list.vcf[[i]]
+  captured_SNPs = c(captured_SNPs, paste0(data[ ,1], paste0(data$V3, data$V4)))
+}
+
+captured_SNPs = unique(captured_SNPs)
+captured_SNPs = captured_SNPs[captured_SNPs != ""]
+
+length(captured_SNPs)
+
+
+human_snp_stat_df = data.frame(variant = integer(length(captured_SNPs)), num_samples_present = integer(length(captured_SNPs)), 
+                         mean_ref_ratio = integer(length(captured_SNPs)), mean_total_counts = integer(length(captured_SNPs)), 
+                         sd_total_counts = integer(length(captured_SNPs)))
+
+for(i in 1:length(captured_SNPs)){
+
+  if(i %% 1000 == 0){print(i)}
+  current_SNP = captured_SNPs[i]
+  
+  snp_ref_exp = c()
+  snp_total_reads = c()
+  for(j in 1:length(list.vcf)){
+
+    suppressWarnings(if(is.null(dim(list.vcf[[j]]))){next})
+    data = list.vcf[[j]]
+    sample_variants = paste0(data[ ,1], paste0(data$V3, data$V4))
+    gene_index = sample_variants == current_SNP
+    ref_counts = data$A[gene_index]
+    alt_counts = data$C[gene_index]
+    total_counts = ref_counts + alt_counts
+    snp_ref_exp = c(snp_ref_exp, ref_counts / total_counts )
+    snp_total_reads = c(snp_total_reads, total_counts)
+    
+  }
+  
+  human_snp_stat_df$variant[i] = current_SNP
+  human_snp_stat_df$num_samples_present[i] = length(snp_ref_exp)
+  human_snp_stat_df$mean_ref_ratio[i] = mean(snp_ref_exp)
+  human_snp_stat_df$mean_total_counts[i] = mean(snp_total_reads)
+  human_snp_stat_df$sd_total_counts[i] = sd(snp_total_reads)
+}
+
+
+
+```
+
+Look at the mean reference ratios and add a filter for the SNPs with mean ratio < 0.4 or > 0.6
+```{r}
+hist(human_snp_stat_df$mean_ref_ratio, breaks = seq(0,1,.01), xlab = 'Mean reference ratio per SNP', main = 'Homo sapian')
+hist(human_snp_stat_df$num_samples_present)
+par(pty = 's')
+plot(human_snp_stat_df$mean_ref_ratio, human_snp_stat_df$num_samples_present, cex = .25, xlab = 'Mean reference ratio', 
+     ylab = '# of samples SNP is detected', main = 'Homo sapian Het SNPs')
+abline(v = .5, col = 'red')
+abline(v = .4, col = 'blue')
+abline(v = .6, col = 'blue')
+length(human_snp_stat_df$mean_ref_ratio)
+human_snp_stat_df$filter = !(human_snp_stat_df$mean_ref_ratio < .4 | human_snp_stat_df$mean_ref_ratio > .6)
+table(human_snp_stat_df$filter)
+
+```
+```{r}
+
+
+human_snp_stat_df$filter = !(human_snp_stat_df$mean_ref_ratio < .4 | human_snp_stat_df$mean_ref_ratio > .6)
+table(human_snp_stat_df$filter)
+
+
+```
+
+```{r}
+
+save(human_snp_stat_df, file = 'PATH_TO_HUMAN_SNP_STAT_DF')
+
+```
+
+
+```{r}
+
+load('PATH_TO_MAX_SNP_PER_GENE_HUMAN_VCFS')
+
+```
+
+```{r}
+length(list.skew.max)
+
+```
+
+
+
+
+Pull together the vcfs for all the tissues of a donor
+
+```{r}
+
+cell_culture = c('Cells - Cultured fibroblasts','Cells - EBV-transformed lymphocytes','Cells - Transformed fibroblasts')
+agg_donor_vcfs = list()
+
+all_donors = unique(skew_and_stats_df$donor)
+
+for(i in 1:length(all_donors)){
+
+  donor_index = filter(skew_and_stats_df, donor == all_donors[i] & !tissue %in% cell_culture)$sample_index
+  donor_vcfs = list.skew.max[donor_index]
+  agg_donor = do.call(rbind, donor_vcfs)
+  
+  agg_donor_vcfs[[i]] = agg_donor
+  
+  ref_ratios = agg_donor$A/agg_donor$A.1
+  hist(ref_ratios, breaks = seq(0,1,.025))
+
+
+}
+
+```
+
+
+XCI ratio modeling
+
+```{r}
+
+
+# Functions to fold and unfold ratios 
+folded <- function(x) { apply( cbind(x,1-x), 1, max)} 
+unfold <- function(x) { c(x,1-x) } 
+
+
+mle_folded <- function(x){ 
+  mus = seq(0.5,1, by = 0.001)
+  sigmas = seq(0,0.5, by = 0.01)
+  
+  mles = sapply(mus, function(mu)
+    sapply(sigmas, function(sigma)
+      -sum( log(dnorm( x,   mean = mu, sd = sigma )
+                + dnorm( x,   mean = 1-mu, sd = sigma ) )  )))
+  mles[!is.finite(mles)] = NA
+  coefs = which(mles==min(mles, na.rm=T), arr.ind=T)
+  return (list( mus[coefs[2]] , sigmas[coefs[1]]))
+} 
+
+```
+
+
+```{r}
+
+est_skew_func = function(list.skew.max, Ns, ratios.max, snp_stat_df, filter_snps = T){
+  
+  #If there's only 1 or 0 SNPs, don't estimate a skew
+  if(Ns <= 0){return(NA)}
+  
+  #Filter for the good snps
+  if(filter_snps){
+    snp_index = list.skew.max$Pos %in% snp_stat_df$snp_pos[snp_stat_df$filter]
+    #Fold the reference skews
+    folded_ref_skews = folded(ratios.max[snp_index])
+  }else{
+    folded_ref_skews = folded(ratios.max)
+  }
+  #return the mean and sigma estimates
+  return(mle_folded(folded_ref_skews))
+}
+
+
+Ns = vector(mode='numeric', length = length(agg_donor_vcfs))
+
+for(i in 1:length(agg_donor_vcfs)){
+  
+  suppressWarnings(if(is.null(dim(agg_donor_vcfs[[i]]))){Ns[i] = 0}
+  else{Ns[i] = dim(agg_donor_vcfs[[i]])[1]})
+  
+}
+
+
+ratios.max = list()
+for(i in 1: length(agg_donor_vcfs)){
+  
+  if(Ns[i] == 0){next}
+  
+  ratios.max[[i]] =  agg_donor_vcfs[[i]]$A / agg_donor_vcfs[[i]]$A.1
+
+}
+
+
+
+```
+
+
+```{r}
+
+head(Ns)
+head(ratios.max)
+```
+
+
+
+```{r}
+
+Sys.time()
+folded_norm_fits = mclapply(1:length(agg_donor_vcfs), function(i) est_skew_func(agg_donor_vcfs[[i]], Ns[i], ratios.max[[i]], 
+                                                                                human_snp_stat_df, filter_snps = F), mc.cores = 20)
+Sys.time()
+
+
+#Grab the skew and variance estimates
+est_skew = vector(mode = 'numeric', length = length(folded_norm_fits))
+est_var = vector(mode = 'numeric', length = length(folded_norm_fits))
+for(i in 1:length(folded_norm_fits)){
+  
+  if(is.na(folded_norm_fits[i])){
+    est_skew[i] = NA
+    est_var[i] = NA
+    next
+  }
+  
+  est_skew[i] = folded_norm_fits[[i]][[1]]
+  est_var[i] = folded_norm_fits[[i]][[2]]
+}
+
+hist(est_skew, main = 'Aggregated GTEx XCI ratio estimates', breaks=seq(.5, 1, .005))
+hist(est_var, main = 'Variance estimates', breaks = 32)
+plot(est_skew, est_var)
+```
+
+```{r}
+hist(unfold(est_skew), breaks = seq(0,1,.025))
+
+hist(unfold(est_skew[Ns >= 10]), breaks = seq(0,1,.025))
+```
+
+
+
+```{r}
+agg_gtex_skew_and_stats_df = data.frame(donor= all_donors, 
+                                   est_skew = est_skew, est_var = est_var,  
+                                   num_good_snps = Ns)
+
+agg_gtex_skew_and_stats_df
+```
+
+
+```{r}
+
+save(agg_donor_vcfs, file = 'PATH_TO_AGGREGATED_HUMAN_VCFS')
+save(agg_gtex_skew_and_stats_df, 
+     file = 'PATH_TO_AGGREGATED_HUMAN_SKEW_AND_STATS_DF')
+```
+
+
+
+Cell number estimate
+
+```{r}
+#Input the folded and filtered skews
+get_cell_num_error_ests = function(folded_skews, n_min, n_max){
+        
+        p = .5
+        n = n_min:n_max
+        percentiles = seq(.01, .99, 0.01)
+        norm_error_vector = vector(mode = 'numeric', length = length(n))
+        
+        #Get the empirical skews for that tissue
+        empir_skews = unfold(folded_skews)
+        num_skews = length(empir_skews)
+        #Get the quantiles for these skews
+        empir_quants = quantile(empir_skews, probs = percentiles, type=1)
+        #Only going to be fitting over the confident skews
+        quant_filt = empir_quants <= .4 | empir_quants >= .6
+
+        for(i in 1:length(n)){
+        
+                #Get the normal and binomial percentiles for the n parameter
+                norm_sd = sqrt( (p*(1-p)) / n[i] )
+                norm_percentiles = qnorm(percentiles, mean=p, sd = norm_sd)
+                norm_error_vector[i] = sum((empir_quants[quant_filt] - norm_percentiles[quant_filt])^2)
+        }
+   return(norm_error_vector)     
+}
+
+
+
+n_min = 2
+n_max = 200
+n_vec = n_min:n_max
+agg_gtex_squared_error = get_cell_num_error_ests(agg_gtex_skew_and_stats_df$est_skew[agg_gtex_skew_and_stats_df$num_good_snps >= 10], n_min, n_max)
+sprintf('Aggregated GTEx estimated cell num: %i', n_vec[which.min(agg_gtex_squared_error)])
+
+
+
+```
+
+
+```{r}
+
+p = .5
+num_bins = 100
+binned_x_axis = seq(0,1,1/num_bins)
+
+#Greying out the .4-.6 skews
+fill_vec = rep(species_palette['Human'], length(binned_x_axis))
+fill_vec[binned_x_axis >= 0.4 & binned_x_axis <= 0.6] = 'grey'
+color_vec = rep(species_palette['Human'], length(binned_x_axis))
+color_vec[binned_x_axis >= 0.4 & binned_x_axis <= 0.6] = 'grey'
+
+
+fitted_normal_n = n_vec[which.min(agg_gtex_squared_error)]
+sigma = sqrt(p*(1-p)/fitted_normal_n)
+dnorm_x = 0:1000/1000
+
+fitted_normal = dnorm(dnorm_x, mean=p, sd = sigma)
+
+theoretical_norms = list()
+n = c(8,32)
+for(i in 1:length(n)){ 
+sigma_t = sqrt(p*(1-p)/n[i])
+theoretical_norms[[i]] = sigma_t
+}
+
+species_name = 'Human'
+skews = unfold(agg_gtex_skew_and_stats_df$est_skew[agg_gtex_skew_and_stats_df$num_good_snps >= 10])
+df = data.frame(skews = skews)
+
+g = ggplot(df, aes(x = skews)) + geom_histogram(aes(y = ..density..), fill = fill_vec, color = color_vec, binwidth = 1/num_bins) +
+  xlim(0,1)+ xlab(sprintf('%s XCI ratios', species_name)) + ggtitle(sprintf('%s population XCI ratio distribution', species_name)) +
+  stat_function(fun = dnorm, args = list(mean = .5, sd = theoretical_norms[[1]]), n = num_bins, size = .5, alpha = .5, aes(linetype = 'dashed')) +
+  stat_function(fun = dnorm, args = list(mean = .5, sd = theoretical_norms[[2]]), n = num_bins, size = .5, alpha = .5, aes(linetype = 'dotted')) + 
+  stat_function(fun = dnorm, args = list(mean = .5, sd = sigma), n = num_bins, size = .75, aes(linetype = 'solid')) +
+  scale_linetype_manual(name="Estimated cell number",values=c('dashed','dotted','solid'),
+                        labels = c('8 cells','32 cells',sprintf('Estimated %i cells', fitted_normal_n)),
+                        breaks=c('dashed','dotted','solid'), 
+                        guide = guide_legend(override.aes = list(size = c(.5, .5, 2)))) +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
+        panel.background = element_rect(fill = 'white'), panel.border = element_rect(color = "black", fill=NA, size=1),  
+        axis.text.y = element_text(size=12), axis.text.x = element_text(size=12),
+        axis.title.y = element_text(size=12), axis.title.x = element_text(size=12), 
+        legend.position = c(.8,.75))   
+print(g)
+
+ggsave(plot = g, filename = 'agg_donor_human_normal_fits.pdf' ,
+ path ='/home/werner/projects/cross_species_XCI/code/graphs/est_cell_num/', 
+ width = 6, height = 4, useDingbats = FALSE)
+
+
+```
+
+
+
+
+
+
