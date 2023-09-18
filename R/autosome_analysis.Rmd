@@ -1,0 +1,1046 @@
+
+
+Compiling all autosome data and comparing across species
+
+Add a filter for the samples that are imbalanced across the autosomes, indicates a global effect outside of XCI that is impacting allelic-expression.
+Exclude these from all downstream analysis, population variance modeling, X-linked heterozygosity, and XCI ratio predicting variant AUROCs.
+
+```{r}
+library(dplyr)
+library(ggplot2)
+```
+
+Load up the skew and stats dataframes for all the autosomes and X chromosomes
+```{r}
+
+#Goat autosomes 18, 19
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/capra_hircus/chr18/goat_chr18_skew_and_stats_df_7_11_23.Rdata')
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/capra_hircus/chr19/goat_chr19_skew_and_stats_df_7_11_23.Rdata')
+
+#dog autosomes 1, 3
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/canis_lupus_familiaris/chr1/dog_chr1_skew_and_stats_df_7_11_23.Rdata')
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/canis_lupus_familiaris/chr3/dog_chr3_skew_and_stats_df_7_11_23.Rdata')
+
+#Horse autosomes 1, 2
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/equus_caballus/chr1/horse_chr1_skew_and_stats_df_7_11_23.Rdata')
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/equus_caballus/chr2/horse_chr2_skew_and_stats_df_7_11_23.Rdata')
+
+#Macaca autosomes 7,8
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/macaca_mulatta/chr7/macaca_chr7_skew_and_stats_df_7_11_23.Rdata')
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/macaca_mulatta/chr8/macaca_chr8_skew_and_stats_df_7_11_23.Rdata')
+
+#Sheep autosomes 3,4
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/ovis_aries/chr3/sheep_chr3_skew_and_stats_df_7_11_23.Rdata')
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/ovis_aries/chr4/sheep_chr4_skew_and_stats_df_7_11_23.Rdata')
+
+#Pig autosomes 4,7
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/sus_scrofa/chr4/pig_chr4_skew_and_stats_df_7_11_23.Rdata')
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/sus_scrofa/chr7/pig_chr7_skew_and_stats_df_7_11_23.Rdata')
+
+#Cow autosomes 1, 2
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/bos_taurus/chr1/cow_chr1_skew_and_stats_df_7_11_23.Rdata')
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/bos_taurus/chr2/cow_chr2_skew_and_stats_df_7_11_23.Rdata')
+
+#Rat autosomes 5, 6
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/rattus_norvegicus/chr5/rat_chr5_skew_and_stats_df_7_11_23.Rdata')
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/rattus_norvegicus/chr6/rat_chr6_skew_and_stats_df_7_11_23.Rdata')
+
+#Human autosomes 7, 8
+load('PATH_TO_HUMAN_AUTOSOME_7_SKEW_AND_STATS_DF')
+load('PATH_TO_HUMAN_AUTOSOME_8_SKEW_AND_STATS_DF')
+```
+
+X chromosome
+
+```{r}
+
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/equus_caballus/horse_skew_and_stats_binFilt_df_4_27_23.Rdata')
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/bos_taurus/cow_skew_and_stats_binFilt_df_4_27_23.Rdata')
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/sus_scrofa/pig_skew_and_stats_binFilt_df_4_27_23.Rdata')
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/ovis_aries/sheep_skew_and_stats_binFilt_df_4_27_23.Rdata')
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/capra_hircus/goat_skew_and_stats_binFilt_df_4_27_23.Rdata')
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/macaca_mulatta/macaca_skew_and_stats_binFilt_df_4_27_23.Rdata')
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/rattus_norvegicus/rat_skew_and_stats_binFilt_df_4_27_23.Rdata')
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/canis_lupus_familiaris/dog_skew_and_stats_binFilt_df_4_27_23.Rdata')
+
+x = load("PATH_TO_HUMAN_CHRX_SKEW_AND_STATS_DF")
+human_skew_and_stats_df = get(x)
+human_skew_and_stats_df
+
+```
+
+Looking at the allelic imbalances on the autosomes, a threshold of 0.60 gets all the samples in each species that are globally allelically imbalanced. Also in line with the limits of our XCI population modeling, where samples with folded skew estimates < 0.60 had high uncertainty
+
+```{r}
+imbalance_thresh = 0.60
+snp_thresh = 10  #Number of SNPs needed per sample
+
+
+# Functions to fold and unfold ratios 
+folded <- function(x) { apply( cbind(x,1-x), 1, max)} 
+unfold <- function(x) { c(x,1-x) } 
+
+```
+
+
+
+First compare the allelic imbalance per sample across the autosomes and then compare autosome imbalance to X-chromosome
+
+goat
+```{r}
+index = match(goat_chr19_skew_and_stats_df$sample_id, goat_chr18_skew_and_stats_df$sample_id )
+#Reorder to match chromosome 19
+temp_goat_chr18_skew_and_stats_df = goat_chr18_skew_and_stats_df[index, ]
+#Filter for samples with at least 10 SNPs on both chromosomes
+num_snp_index = temp_goat_chr18_skew_and_stats_df$num_good_snps >= snp_thresh & goat_chr19_skew_and_stats_df$num_good_snps >= snp_thresh
+
+
+par(pty = 's')
+plot(temp_goat_chr18_skew_and_stats_df$est_skew[num_snp_index], goat_chr19_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chr18 estimated skew', 
+     ylab = 'chr19 estimated skew', main = 'goat autosome skew estimates', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+
+#save
+pdf(file = '/home/werner/projects/cross_species_XCI/code/graphs/autosome_imbalance/goat_chr18_chr19_skew_scatter.pdf', useDingbats = F, height = 4, width = 4)
+par(pty = 's')
+plot(temp_goat_chr18_skew_and_stats_df$est_skew[num_snp_index], goat_chr19_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chr18 estimated skew', 
+     ylab = 'chr19 estimated skew', main = 'goat autosome skew estimates', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+dev.off()
+
+#Grab the samples that are imbalanced on both autosomes
+bad_chr18_samples = filter(goat_chr18_skew_and_stats_df, est_skew >= imbalance_thresh & num_good_snps >= snp_thresh)$sample_id
+bad_chr19_samples = filter(goat_chr19_skew_and_stats_df, est_skew >= imbalance_thresh & num_good_snps >= snp_thresh)$sample_id
+bad_goat_samples = union(bad_chr18_samples, bad_chr19_samples)
+
+
+#Compare to X chromosome
+index = match(goat_chr19_skew_and_stats_df$sample_id, goat_skew_and_stats_df$sample_id )
+#Reorder to match chromosome 19
+temp_goat_skew_and_stats_df = goat_skew_and_stats_df[index, ]
+#Filter for samples with at least 10 SNPs on each chromosome
+num_snp_index = goat_chr19_skew_and_stats_df$num_good_snps >= snp_thresh & temp_goat_skew_and_stats_df$num_good_snps_no_escape >= snp_thresh
+
+par(pty = 's')
+plot(temp_goat_skew_and_stats_df$est_skew_no_escape[num_snp_index], goat_chr19_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chrX estimated skew', 
+     ylab = 'chr19 estimated skew', main = 'goat chrX and chr19', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+
+#save
+pdf(file = '/home/werner/projects/cross_species_XCI/code/graphs/autosome_imbalance/goat_chr19_chrX_skew_scatter.pdf', useDingbats = F, height = 4, width = 4)
+par(pty = 's')
+plot(temp_goat_skew_and_stats_df$est_skew_no_escape[num_snp_index], goat_chr19_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chrX estimated skew', 
+     ylab = 'chr19 estimated skew', main = 'goat chrX and chr19', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+dev.off()
+
+
+#Compare to X chromosome
+index = match(goat_chr18_skew_and_stats_df$sample_id, goat_skew_and_stats_df$sample_id )
+#Reorder to match chromosome 18
+temp_goat_skew_and_stats_df = goat_skew_and_stats_df[index, ]
+#Filter for samples with at least 10 SNPs on each chromosome
+num_snp_index = goat_chr18_skew_and_stats_df$num_good_snps >= snp_thresh & temp_goat_skew_and_stats_df$num_good_snps_no_escape >= snp_thresh
+
+par(pty = 's')
+plot(temp_goat_skew_and_stats_df$est_skew_no_escape[num_snp_index], goat_chr18_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chrX estimated skew', 
+     ylab = 'chr18 estimated skew', main = 'goat chrX and chr18', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+
+#save
+pdf(file = '/home/werner/projects/cross_species_XCI/code/graphs/autosome_imbalance/goat_chr18_chrX_skew_scatter.pdf', useDingbats = F, height = 4, width = 4)
+par(pty = 's')
+plot(temp_goat_skew_and_stats_df$est_skew_no_escape[num_snp_index], goat_chr18_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chrX estimated skew', 
+     ylab = 'chr18 estimated skew', main = 'goat chrX and chr18', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+dev.off()
+
+
+#Add a filter for the samples that are imbalanced on the autosomes to the X skew_and_stats_df. Exclude these samples downstream
+goat_skew_and_stats_df$autosome_imbalance = goat_skew_and_stats_df$sample_id %in% bad_goat_samples
+save(goat_skew_and_stats_df, file = '/home/werner/projects/cross_species_XCI/data/species_data_analysis/capra_hircus/goat_skew_and_stats_autoFilt_df_7_12_23.Rdata')
+
+#Just sanity check I labeled the right samples
+index = match(goat_skew_and_stats_df$sample_id, goat_chr18_skew_and_stats_df$sample_id)
+temp_df = data.frame(chrX_skew = goat_skew_and_stats_df$est_skew_no_escape, chr18_skew = goat_chr18_skew_and_stats_df$est_skew[index], auto_imbalance = goat_skew_and_stats_df$autosome_imbalance)
+ggplot(temp_df, aes(x = chrX_skew, y = chr18_skew, color = auto_imbalance)) + geom_point() + ylim(.5, 1) + xlim(.5, 1)
+
+par(pty = 's')
+final_goat_skews = filter(goat_skew_and_stats_df, num_good_snps_no_escape >= 10 & autosome_imbalance == F)$est_skew_no_escape
+final_goat_skews_imbalanced = filter(goat_skew_and_stats_df, num_good_snps_no_escape >= 10)$est_skew_no_escape
+hist(unfold(final_goat_skews), breaks = seq(0,1,.025))
+hist(unfold(final_goat_skews_imbalanced), breaks = seq(0,1,.025))
+
+
+```
+
+
+dog
+```{r}
+index = match(dog_chr3_skew_and_stats_df$sample_id, dog_chr1_skew_and_stats_df$sample_id )
+#Reorder to match chromosome 3
+temp_dog_chr1_skew_and_stats_df = dog_chr1_skew_and_stats_df[index, ]
+#Filter for samples with at least 10 SNPs on both chromosomes
+num_snp_index = temp_dog_chr1_skew_and_stats_df$num_good_snps >= snp_thresh & dog_chr3_skew_and_stats_df$num_good_snps >= snp_thresh
+
+
+par(pty = 's')
+plot(temp_dog_chr1_skew_and_stats_df$est_skew[num_snp_index], dog_chr3_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chr1 estimated skew', 
+     ylab = 'chr3 estimated skew', main = 'dog autosome skew estimates', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+
+#save
+pdf(file = '/home/werner/projects/cross_species_XCI/code/graphs/autosome_imbalance/dog_chr1_chr3_skew_scatter.pdf', useDingbats = F, height = 4, width = 4)
+par(pty = 's')
+plot(temp_dog_chr1_skew_and_stats_df$est_skew[num_snp_index], dog_chr3_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chr1 estimated skew', 
+     ylab = 'chr3 estimated skew', main = 'dog autosome skew estimates', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+dev.off()
+
+#Grab the samples that are imbalanced on both autosomes
+bad_chr1_samples = filter(dog_chr1_skew_and_stats_df, est_skew >= imbalance_thresh & num_good_snps >= snp_thresh)$sample_id
+bad_chr3_samples = filter(dog_chr3_skew_and_stats_df, est_skew >= imbalance_thresh & num_good_snps >= snp_thresh)$sample_id
+bad_dog_samples = union(bad_chr1_samples, bad_chr3_samples)
+
+
+#Compare to X chromosome
+index = match(dog_chr3_skew_and_stats_df$sample_id, dog_skew_and_stats_df$sample_id )
+#Reorder to match chromosome 3
+temp_dog_skew_and_stats_df = dog_skew_and_stats_df[index, ]
+#Filter for samples with at least 10 SNPs on each chromosome
+num_snp_index = dog_chr3_skew_and_stats_df$num_good_snps >= snp_thresh & temp_dog_skew_and_stats_df$num_good_snps_no_escape >= snp_thresh
+
+par(pty = 's')
+plot(temp_dog_skew_and_stats_df$est_skew_no_escape[num_snp_index], dog_chr3_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chrX estimated skew', 
+     ylab = 'chr3 estimated skew', main = 'dog chrX and chr3', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+
+#save
+pdf(file = '/home/werner/projects/cross_species_XCI/code/graphs/autosome_imbalance/dog_chr3_chrX_skew_scatter.pdf', useDingbats = F, height = 4, width = 4)
+par(pty = 's')
+plot(temp_dog_skew_and_stats_df$est_skew_no_escape[num_snp_index], dog_chr3_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chrX estimated skew', 
+     ylab = 'chr3 estimated skew', main = 'dog chrX and chr3', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+dev.off()
+
+
+#Compare to X chromosome
+index = match(dog_chr1_skew_and_stats_df$sample_id, dog_skew_and_stats_df$sample_id )
+#Reorder to match chromosome 1
+temp_dog_skew_and_stats_df = dog_skew_and_stats_df[index, ]
+#Filter for samples with at least 10 SNPs on each chromosome
+num_snp_index = dog_chr1_skew_and_stats_df$num_good_snps >= snp_thresh & temp_dog_skew_and_stats_df$num_good_snps_no_escape >= snp_thresh
+
+par(pty = 's')
+plot(temp_dog_skew_and_stats_df$est_skew_no_escape[num_snp_index], dog_chr1_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chrX estimated skew', 
+     ylab = 'chr1 estimated skew', main = 'dog chrX and chr1', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+
+#save
+pdf(file = '/home/werner/projects/cross_species_XCI/code/graphs/autosome_imbalance/dog_chr1_chrX_skew_scatter.pdf', useDingbats = F, height = 4, width = 4)
+par(pty = 's')
+plot(temp_dog_skew_and_stats_df$est_skew_no_escape[num_snp_index], dog_chr1_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chrX estimated skew', 
+     ylab = 'chr1 estimated skew', main = 'dog chrX and chr1', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+dev.off()
+
+
+#Add a filter for the samples that are imbalanced on the autosomes to the X skew_and_stats_df. Exclude these samples downstream
+dog_skew_and_stats_df$autosome_imbalance = dog_skew_and_stats_df$sample_id %in% bad_dog_samples
+save(dog_skew_and_stats_df, file = '/home/werner/projects/cross_species_XCI/data/species_data_analysis/canis_lupus_familiaris/dog_skew_and_stats_autoFilt_df_7_12_23.Rdata')
+
+#Just sanity check I labeled the right samples
+index = match(dog_skew_and_stats_df$sample_id, dog_chr1_skew_and_stats_df$sample_id)
+temp_df = data.frame(chrX_skew = dog_skew_and_stats_df$est_skew_no_escape, chr1_skew = dog_chr1_skew_and_stats_df$est_skew[index], auto_imbalance = dog_skew_and_stats_df$autosome_imbalance)
+ggplot(temp_df, aes(x = chrX_skew, y = chr1_skew, color = auto_imbalance)) + geom_point() + ylim(.5, 1) + xlim(.5, 1)
+
+par(pty = 's')
+final_dog_skews = filter(dog_skew_and_stats_df, num_good_snps_no_escape >= 10 & autosome_imbalance == F)$est_skew_no_escape
+final_dog_skews_imbalanced = filter(dog_skew_and_stats_df, num_good_snps_no_escape >= 10)$est_skew_no_escape
+hist(unfold(final_dog_skews), breaks = seq(0,1,.025))
+hist(unfold(final_dog_skews_imbalanced), breaks = seq(0,1,.025))
+
+
+```
+
+
+
+horse
+```{r}
+index = match(horse_chr2_skew_and_stats_df$sample_id, horse_chr1_skew_and_stats_df$sample_id )
+#Reorder to match chromosome 2
+temp_horse_chr1_skew_and_stats_df = horse_chr1_skew_and_stats_df[index, ]
+#Filter for samples with at least 10 SNPs on both chromosomes
+num_snp_index = temp_horse_chr1_skew_and_stats_df$num_good_snps >= snp_thresh & horse_chr2_skew_and_stats_df$num_good_snps >= snp_thresh
+
+
+par(pty = 's')
+plot(temp_horse_chr1_skew_and_stats_df$est_skew[num_snp_index], horse_chr2_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chr1 estimated skew', 
+     ylab = 'chr2 estimated skew', main = 'horse autosome skew estimates', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+
+#save
+pdf(file = '/home/werner/projects/cross_species_XCI/code/graphs/autosome_imbalance/horse_chr1_chr2_skew_scatter.pdf', useDingbats = F, height = 4, width = 4)
+par(pty = 's')
+plot(temp_horse_chr1_skew_and_stats_df$est_skew[num_snp_index], horse_chr2_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chr1 estimated skew', 
+     ylab = 'chr2 estimated skew', main = 'horse autosome skew estimates', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+dev.off()
+
+#Grab the samples that are imbalanced on both autosomes
+bad_chr1_samples = filter(horse_chr1_skew_and_stats_df, est_skew >= imbalance_thresh & num_good_snps >= snp_thresh)$sample_id
+bad_chr2_samples = filter(horse_chr2_skew_and_stats_df, est_skew >= imbalance_thresh & num_good_snps >= snp_thresh)$sample_id
+bad_horse_samples = union(bad_chr1_samples, bad_chr2_samples)
+
+
+#Compare to X chromosome
+index = match(horse_chr2_skew_and_stats_df$sample_id, horse_skew_and_stats_df$sample_id )
+#Reorder to match chromosome 2
+temp_horse_skew_and_stats_df = horse_skew_and_stats_df[index, ]
+#Filter for samples with at least 10 SNPs on each chromosome
+num_snp_index = horse_chr2_skew_and_stats_df$num_good_snps >= snp_thresh & temp_horse_skew_and_stats_df$num_good_snps_no_escape >= snp_thresh
+
+par(pty = 's')
+plot(temp_horse_skew_and_stats_df$est_skew_no_escape[num_snp_index], horse_chr2_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chrX estimated skew', 
+     ylab = 'chr2 estimated skew', main = 'horse chrX and chr2', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+
+#save
+pdf(file = '/home/werner/projects/cross_species_XCI/code/graphs/autosome_imbalance/horse_chr2_chrX_skew_scatter.pdf', useDingbats = F, height = 4, width = 4)
+par(pty = 's')
+plot(temp_horse_skew_and_stats_df$est_skew_no_escape[num_snp_index], horse_chr2_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chrX estimated skew', 
+     ylab = 'chr2 estimated skew', main = 'horse chrX and chr2', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+dev.off()
+
+
+#Compare to X chromosome
+index = match(horse_chr1_skew_and_stats_df$sample_id, horse_skew_and_stats_df$sample_id )
+#Reorder to match chromosome 1
+temp_horse_skew_and_stats_df = horse_skew_and_stats_df[index, ]
+#Filter for samples with at least 10 SNPs on each chromosome
+num_snp_index = horse_chr1_skew_and_stats_df$num_good_snps >= snp_thresh & temp_horse_skew_and_stats_df$num_good_snps_no_escape >= snp_thresh
+
+par(pty = 's')
+plot(temp_horse_skew_and_stats_df$est_skew_no_escape[num_snp_index], horse_chr1_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chrX estimated skew', 
+     ylab = 'chr1 estimated skew', main = 'horse chrX and chr1', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+
+#save
+pdf(file = '/home/werner/projects/cross_species_XCI/code/graphs/autosome_imbalance/horse_chr1_chrX_skew_scatter.pdf', useDingbats = F, height = 4, width = 4)
+par(pty = 's')
+plot(temp_horse_skew_and_stats_df$est_skew_no_escape[num_snp_index], horse_chr1_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chrX estimated skew', 
+     ylab = 'chr1 estimated skew', main = 'horse chrX and chr1', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+dev.off()
+
+
+#Add a filter for the samples that are imbalanced on the autosomes to the X skew_and_stats_df. Exclude these samples downstream
+horse_skew_and_stats_df$autosome_imbalance = horse_skew_and_stats_df$sample_id %in% bad_horse_samples
+save(horse_skew_and_stats_df, file = '/home/werner/projects/cross_species_XCI/data/species_data_analysis/equus_caballus/horse_skew_and_stats_autoFilt_df_7_12_23.Rdata')
+
+#Just sanity check I labeled the right samples
+index = match(horse_skew_and_stats_df$sample_id, horse_chr1_skew_and_stats_df$sample_id)
+temp_df = data.frame(chrX_skew = horse_skew_and_stats_df$est_skew_no_escape, chr1_skew = horse_chr1_skew_and_stats_df$est_skew[index], auto_imbalance = horse_skew_and_stats_df$autosome_imbalance)
+ggplot(temp_df, aes(x = chrX_skew, y = chr1_skew, color = auto_imbalance)) + geom_point() + ylim(.5, 1) + xlim(.5, 1)
+
+par(pty = 's')
+final_horse_skews = filter(horse_skew_and_stats_df, num_good_snps_no_escape >= 10 & autosome_imbalance == F)$est_skew_no_escape
+final_horse_skews_imbalanced = filter(horse_skew_and_stats_df, num_good_snps_no_escape >= 10)$est_skew_no_escape
+hist(unfold(final_horse_skews), breaks = seq(0,1,.025))
+hist(unfold(final_horse_skews_imbalanced), breaks = seq(0,1,.025))
+
+```
+
+
+macaca
+```{r}
+index = match(macaca_chr8_skew_and_stats_df$sample_id, macaca_chr7_skew_and_stats_df$sample_id )
+#Reorder to match chromosome 8
+temp_macaca_chr7_skew_and_stats_df = macaca_chr7_skew_and_stats_df[index, ]
+#Filter for samples with at least 10 SNPs on both chromosomes
+num_snp_index = temp_macaca_chr7_skew_and_stats_df$num_good_snps >= snp_thresh & macaca_chr8_skew_and_stats_df$num_good_snps >= snp_thresh
+
+
+par(pty = 's')
+plot(temp_macaca_chr7_skew_and_stats_df$est_skew[num_snp_index], macaca_chr8_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chr7 estimated skew', 
+     ylab = 'chr8 estimated skew', main = 'macaca autosome skew estimates', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+
+#save
+pdf(file = '/home/werner/projects/cross_species_XCI/code/graphs/autosome_imbalance/macaca_chr7_chr8_skew_scatter.pdf', useDingbats = F, height = 4, width = 4)
+par(pty = 's')
+plot(temp_macaca_chr7_skew_and_stats_df$est_skew[num_snp_index], macaca_chr8_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chr7 estimated skew', 
+     ylab = 'chr8 estimated skew', main = 'macaca autosome skew estimates', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+dev.off()
+
+#Grab the samples that are imbalanced on both autosomes
+bad_chr7_samples = filter(macaca_chr7_skew_and_stats_df, est_skew >= imbalance_thresh & num_good_snps >= snp_thresh)$sample_id
+bad_chr8_samples = filter(macaca_chr8_skew_and_stats_df, est_skew >= imbalance_thresh & num_good_snps >= snp_thresh)$sample_id
+bad_macaca_samples = union(bad_chr7_samples, bad_chr8_samples)
+
+
+#Compare to X chromosome
+index = match(macaca_chr8_skew_and_stats_df$sample_id, macaca_skew_and_stats_df$sample_id )
+#Reorder to match chromosome 8
+temp_macaca_skew_and_stats_df = macaca_skew_and_stats_df[index, ]
+#Filter for samples with at least 10 SNPs on each chromosome
+num_snp_index = macaca_chr8_skew_and_stats_df$num_good_snps >= snp_thresh & temp_macaca_skew_and_stats_df$num_good_snps_no_escape >= snp_thresh
+
+par(pty = 's')
+plot(temp_macaca_skew_and_stats_df$est_skew_no_escape[num_snp_index], macaca_chr8_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chrX estimated skew', 
+     ylab = 'chr8 estimated skew', main = 'macaca chrX and chr8', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+
+#save
+pdf(file = '/home/werner/projects/cross_species_XCI/code/graphs/autosome_imbalance/macaca_chr8_chrX_skew_scatter.pdf', useDingbats = F, height = 4, width = 4)
+par(pty = 's')
+plot(temp_macaca_skew_and_stats_df$est_skew_no_escape[num_snp_index], macaca_chr8_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chrX estimated skew', 
+     ylab = 'chr8 estimated skew', main = 'macaca chrX and chr8', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+dev.off()
+
+
+#Compare to X chromosome
+index = match(macaca_chr7_skew_and_stats_df$sample_id, macaca_skew_and_stats_df$sample_id )
+#Reorder to match chromosome 7
+temp_macaca_skew_and_stats_df = macaca_skew_and_stats_df[index, ]
+#Filter for samples with at least 10 SNPs on each chromosome
+num_snp_index = macaca_chr7_skew_and_stats_df$num_good_snps >= snp_thresh & temp_macaca_skew_and_stats_df$num_good_snps_no_escape >= snp_thresh
+
+par(pty = 's')
+plot(temp_macaca_skew_and_stats_df$est_skew_no_escape[num_snp_index], macaca_chr7_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chrX estimated skew', 
+     ylab = 'chr7 estimated skew', main = 'macaca chrX and chr7', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+
+#save
+pdf(file = '/home/werner/projects/cross_species_XCI/code/graphs/autosome_imbalance/macaca_chr7_chrX_skew_scatter.pdf', useDingbats = F, height = 4, width = 4)
+par(pty = 's')
+plot(temp_macaca_skew_and_stats_df$est_skew_no_escape[num_snp_index], macaca_chr7_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chrX estimated skew', 
+     ylab = 'chr7 estimated skew', main = 'macaca chrX and chr7', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+dev.off()
+
+
+#Add a filter for the samples that are imbalanced on the autosomes to the X skew_and_stats_df. Exclude these samples downstream
+macaca_skew_and_stats_df$autosome_imbalance = macaca_skew_and_stats_df$sample_id %in% bad_macaca_samples
+save(macaca_skew_and_stats_df, file = '/home/werner/projects/cross_species_XCI/data/species_data_analysis/macaca_mulatta/macaca_skew_and_stats_autoFilt_df_7_12_23.Rdata')
+
+#Just sanity check I labeled the right samples
+index = match(macaca_skew_and_stats_df$sample_id, macaca_chr7_skew_and_stats_df$sample_id)
+temp_df = data.frame(chrX_skew = macaca_skew_and_stats_df$est_skew_no_escape, chr7_skew = macaca_chr7_skew_and_stats_df$est_skew[index], auto_imbalance = macaca_skew_and_stats_df$autosome_imbalance)
+ggplot(temp_df, aes(x = chrX_skew, y = chr7_skew, color = auto_imbalance)) + geom_point() + ylim(.5, 1) + xlim(.5, 1)
+
+
+par(pty = 's')
+final_macaca_skews = filter(macaca_skew_and_stats_df, num_good_snps_no_escape >= 10 & autosome_imbalance == F)$est_skew_no_escape
+final_macaca_skews_imbalanced = filter(macaca_skew_and_stats_df, num_good_snps_no_escape >= 10)$est_skew_no_escape
+hist(unfold(final_macaca_skews), breaks = seq(0,1,.025))
+hist(unfold(final_macaca_skews_imbalanced), breaks = seq(0,1,.025))
+
+```
+
+
+
+sheep
+using the union of bad samples as well, there are a few clearly imbalanced samples across the autosomes that the 0.60 threshold doesn't quite capture
+```{r}
+index = match(sheep_chr4_skew_and_stats_df$sample_id, sheep_chr3_skew_and_stats_df$sample_id )
+#Reorder to match chromosome 4
+temp_sheep_chr3_skew_and_stats_df = sheep_chr3_skew_and_stats_df[index, ]
+#Filter for samples with at least 10 SNPs on both chromosomes
+num_snp_index = temp_sheep_chr3_skew_and_stats_df$num_good_snps >= snp_thresh & sheep_chr4_skew_and_stats_df$num_good_snps >= snp_thresh
+
+
+par(pty = 's')
+plot(temp_sheep_chr3_skew_and_stats_df$est_skew[num_snp_index], sheep_chr4_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chr3 estimated skew', 
+     ylab = 'chr4 estimated skew', main = 'sheep autosome skew estimates', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+
+#save
+pdf(file = '/home/werner/projects/cross_species_XCI/code/graphs/autosome_imbalance/sheep_chr3_chr4_skew_scatter.pdf', useDingbats = F, height = 4, width = 4)
+par(pty = 's')
+plot(temp_sheep_chr3_skew_and_stats_df$est_skew[num_snp_index], sheep_chr4_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chr3 estimated skew', 
+     ylab = 'chr4 estimated skew', main = 'sheep autosome skew estimates', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+dev.off()
+
+#Grab the samples that are imbalanced on both autosomes
+bad_chr3_samples = filter(sheep_chr3_skew_and_stats_df, est_skew >= imbalance_thresh & num_good_snps >= snp_thresh)$sample_id
+bad_chr4_samples = filter(sheep_chr4_skew_and_stats_df, est_skew >= imbalance_thresh & num_good_snps >= snp_thresh)$sample_id
+bad_sheep_samples = union(bad_chr3_samples, bad_chr4_samples)
+
+
+#Compare to X chromosome
+index = match(sheep_chr4_skew_and_stats_df$sample_id, sheep_skew_and_stats_df$sample_id )
+#Reorder to match chromosome 4
+temp_sheep_skew_and_stats_df = sheep_skew_and_stats_df[index, ]
+#Filter for samples with at least 10 SNPs on each chromosome
+num_snp_index = sheep_chr4_skew_and_stats_df$num_good_snps >= snp_thresh & temp_sheep_skew_and_stats_df$num_good_snps_no_escape >= snp_thresh
+
+par(pty = 's')
+plot(temp_sheep_skew_and_stats_df$est_skew_no_escape[num_snp_index], sheep_chr4_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chrX estimated skew', 
+     ylab = 'chr4 estimated skew', main = 'sheep chrX and chr4', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+
+#save
+pdf(file = '/home/werner/projects/cross_species_XCI/code/graphs/autosome_imbalance/sheep_chr4_chrX_skew_scatter.pdf', useDingbats = F, height = 4, width = 4)
+par(pty = 's')
+plot(temp_sheep_skew_and_stats_df$est_skew_no_escape[num_snp_index], sheep_chr4_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chrX estimated skew', 
+     ylab = 'chr4 estimated skew', main = 'sheep chrX and chr4', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+dev.off()
+
+
+#Compare to X chromosome
+index = match(sheep_chr3_skew_and_stats_df$sample_id, sheep_skew_and_stats_df$sample_id )
+#Reorder to match chromosome 3
+temp_sheep_skew_and_stats_df = sheep_skew_and_stats_df[index, ]
+#Filter for samples with at least 10 SNPs on each chromosome
+num_snp_index = sheep_chr3_skew_and_stats_df$num_good_snps >= snp_thresh & temp_sheep_skew_and_stats_df$num_good_snps_no_escape >= snp_thresh
+
+par(pty = 's')
+plot(temp_sheep_skew_and_stats_df$est_skew_no_escape[num_snp_index], sheep_chr3_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chrX estimated skew', 
+     ylab = 'chr3 estimated skew', main = 'sheep chrX and chr3', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+
+#save
+pdf(file = '/home/werner/projects/cross_species_XCI/code/graphs/autosome_imbalance/sheep_chr3_chrX_skew_scatter.pdf', useDingbats = F, height = 4, width = 4)
+par(pty = 's')
+plot(temp_sheep_skew_and_stats_df$est_skew_no_escape[num_snp_index], sheep_chr3_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chrX estimated skew', 
+     ylab = 'chr3 estimated skew', main = 'sheep chrX and chr3', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+dev.off()
+
+
+#Add a filter for the samples that are imbalanced on the autosomes to the X skew_and_stats_df. Exclude these samples downstream
+sheep_skew_and_stats_df$autosome_imbalance = sheep_skew_and_stats_df$sample_id %in% bad_sheep_samples
+save(sheep_skew_and_stats_df, file = '/home/werner/projects/cross_species_XCI/data/species_data_analysis/ovis_aries/sheep_skew_and_stats_autoFilt_df_7_12_23.Rdata')
+
+#Just sanity check I labeled the right samples
+index = match(sheep_skew_and_stats_df$sample_id, sheep_chr3_skew_and_stats_df$sample_id)
+temp_df = data.frame(chrX_skew = sheep_skew_and_stats_df$est_skew_no_escape, chr3_skew = sheep_chr3_skew_and_stats_df$est_skew[index], auto_imbalance = sheep_skew_and_stats_df$autosome_imbalance)
+ggplot(temp_df, aes(x = chrX_skew, y = chr3_skew, color = auto_imbalance)) + geom_point() + ylim(.5, 1) + xlim(.5, 1)
+
+
+par(pty = 's')
+final_sheep_skews = filter(sheep_skew_and_stats_df, num_good_snps_no_escape >= 10 & autosome_imbalance == F)$est_skew_no_escape
+final_sheep_skews_imbalanced = filter(sheep_skew_and_stats_df, num_good_snps_no_escape >= 10)$est_skew_no_escape
+hist(unfold(final_sheep_skews), breaks = seq(0,1,.025))
+hist(unfold(final_sheep_skews_imbalanced), breaks = seq(0,1,.025))
+
+```
+
+
+
+pig
+```{r}
+index = match(pig_chr7_skew_and_stats_df$sample_id, pig_chr4_skew_and_stats_df$sample_id )
+#Reorder to match chromosome 7
+temp_pig_chr4_skew_and_stats_df = pig_chr4_skew_and_stats_df[index, ]
+#Filter for samples with at least 10 SNPs on both chromosomes
+num_snp_index = temp_pig_chr4_skew_and_stats_df$num_good_snps >= snp_thresh & pig_chr7_skew_and_stats_df$num_good_snps >= snp_thresh
+
+
+par(pty = 's')
+plot(temp_pig_chr4_skew_and_stats_df$est_skew[num_snp_index], pig_chr7_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chr4 estimated skew', 
+     ylab = 'chr7 estimated skew', main = 'pig autosome skew estimates', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+
+#save
+pdf(file = '/home/werner/projects/cross_species_XCI/code/graphs/autosome_imbalance/pig_chr4_chr7_skew_scatter.pdf', useDingbats = F, height = 4, width = 4)
+par(pty = 's')
+plot(temp_pig_chr4_skew_and_stats_df$est_skew[num_snp_index], pig_chr7_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chr4 estimated skew', 
+     ylab = 'chr7 estimated skew', main = 'pig autosome skew estimates', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+dev.off()
+
+#Grab the samples that are imbalanced on both autosomes
+bad_chr4_samples = filter(pig_chr4_skew_and_stats_df, est_skew >= imbalance_thresh & num_good_snps >= snp_thresh)$sample_id
+bad_chr7_samples = filter(pig_chr7_skew_and_stats_df, est_skew >= imbalance_thresh & num_good_snps >= snp_thresh)$sample_id
+bad_pig_samples = union(bad_chr4_samples, bad_chr7_samples)
+
+
+#Compare to X chromosome
+index = match(pig_chr7_skew_and_stats_df$sample_id, pig_skew_and_stats_df$sample_id )
+#Reorder to match chromosome 7
+temp_pig_skew_and_stats_df = pig_skew_and_stats_df[index, ]
+#Filter for samples with at least 10 SNPs on each chromosome
+num_snp_index = pig_chr7_skew_and_stats_df$num_good_snps >= snp_thresh & temp_pig_skew_and_stats_df$num_good_snps_no_escape >= snp_thresh
+
+par(pty = 's')
+plot(temp_pig_skew_and_stats_df$est_skew_no_escape[num_snp_index], pig_chr7_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chrX estimated skew', 
+     ylab = 'chr7 estimated skew', main = 'pig chrX and chr7', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+
+#save
+pdf(file = '/home/werner/projects/cross_species_XCI/code/graphs/autosome_imbalance/pig_chr7_chrX_skew_scatter.pdf', useDingbats = F, height = 4, width = 4)
+par(pty = 's')
+plot(temp_pig_skew_and_stats_df$est_skew_no_escape[num_snp_index], pig_chr7_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chrX estimated skew', 
+     ylab = 'chr7 estimated skew', main = 'pig chrX and chr7', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+dev.off()
+
+
+#Compare to X chromosome
+index = match(pig_chr4_skew_and_stats_df$sample_id, pig_skew_and_stats_df$sample_id )
+#Reorder to match chromosome 4
+temp_pig_skew_and_stats_df = pig_skew_and_stats_df[index, ]
+#Filter for samples with at least 10 SNPs on each chromosome
+num_snp_index = pig_chr4_skew_and_stats_df$num_good_snps >= snp_thresh & temp_pig_skew_and_stats_df$num_good_snps_no_escape >= snp_thresh
+
+par(pty = 's')
+plot(temp_pig_skew_and_stats_df$est_skew_no_escape[num_snp_index], pig_chr4_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chrX estimated skew', 
+     ylab = 'chr4 estimated skew', main = 'pig chrX and chr4', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+
+#save
+pdf(file = '/home/werner/projects/cross_species_XCI/code/graphs/autosome_imbalance/pig_chr4_chrX_skew_scatter.pdf', useDingbats = F, height = 4, width = 4)
+par(pty = 's')
+plot(temp_pig_skew_and_stats_df$est_skew_no_escape[num_snp_index], pig_chr4_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chrX estimated skew', 
+     ylab = 'chr4 estimated skew', main = 'pig chrX and chr4', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+dev.off()
+
+
+#Add a filter for the samples that are imbalanced on the autosomes to the X skew_and_stats_df. Exclude these samples downstream
+pig_skew_and_stats_df$autosome_imbalance = pig_skew_and_stats_df$sample_id %in% bad_pig_samples
+save(pig_skew_and_stats_df, file = '/home/werner/projects/cross_species_XCI/data/species_data_analysis/sus_scrofa/pig_skew_and_stats_autoFilt_df_7_12_23.Rdata')
+
+#Just sanity check I labeled the right samples
+index = match(pig_skew_and_stats_df$sample_id, pig_chr4_skew_and_stats_df$sample_id)
+temp_df = data.frame(chrX_skew = pig_skew_and_stats_df$est_skew_no_escape, chr4_skew = pig_chr4_skew_and_stats_df$est_skew[index], auto_imbalance = pig_skew_and_stats_df$autosome_imbalance)
+ggplot(temp_df, aes(x = chrX_skew, y = chr4_skew, color = auto_imbalance)) + geom_point() + ylim(.5, 1) + xlim(.5, 1)
+
+par(pty = 's')
+final_pig_skews = filter(pig_skew_and_stats_df, num_good_snps_no_escape >= 10 & autosome_imbalance == F)$est_skew_no_escape
+final_pig_skews_imbalanced = filter(pig_skew_and_stats_df, num_good_snps_no_escape >= 10)$est_skew_no_escape
+hist(unfold(final_pig_skews), breaks = seq(0,1,.025))
+hist(unfold(final_pig_skews_imbalanced), breaks = seq(0,1,.025))
+
+```
+
+
+cow
+```{r}
+index = match(cow_chr2_skew_and_stats_df$sample_id, cow_chr1_skew_and_stats_df$sample_id )
+#Reorder to match chromosome 2
+temp_cow_chr1_skew_and_stats_df = cow_chr1_skew_and_stats_df[index, ]
+#Filter for samples with at least 10 SNPs on both chromosomes
+num_snp_index = temp_cow_chr1_skew_and_stats_df$num_good_snps >= snp_thresh & cow_chr2_skew_and_stats_df$num_good_snps >= snp_thresh
+
+
+par(pty = 's')
+plot(temp_cow_chr1_skew_and_stats_df$est_skew[num_snp_index], cow_chr2_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chr1 estimated skew', 
+     ylab = 'chr2 estimated skew', main = 'cow autosome skew estimates', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+
+#save
+pdf(file = '/home/werner/projects/cross_species_XCI/code/graphs/autosome_imbalance/cow_chr1_chr2_skew_scatter.pdf', useDingbats = F, height = 4, width = 4)
+par(pty = 's')
+plot(temp_cow_chr1_skew_and_stats_df$est_skew[num_snp_index], cow_chr2_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chr1 estimated skew', 
+     ylab = 'chr2 estimated skew', main = 'cow autosome skew estimates', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+dev.off()
+
+#Grab the samples that are imbalanced on both autosomes
+bad_chr1_samples = filter(cow_chr1_skew_and_stats_df, est_skew >= imbalance_thresh & num_good_snps >= snp_thresh)$sample_id
+bad_chr2_samples = filter(cow_chr2_skew_and_stats_df, est_skew >= imbalance_thresh & num_good_snps >= snp_thresh)$sample_id
+bad_cow_samples = union(bad_chr1_samples, bad_chr2_samples)
+
+
+#Compare to X chromosome
+index = match(cow_chr2_skew_and_stats_df$sample_id, cow_skew_and_stats_df$sample_id )
+#Reorder to match chromosome 2
+temp_cow_skew_and_stats_df = cow_skew_and_stats_df[index, ]
+#Filter for samples with at least 10 SNPs on each chromosome
+num_snp_index = cow_chr2_skew_and_stats_df$num_good_snps >= snp_thresh & temp_cow_skew_and_stats_df$num_good_snps_no_escape >= snp_thresh
+
+par(pty = 's')
+plot(temp_cow_skew_and_stats_df$est_skew_no_escape[num_snp_index], cow_chr2_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chrX estimated skew', 
+     ylab = 'chr2 estimated skew', main = 'cow chrX and chr2', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+
+#save
+pdf(file = '/home/werner/projects/cross_species_XCI/code/graphs/autosome_imbalance/cow_chr2_chrX_skew_scatter.pdf', useDingbats = F, height = 4, width = 4)
+par(pty = 's')
+plot(temp_cow_skew_and_stats_df$est_skew_no_escape[num_snp_index], cow_chr2_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chrX estimated skew', 
+     ylab = 'chr2 estimated skew', main = 'cow chrX and chr2', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+dev.off()
+
+
+#Compare to X chromosome
+index = match(cow_chr1_skew_and_stats_df$sample_id, cow_skew_and_stats_df$sample_id )
+#Reorder to match chromosome 1
+temp_cow_skew_and_stats_df = cow_skew_and_stats_df[index, ]
+#Filter for samples with at least 10 SNPs on each chromosome
+num_snp_index = cow_chr1_skew_and_stats_df$num_good_snps >= snp_thresh & temp_cow_skew_and_stats_df$num_good_snps_no_escape >= snp_thresh
+
+par(pty = 's')
+plot(temp_cow_skew_and_stats_df$est_skew_no_escape[num_snp_index], cow_chr1_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chrX estimated skew', 
+     ylab = 'chr1 estimated skew', main = 'cow chrX and chr1', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+
+#save
+pdf(file = '/home/werner/projects/cross_species_XCI/code/graphs/autosome_imbalance/cow_chr1_chrX_skew_scatter.pdf', useDingbats = F, height = 4, width = 4)
+par(pty = 's')
+plot(temp_cow_skew_and_stats_df$est_skew_no_escape[num_snp_index], cow_chr1_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chrX estimated skew', 
+     ylab = 'chr1 estimated skew', main = 'cow chrX and chr1', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+dev.off()
+
+
+#Add a filter for the samples that are imbalanced on the autosomes to the X skew_and_stats_df. Exclude these samples downstream
+cow_skew_and_stats_df$autosome_imbalance = cow_skew_and_stats_df$sample_id %in% bad_cow_samples
+save(cow_skew_and_stats_df, file = '/home/werner/projects/cross_species_XCI/data/species_data_analysis/bos_taurus/cow_skew_and_stats_autoFilt_df_7_12_23.Rdata')
+
+#Just sanity check I labeled the right samples
+index = match(cow_skew_and_stats_df$sample_id, cow_chr1_skew_and_stats_df$sample_id)
+temp_df = data.frame(chrX_skew = cow_skew_and_stats_df$est_skew_no_escape, chr1_skew = cow_chr1_skew_and_stats_df$est_skew[index], auto_imbalance = cow_skew_and_stats_df$autosome_imbalance)
+ggplot(temp_df, aes(x = chrX_skew, y = chr1_skew, color = auto_imbalance)) + geom_point() + ylim(.5, 1) + xlim(.5, 1)
+
+par(pty = 's')
+final_cow_skews = filter(cow_skew_and_stats_df, num_good_snps_no_escape >= 10 & autosome_imbalance == F)$est_skew_no_escape
+final_cow_skews_imbalanced = filter(cow_skew_and_stats_df, num_good_snps_no_escape >= 10)$est_skew_no_escape
+hist(unfold(final_cow_skews), breaks = seq(0,1,.025))
+hist(unfold(final_cow_skews_imbalanced), breaks = seq(0,1,.025))
+
+```
+
+
+
+rat
+```{r}
+index = match(rat_chr6_skew_and_stats_df$sample_id, rat_chr5_skew_and_stats_df$sample_id )
+#Reorder to match chromosome 6
+temp_rat_chr5_skew_and_stats_df = rat_chr5_skew_and_stats_df[index, ]
+#Filter for samples with at least 10 SNPs on both chromosomes
+num_snp_index = temp_rat_chr5_skew_and_stats_df$num_good_snps >= snp_thresh & rat_chr6_skew_and_stats_df$num_good_snps >= snp_thresh
+
+
+par(pty = 's')
+plot(temp_rat_chr5_skew_and_stats_df$est_skew[num_snp_index], rat_chr6_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chr5 estimated skew', 
+     ylab = 'chr6 estimated skew', main = 'rat autosome skew estimates', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+
+#save
+pdf(file = '/home/werner/projects/cross_species_XCI/code/graphs/autosome_imbalance/rat_chr5_chr6_skew_scatter.pdf', useDingbats = F, height = 4, width = 4)
+par(pty = 's')
+plot(temp_rat_chr5_skew_and_stats_df$est_skew[num_snp_index], rat_chr6_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chr5 estimated skew', 
+     ylab = 'chr6 estimated skew', main = 'rat autosome skew estimates', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+dev.off()
+
+#Grab the samples that are imbalanced on both autosomes
+bad_chr5_samples = filter(rat_chr5_skew_and_stats_df, est_skew >= imbalance_thresh & num_good_snps >= snp_thresh)$sample_id
+bad_chr6_samples = filter(rat_chr6_skew_and_stats_df, est_skew >= imbalance_thresh & num_good_snps >= snp_thresh)$sample_id
+bad_rat_samples = union(bad_chr5_samples, bad_chr6_samples)
+
+
+#Compare to X chromosome
+index = match(rat_chr6_skew_and_stats_df$sample_id, rat_skew_and_stats_df$sample_id )
+#Reorder to match chromosome 6
+temp_rat_skew_and_stats_df = rat_skew_and_stats_df[index, ]
+#Filter for samples with at least 10 SNPs on each chromosome
+num_snp_index = rat_chr6_skew_and_stats_df$num_good_snps >= snp_thresh & temp_rat_skew_and_stats_df$num_good_snps_no_escape >= snp_thresh
+
+par(pty = 's')
+plot(temp_rat_skew_and_stats_df$est_skew_no_escape[num_snp_index], rat_chr6_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chrX estimated skew', 
+     ylab = 'chr6 estimated skew', main = 'rat chrX and chr6', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+
+#save
+pdf(file = '/home/werner/projects/cross_species_XCI/code/graphs/autosome_imbalance/rat_chr6_chrX_skew_scatter.pdf', useDingbats = F, height = 4, width = 4)
+par(pty = 's')
+plot(temp_rat_skew_and_stats_df$est_skew_no_escape[num_snp_index], rat_chr6_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chrX estimated skew', 
+     ylab = 'chr6 estimated skew', main = 'rat chrX and chr6', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+dev.off()
+
+
+#Compare to X chromosome
+index = match(rat_chr5_skew_and_stats_df$sample_id, rat_skew_and_stats_df$sample_id )
+#Reorder to match chromosome 5
+temp_rat_skew_and_stats_df = rat_skew_and_stats_df[index, ]
+#Filter for samples with at least 10 SNPs on each chromosome
+num_snp_index = rat_chr5_skew_and_stats_df$num_good_snps >= snp_thresh & temp_rat_skew_and_stats_df$num_good_snps_no_escape >= snp_thresh
+
+par(pty = 's')
+plot(temp_rat_skew_and_stats_df$est_skew_no_escape[num_snp_index], rat_chr5_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chrX estimated skew', 
+     ylab = 'chr5 estimated skew', main = 'rat chrX and chr5', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+
+#save
+pdf(file = '/home/werner/projects/cross_species_XCI/code/graphs/autosome_imbalance/rat_chr5_chrX_skew_scatter.pdf', useDingbats = F, height = 4, width = 4)
+par(pty = 's')
+plot(temp_rat_skew_and_stats_df$est_skew_no_escape[num_snp_index], rat_chr5_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chrX estimated skew', 
+     ylab = 'chr5 estimated skew', main = 'rat chrX and chr5', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+dev.off()
+
+
+#Add a filter for the samples that are imbalanced on the autosomes to the X skew_and_stats_df. Exclude these samples downstream
+rat_skew_and_stats_df$autosome_imbalance = rat_skew_and_stats_df$sample_id %in% bad_rat_samples
+save(rat_skew_and_stats_df, file = '/home/werner/projects/cross_species_XCI/data/species_data_analysis/rattus_norvegicus/rat_skew_and_stats_autoFilt_df_7_12_23.Rdata')
+
+#Just sanity check I labeled the right samples
+index = match(rat_skew_and_stats_df$sample_id, rat_chr5_skew_and_stats_df$sample_id)
+temp_df = data.frame(chrX_skew = rat_skew_and_stats_df$est_skew_no_escape, chr5_skew = rat_chr5_skew_and_stats_df$est_skew[index], auto_imbalance = rat_skew_and_stats_df$autosome_imbalance)
+ggplot(temp_df, aes(x = chrX_skew, y = chr5_skew, color = auto_imbalance)) + geom_point() + ylim(.5, 1) + xlim(.5, 1)
+
+
+par(pty = 's')
+final_rat_skews = filter(rat_skew_and_stats_df, num_good_snps_no_escape >= 10 & autosome_imbalance == F)$est_skew_no_escape
+final_rat_skews_imbalanced = filter(rat_skew_and_stats_df, num_good_snps_no_escape >= 10)$est_skew_no_escape
+hist(unfold(final_rat_skews), breaks = seq(0,1,.025))
+hist(unfold(final_rat_skews_imbalanced), breaks = seq(0,1,.025))
+```
+
+
+
+Human
+
+first add the full sampleId to the Xchr dataset to match to the autosomes
+
+```{r}
+#sample_metadata
+mapping = read.table('/home/werner/projects/cross_species_XCI/code/human_GTEx_XCI/code/sample_metadata_with_v8.txt', sep="\t", header = TRUE)
+
+human_skew_and_stats_df$sample_id = mapping$Run_s[human_skew_and_stats_df$sample_index]
+human_skew_and_stats_df
+
+```
+
+
+
+human
+```{r}
+
+
+index = match(human_chr8_skew_and_stats_df$sample_id, human_chr7_skew_and_stats_df$sample_id )
+#Reorder to match chromosome 8
+human_chr7_skew_and_stats_df = human_chr7_skew_and_stats_df[index, ]
+#Filter for samples with at least 10 SNPs on both chromosomes
+num_snp_index = human_chr7_skew_and_stats_df$num_good_snps >= snp_thresh & human_chr8_skew_and_stats_df$num_good_snps >= snp_thresh
+
+
+par(pty = 's')
+plot(human_chr7_skew_and_stats_df$est_skew[num_snp_index], human_chr8_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chr7 estimated skew', 
+     ylab = 'chr8 estimated skew', main = 'human autosome skew estimates', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+
+#save
+pdf(file = '/home/werner/projects/cross_species_XCI/code/graphs/autosome_imbalance/human_chr7_chr8_skew_scatter.pdf', useDingbats = F, height = 4, width = 4)
+par(pty = 's')
+plot(human_chr7_skew_and_stats_df$est_skew[num_snp_index], human_chr8_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chr7 estimated skew', 
+     ylab = 'chr8 estimated skew', main = 'human autosome skew estimates', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+dev.off()
+
+#Grab the samples that are imbalanced on both autosomes
+bad_chr7_samples = filter(human_chr7_skew_and_stats_df, est_skew >= imbalance_thresh & num_good_snps >= snp_thresh)$sample_id
+bad_chr8_samples = filter(human_chr8_skew_and_stats_df, est_skew >= imbalance_thresh & num_good_snps >= snp_thresh)$sample_id
+bad_human_samples = union(bad_chr7_samples, bad_chr8_samples)
+
+
+#Compare to X chromosome
+index = match(human_chr8_skew_and_stats_df$sample_id, human_skew_and_stats_df$sample_id )
+#Reorder to match chromosome 8
+temp_human_skew_and_stats_df = human_skew_and_stats_df[index, ]
+#Filter for samples with at least 10 SNPs on each chromosome
+num_snp_index = human_chr8_skew_and_stats_df$num_good_snps >= snp_thresh & temp_human_skew_and_stats_df$num_snps >= snp_thresh
+
+par(pty = 's')
+plot(temp_human_skew_and_stats_df$skew[num_snp_index], human_chr8_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chrX estimated skew', 
+     ylab = 'chr8 estimated skew', main = 'human chrX and chr8', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+
+#save
+pdf(file = '/home/werner/projects/cross_species_XCI/code/graphs/autosome_imbalance/human_chr8_chrX_skew_scatter.pdf', useDingbats = F, height = 4, width = 4)
+par(pty = 's')
+plot(temp_human_skew_and_stats_df$skew[num_snp_index], human_chr8_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chrX estimated skew', 
+     ylab = 'chr8 estimated skew', main = 'human chrX and chr8', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+dev.off()
+
+
+#Compare to X chromosome
+index = match(human_chr7_skew_and_stats_df$sample_id, human_skew_and_stats_df$sample_id )
+#Reorder to match chromosome 7
+temp_human_skew_and_stats_df = human_skew_and_stats_df[index, ]
+#Filter for samples with at least 10 SNPs on each chromosome
+num_snp_index = human_chr7_skew_and_stats_df$num_good_snps >= snp_thresh & temp_human_skew_and_stats_df$num_snps>= snp_thresh
+
+par(pty = 's')
+plot(temp_human_skew_and_stats_df$skew[num_snp_index], human_chr7_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chrX estimated skew', 
+     ylab = 'chr7 estimated skew', main = 'human chrX and chr7', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+
+#save
+pdf(file = '/home/werner/projects/cross_species_XCI/code/graphs/autosome_imbalance/human_chr7_chrX_skew_scatter.pdf', useDingbats = F, height = 4, width = 4)
+par(pty = 's')
+plot(temp_human_skew_and_stats_df$skew[num_snp_index], human_chr7_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chrX estimated skew', 
+     ylab = 'chr7 estimated skew', main = 'human chrX and chr7', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+dev.off()
+
+
+#Add a filter for the samples that are imbalanced on the autosomes to the X skew_and_stats_df. Exclude these samples downstream
+human_skew_and_stats_df$autosome_imbalance = human_skew_and_stats_df$sample_id %in% bad_human_samples
+human_skew_and_stats_df
+save(human_skew_and_stats_df, file = 'PATH_TO_HUMAN_SKEW_AND_STATS_AUTOSOME_FILTERING_DF')
+
+#Just sanity check I labeled the right samples
+index = match(human_skew_and_stats_df$sample_id, human_chr7_skew_and_stats_df$sample_id)
+temp_df = data.frame(chrX_skew = human_skew_and_stats_df$skew, chr7_skew = human_chr7_skew_and_stats_df$est_skew[index], auto_imbalance = human_skew_and_stats_df$autosome_imbalance)
+ggplot(temp_df, aes(x = chrX_skew, y = chr7_skew, color = auto_imbalance)) + geom_point() + ylim(.5, 1) + xlim(.5, 1)
+
+
+final_human_skews = filter(human_skew_and_stats_df, num_snps >= 10 & autosome_imbalance == F)$skew
+final_human_skews_imbalanced = filter(human_skew_and_stats_df, num_snps >= 10)$skew
+hist(unfold(final_human_skews), breaks = seq(0,1,.025))
+hist(unfold(final_human_skews_imbalanced), breaks = seq(0,1,.025))
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
