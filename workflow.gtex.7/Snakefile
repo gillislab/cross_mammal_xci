@@ -18,7 +18,7 @@ num_workers = config["num_workers"]
 worker_idx = config["worker_idx"]
 sample = config["sample"]
 genomedir = os.path.expanduser(f'~/data/cross_mammal_xci/genomes/{species}')
-datadir = os.path.expanduser('/grid/gillis/home/hover/data/cross_mammal_xci/gtex')
+datadir = os.path.expanduser('/grid/gillis/home/hover/data/cross_mammal_xci/gtex.7')
 homedir = os.path.expanduser("~/")
 #wdir = "/grid/gillis/home/hover/work/cmxci.gtex/Homo_sapiens"
 wdir = f"{homedir}work/cmxci.gtex/{species}"
@@ -57,6 +57,7 @@ rule all:
         #expand(wdir + "/{sample}.Aligned.out.bam", sample=SAMPLE),
         # samtools1
         expand(wdir + "/{sample}.Aligned.sortedByCoord.out.bam", sample=SAMPLE),
+        expand(wdir + "/{sample}.Aligned.sortedByCoord.out.bam.bai", sample=SAMPLE),
         # samtools2
         #expand(wdir + "/{sample}."+ chr +".bam", sample=SAMPLE),
         # gatk1
@@ -113,7 +114,7 @@ rule star_nowasp:
         
 rule samsort: 
     input:
-        bam = datadir + "/{sample}.Aligned.sortedByCoord.out.patched.md.bam"
+        bam = datadir + "/{sample}.Aligned.sortedByCoord.out.bam"
     output:
         qbam = wdir + "/{sample}.qsort.bam"
     resources:
@@ -145,12 +146,35 @@ rule bam_fastq:
         
 
 
-rule samtools1:
+#rule samtools1:
+#    priority: 3 
+#    input:
+#        abam = wdir + "/{sample}.Aligned.out.bam"    
+#    output:
+#        sbam = wdir + "/{sample}.Aligned.sortedByCoord.out.bam",
+#        sbai = wdir + "/{sample}.Aligned.sortedByCoord.out.bam.bai"
+#      
+#    resources:
+#        mem_mb=2048
+#    threads: 16
+    
+#    run:
+#        samtools_sort(infile=input.abam, 
+#                      outfile=output.sbam, 
+#                      memory=resources.mem_mb, 
+#                      nthreads=f"{threads}")
+#        samtools_index(infile=output.sbam, 
+#                       nthreads=f"{threads}")
+
+
+rule samtools1gtex7:
+    #
+    # Assume symlinks to .bam in work dir. just make index (.bai)
+    #
     priority: 3 
     input:
-        abam = wdir + "/{sample}.Aligned.out.bam"    
+        sbam = wdir + "/{sample}.Aligned.sortedByCoord.out.bam"  
     output:
-        sbam = wdir + "/{sample}.Aligned.sortedByCoord.out.bam",
         sbai = wdir + "/{sample}.Aligned.sortedByCoord.out.bam.bai"
       
     resources:
@@ -158,11 +182,7 @@ rule samtools1:
     threads: 16
     
     run:
-        samtools_sort(infile=input.abam, 
-                      outfile=output.sbam, 
-                      memory=resources.mem_mb, 
-                      nthreads=f"{threads}")
-        samtools_index(infile=output.sbam, 
+        samtools_index(infile=input.sbam, 
                        nthreads=f"{threads}")
 
 
