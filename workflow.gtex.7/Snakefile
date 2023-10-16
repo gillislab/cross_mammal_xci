@@ -101,9 +101,9 @@ rule star_nowasp:
         outprefix = wdir + "/{sample}."  
         
     resources:
-        mem_mb=3072
+        mem_mb=4096
 
-    threads: 16
+    threads: 8
     
     run:
         star_nowasp( end1=input.end1, 
@@ -311,8 +311,8 @@ rule star_wasp:
         gdir = genomedir ,
         outprefix = wdir + "/{sample}.wasp." + chr + "."
     resources:
-        mem_mb=3072
-    threads: 16
+        mem_mb=4096
+    threads: 8
     
     run:
         star_wasp( end1=input.end1, 
