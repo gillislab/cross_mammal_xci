@@ -179,7 +179,7 @@ rule samtools1gtex7:
       
     resources:
         mem_mb=2048
-    threads: 16
+    threads: 8
     
     run:
         samtools_index(infile=input.sbam, 
@@ -206,6 +206,7 @@ rule samtools2:
         #region=f"{chr}",
         #region = get_chr_label(genomedir, chr),
         qual = 10,
+    
     resources:
         mem_mb=4096  
     threads: 1        
@@ -334,7 +335,7 @@ rule samtools3:
     resources:
         mem_mb=3072
     
-    threads: 16
+    threads: 8
     run:
         samtools_sort(infile=input.wabam, 
                       outfile=output.wsbam, 
