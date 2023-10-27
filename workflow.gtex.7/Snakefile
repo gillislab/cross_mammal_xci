@@ -329,8 +329,8 @@ rule samtools3:
     input:         
         wabam = wdir + "/{sample}.wasp." +  str(chr) + ".Aligned.out.bam"
     output:        
-        wsbam = wdir + "/{sample}.wasp." +  str(chr) + ".Aligned.sortedByCoord.out.bam",
-        wsbai = wdir + "/{sample}.wasp." +  str(chr) + ".Aligned.sortedByCoord.out.bam.bai"
+        wsbam = temp( wdir + "/{sample}.wasp." +  str(chr) + ".Aligned.sortedByCoord.out.bam"),
+        wsbai = temp( wdir + "/{sample}.wasp." +  str(chr) + ".Aligned.sortedByCoord.out.bam.bai")
     
     resources:
         mem_mb=3072
