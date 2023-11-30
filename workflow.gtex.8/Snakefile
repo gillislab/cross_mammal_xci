@@ -32,7 +32,7 @@ if len(sample) >  0:
     logging.debug(f'explicit sample given: {sample}')
     SAMPLE = sample
 else:
-    (SAMPLE,) = glob_wildcards(datadir + "/{sample}.Aligned.sortedByCoord.out.bam")
+    (SAMPLE,) = glob_wildcards(datadir + "/{sample}.Aligned.sortedByCoord.out.patched.md.bam")
     #(SAMPLE,) = glob_wildcards(datadir + "/{sample}.Aligned.sortedByCoord.out.patched.md.bam")
     logging.debug(f'Initial sample number = {len(SAMPLE)}. Filtering...')
     SAMPLE = modulo_filter(SAMPLE, num_workers, worker_idx)
