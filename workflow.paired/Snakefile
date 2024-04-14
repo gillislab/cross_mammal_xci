@@ -59,6 +59,8 @@ wildcard_constraints:
 
 rule all:
     input:
+    	expand(wdir + "/{sample}.Aligned.out.bam", sample=SAMPLE ),
+    	expand(wdir + "/{sample}.ReadsPerGene.out.tab", sample=SAMPLE ),
         #expand(wdir + "/{sample}." +  chr + ".split.filtered.wig", sample=SAMPLE ),
         #expand(wdir + "/{sample}.wasp." +  chr + ".snps.vcf", sample=SAMPLE), 
         #expand(wdir + "/{sample}.wasp." +  chr + ".filtered.vcf", sample=SAMPLE), 
@@ -69,9 +71,13 @@ rule all:
         #expand(wdir + "/{sample}.wasp." +  chr + ".Aligned.sortedByCoord.out.bam", sample=SAMPLE),
         #expand(wdir + "/{sample}.wasp." +  chr + ".Aligned.sortedByCoord.out.bam.bai", sample=SAMPLE),
         #expand(wdir + "/{sample}.wasp." +  chr + ".filtered.vcf", sample=SAMPLE),
-        expand(wdir + "/{sample}.wasp." +  chr + ".snps.vcf", sample=SAMPLE),
-        expand(wdir + "/{sample}.wasp." +  chr + ".snps_filtered.vcf", sample=SAMPLE),
-        expand(wdir + "/{sample}.wasp." +  chr + ".split.filtered.wig", sample=SAMPLE ),        
+        
+        #
+        # FINAL SET FOR ENTIRE PIPELINE
+        #
+        #expand(wdir + "/{sample}.wasp." +  chr + ".snps.vcf", sample=SAMPLE),
+        #expand(wdir + "/{sample}.wasp." +  chr + ".snps_filtered.vcf", sample=SAMPLE),
+        #expand(wdir + "/{sample}.wasp." +  chr + ".split.filtered.wig", sample=SAMPLE ),        
         
         # FROM GENOME SETUP
         #gdict = genomedir + "/genome.dict",
@@ -164,7 +170,7 @@ rule star_nowasp:
         
     output:     
         abam=  wdir + "/{sample}.Aligned.out.bam",
-        rpg=   temp(wdir + "/{sample}.ReadsPerGene.out.tab"),
+        rpg=   wdir + "/{sample}.ReadsPerGene.out.tab",
         sjtab= temp(wdir + "/{sample}.SJ.out.tab"),
         log=   temp(wdir + "/{sample}.Log.out"),        
         plog=  temp(wdir + "/{sample}.Log.progress.out"),
