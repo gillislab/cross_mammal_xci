@@ -60,8 +60,8 @@ wildcard_constraints:
 
 rule all:
     input:
-		expand(wdir + "/{sample}.Aligned.out.bam", sample=SAMPLE ),
-		expand(wdir + "/{sample}.ReadsPerGene.out.tab", sample=SAMPLE ),    
+		#expand(wdir + "/{sample}.Aligned.out.bam", sample=SAMPLE ),
+		#expand(wdir + "/{sample}.ReadsPerGene.out.tab", sample=SAMPLE ),    
         #expand(wdir + "/{sample}." + str(chr) + ".split.filtered.wig", sample=SAMPLE ),
         #expand(wdir + "/{sample}.wasp." + chr + ".snps.vcf", sample=SAMPLE), 
         #expand(wdir + "/{sample}.wasp." + chr + ".filtered.vcf", sample=SAMPLE), 
@@ -76,9 +76,9 @@ rule all:
         #
         # FINAL SET FOR ENTIRE PIPELINE
         #
-        #expand(wdir + "/{sample}.wasp." + chr + ".snps.vcf", sample=SAMPLE),
-        #expand(wdir + "/{sample}.wasp." + chr + ".snps_filtered.vcf", sample=SAMPLE),
-        #expand(wdir + "/{sample}.wasp." + chr + ".split.filtered.wig", sample=SAMPLE )        
+        expand(wdir + "/{sample}.wasp." + chr + ".snps.vcf", sample=SAMPLE),
+        expand(wdir + "/{sample}.wasp." + chr + ".snps_filtered.vcf", sample=SAMPLE),
+        expand(wdir + "/{sample}.wasp." + chr + ".split.filtered.wig", sample=SAMPLE )        
          
         # testing. 
         #end1 = expand(wdir +  "/{sample}_1.fastq", sample=SAMPLE ),

@@ -59,8 +59,8 @@ wildcard_constraints:
 
 rule all:
     input:
-    	expand(wdir + "/{sample}.Aligned.out.bam", sample=SAMPLE ),
-    	expand(wdir + "/{sample}.ReadsPerGene.out.tab", sample=SAMPLE ),
+    	#expand(wdir + "/{sample}.Aligned.out.bam", sample=SAMPLE ),
+    	#expand(wdir + "/{sample}.ReadsPerGene.out.tab", sample=SAMPLE ),
         #expand(wdir + "/{sample}." +  chr + ".split.filtered.wig", sample=SAMPLE ),
         #expand(wdir + "/{sample}.wasp." +  chr + ".snps.vcf", sample=SAMPLE), 
         #expand(wdir + "/{sample}.wasp." +  chr + ".filtered.vcf", sample=SAMPLE), 
@@ -75,9 +75,9 @@ rule all:
         #
         # FINAL SET FOR ENTIRE PIPELINE
         #
-        #expand(wdir + "/{sample}.wasp." +  chr + ".snps.vcf", sample=SAMPLE),
-        #expand(wdir + "/{sample}.wasp." +  chr + ".snps_filtered.vcf", sample=SAMPLE),
-        #expand(wdir + "/{sample}.wasp." +  chr + ".split.filtered.wig", sample=SAMPLE ),        
+        expand(wdir + "/{sample}.wasp." +  chr + ".snps.vcf", sample=SAMPLE),
+        expand(wdir + "/{sample}.wasp." +  chr + ".snps_filtered.vcf", sample=SAMPLE),
+        expand(wdir + "/{sample}.wasp." +  chr + ".split.filtered.wig", sample=SAMPLE ),        
         
         # FROM GENOME SETUP
         #gdict = genomedir + "/genome.dict",
