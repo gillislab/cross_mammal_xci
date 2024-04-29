@@ -19,6 +19,11 @@ def handle_file(fn, single=None, paired=None):
     basename = os.path.basename(fn)
     dirname = os.path.dirname(fn)
     
+    if single is not None:
+        single = os.path.abspath( os.path.expanduser(single) )
+    if paired is not None:
+        paired = os.path.abspath( os.path.expanduser(paired) )
+       
     try:
         b = is_paired(fn)
         logging.debug(f'{fn} -> {b}')
@@ -42,7 +47,6 @@ def handle_file(fn, single=None, paired=None):
     except Exception as e:
         logging.error(f'problem with {fn}')
         logging.error(traceback.format_exc(None))
-
 
 
 def is_paired(filename):
