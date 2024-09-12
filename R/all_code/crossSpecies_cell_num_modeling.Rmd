@@ -195,8 +195,14 @@ num_snps_df$species = factor(num_snps_df$species, levels = c(mean_dist_order$spe
 
 ggplot(num_snps_df, aes(x = species, y = snp_counts, fill = species)) + geom_violin(scale = 'width') + scale_fill_manual(values = species_palette) +
   ylab('Number of well-powered SNPs per sample')
-ggsave(filename = 'number_of_snps_persample_violin_v2.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/ref_snp_filtering/', device = 'pdf', useDingbats = F, 
-       height = 4, width = 6)
+#ggsave(filename = 'number_of_snps_persample_violin_v2.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/ref_snp_filtering/', device = 'pdf', useDingbats = F, 
+#       height = 4, width = 6)
+
+
+save(num_snps_df, file = '/home/werner/projects/cross_species_XCI/final_plots/R/data_for_plots/num_snps_df.Rdata')
+
+
+
 ```
 
 
@@ -637,81 +643,6 @@ nrow(dog_inbred_df)
 ```
 
 
-
-Get the correlation between estimated XCI ratios and the incidence of singleton variants.
-Another measure of the association between rare variants and XCI ratios
-
-
-```{r}
-
-compare_skew_and_singletons = function(species_name, inbred_df, annot_vcfs, skew_df){
-  
-  #Get the variants that only show up once
-  singletons = inbred_df$variant[inbred_df$num_samps_detected == 1]
-  #Go through the cow samples and get the incidences of singletons per sample
-  singleton_incidence = vector(mode = 'numeric', length = length(annot_vcfs))
-  for(i in 1:length(annot_vcfs)){
-    if(is.null(dim(annot_vcfs[[i]]))){singleton_incidence[i] = NA; next}
-  
-    data = annot_vcfs[[i]]
-    data_variants = paste0(data$Pos,paste0(data$ref, data$alt))
-    singleton_incidence[i] = sum(data_variants %in% singletons) / length(data_variants)
-  }
-  #Compare to the estimated XCI ratio of the samples and get the correlation
-  filter_num_snps = skew_df$num_good_snps_no_escape >= 10
-  par(pty = 's')
-  species_corr = cor(skew_df$est_skew_no_escape[filter_num_snps], singleton_incidence[filter_num_snps], method = 'spearman')
-  plot(skew_df$est_skew_no_escape[filter_num_snps], singleton_incidence[filter_num_snps], main = sprintf('%s, corr: %1.3f',species_name, species_corr),
-       xlab = 'Estimated XCI ratio', ylab = 'Singleton variant incidence', xlim = c(.5,1), ylim = c(0,1))
-}
-
-
-compare_skew_and_singletons('Cow', cow_inbred_df, annot_cow_vcfs, cow_skew_and_stats_df)
-
-compare_skew_and_singletons('Pig', pig_inbred_df, annot_pig_vcfs, pig_skew_and_stats_df)
-
-compare_skew_and_singletons('Horse', horse_inbred_df, annot_horse_vcfs, horse_skew_and_stats_df)
-
-compare_skew_and_singletons('Sheep', sheep_inbred_df, annot_sheep_vcfs, sheep_skew_and_stats_df)
-
-compare_skew_and_singletons('Goat', goat_inbred_df, annot_goat_vcfs, goat_skew_and_stats_df)
-
-compare_skew_and_singletons('Dog', dog_inbred_df, annot_dog_vcfs, dog_skew_and_stats_df)
-
-compare_skew_and_singletons('Rat', rat_inbred_df, annot_rat_vcfs, rat_skew_and_stats_df)
-
-compare_skew_and_singletons('Mouse', mouse_inbred_df, annot_mouse_vcfs, mouse_skew_and_stats_df)
-
-compare_skew_and_singletons('Macaca', macaca_inbred_df, annot_macaca_vcfs, macaca_skew_and_stats_df)
-
-```
-human singleton data
-```{r}
-
-#Get the variants that only show up once
-human_singletons = human_inbred_df$variant[human_inbred_df$num_samps_detected == 1]
-#Go through the cow samples and get the incidences of singletons per sample
-human_singleton_incidence = vector(mode = 'numeric', length = length(list.vcf))
-for(i in 1:length(list.vcf)){
-  if(is.null(dim(list.vcf[[i]]))){human_singleton_incidence[i] = NA; next}
-
-  data = list.vcf[[i]]
-  data_variants = paste0(data[ ,1],paste0(data$V3, data$V4))
-  human_singleton_incidence[i] = sum(data_variants %in% human_singletons) / length(data_variants)
-}
-#Compare to the estimated XCI ratio of the samples and get the correlation
-sample_index_num_snps = human_skew_and_stats_df$sample_index[human_skew_and_stats_df$num_snps >= 10]
-filter_num_snps = human_skew_and_stats_df$num_snps >= 10
-par(pty = 's')
-species_corr = cor(human_skew_and_stats_df$skew[filter_num_snps], human_singleton_incidence[sample_index_num_snps], method = 'spearman')
-plot(human_skew_and_stats_df$skew[filter_num_snps], human_singleton_incidence[sample_index_num_snps], main = sprintf('Human, corr: %1.3f', species_corr),
-     xlab = 'Estimated XCI ratio', ylab = 'Singleton variant incidence', xlim = c(.5,1), ylim = c(0,1))
-
-
-
-```
-
-
 ######################################################################
 Measures of heterozygousity
 For each sample, fraction is # of het sites over # of all het sites detected in species
@@ -749,16 +680,16 @@ compare_heterozygosity_and_xci = function(inbred_df, annot_vcf, species_name, sk
     ylim(.5, 1) + ylab('Estimated XCI ratio') + xlab('Heterozygousity') + ggtitle(sprintf('%s corr: %0.3f', species_name, corr))
   print(p1)
   file_name = sprintf('%s_het_exp_skew_scatter_v2.pdf', species_name)
-  ggsave(plot = p1, filename = file_name, path = '/home/werner/projects/cross_species_XCI/code/graphs/heterozygousity/', device = 'pdf', 
-         useDingbats = F, height = 3, width = 4)
+  #ggsave(plot = p1, filename = file_name, path = '/home/werner/projects/cross_species_XCI/code/graphs/heterozygousity/', device = 'pdf', 
+  #       useDingbats = F, height = 3, width = 4)
   
   corr = cor(het_df$het_fraction, het_df$est_var_no_escape, method = 'spearman', use = 'complete.obs')
   p2 = ggplot(het_df, aes(x = log10(het_fraction), y = est_var_no_escape)) + geom_bin2d(bins = 25) + scale_fill_continuous(type = "viridis") +
     ylab('Estimated XCI SD') + xlab('Heterozygousity') + ggtitle(sprintf('%s corr: %0.3f',species_name, corr))
   print(p2)
   file_name = sprintf('%s_het_exp_var_scatter_v2.pdf', species_name)
-  ggsave(plot = p2, filename = file_name, path = '/home/werner/projects/cross_species_XCI/code/graphs/heterozygousity/', device = 'pdf', 
-         useDingbats = F, height = 3, width = 4)
+  #ggsave(plot = p2, filename = file_name, path = '/home/werner/projects/cross_species_XCI/code/graphs/heterozygousity/', device = 'pdf', 
+  #       useDingbats = F, height = 3, width = 4)
   
   return(het_df)
 }
@@ -794,13 +725,13 @@ human_het_df = data.frame(het_fraction = human_het_fraction[sample_size_index], 
 human_corr = cor(human_het_df$het_fraction, human_het_df$est_skew_no_escape, method = 'spearman', use = 'complete.obs')
 ggplot(human_het_df, aes(x = log10(het_fraction), y = est_skew_no_escape)) + geom_bin2d(bins = 25) + scale_fill_continuous(type = "viridis") +
   ylim(.5, 1) + ylab('Estimated XCI ratio') + xlab('Heterozygousity') + ggtitle(sprintf('human corr: %0.3f', human_corr))
-ggsave(filename = 'human_het_exp_skew_scatter_v2.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/heterozygousity/', device = 'pdf', 
-       useDingbats = F, height = 3, width = 4)
+#ggsave(filename = 'human_het_exp_skew_scatter_v2.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/heterozygousity/', device = 'pdf', 
+#       useDingbats = F, height = 3, width = 4)
 human_corr = cor(human_het_df$het_fraction, human_het_df$est_var_no_escape, method = 'spearman', use = 'complete.obs')
 ggplot(human_het_df, aes(x = log10(het_fraction), y = est_var_no_escape)) + geom_bin2d(bins = 25) + scale_fill_continuous(type = "viridis") +
   ylab('Estimated XCI SD') + xlab('Heterozygousity') + ggtitle(sprintf('human corr: %0.3f', human_corr))
-ggsave(filename = 'human_het_exp_var_scatter_v2.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/heterozygousity/', device = 'pdf', 
-       useDingbats = F, height = 3, width = 4)
+#ggsave(filename = 'human_het_exp_var_scatter_v2.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/heterozygousity/', device = 'pdf', 
+#       useDingbats = F, height = 3, width = 4)
 
 
 
@@ -828,8 +759,16 @@ all_species_het_frac_df$label = factor( all_species_het_frac_df$label, levels = 
 ggplot(all_species_het_frac_df, aes(x = label, y = log10(het_fracs), fill = label)) + geom_violin(scale = 'width') + geom_boxplot(outlier.shape = NA, width = .5, show.legend = F ) +
   ylab('Sample heterozygousity') + xlab('Species') +
   scale_fill_manual(values = species_palette, breaks = levels(all_species_het_frac_df$label))
-ggsave(filename = 'species_het_frac_distr_v2.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/heterozygousity/', device = 'pdf', 
-       useDingbats = F, height = 4, width = 6)
+#ggsave(filename = 'species_het_frac_distr_v2.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/heterozygousity/', device = 'pdf', 
+#       useDingbats = F, height = 4, width = 6)
+
+```
+
+
+```{r}
+
+save(cow_het_df, rat_het_df, mouse_het_df, macaca_het_df, pig_het_df, sheep_het_df, goat_het_df, dog_het_df,horse_het_df, human_het_df, 
+     file = '/home/werner/projects/cross_species_XCI/final_plots/R/data_for_plots/all_species_het_dfs.Rdata')
 
 ```
 
@@ -937,9 +876,11 @@ ggplot(het_corr_df, aes(x = corrs_label, y = corrs)) + geom_violin(scale = 'widt
   geom_label_repel(aes(label = species_label, fill = species_label), color = 'white',box.padding = 0.5) +
   guides(fill = guide_legend(override.aes = aes(label = ""))) +
   ylab('Correlation with sample heterozygousity (spearman)') + xlab('')
-ggsave(filename = 'het_corr_violin_plot_v2.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/heterozygousity/', device = 'pdf', 
-       useDingbats = F, height = 4, width = 6)
+#ggsave(filename = 'het_corr_violin_plot_v2.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/heterozygousity/', device = 'pdf', 
+#       useDingbats = F, height = 4, width = 6)
 ```
+
+
 ```{r}
 
 save(het_corr_df, file = '/home/werner/projects/cross_species_XCI/data/species_data_analysis/heterozygousity/het_corr_df_v2.Rdata')
@@ -949,7 +890,7 @@ save(het_corr_df, file = '/home/werner/projects/cross_species_XCI/data/species_d
 
 ```{r}
 
-load( file = '/home/werner/projects/cross_species_XCI/data/species_data_analysis/heterozygousity/het_corr_df.Rdata')
+load( file = '/home/werner/projects/cross_species_XCI/data/species_data_analysis/heterozygousity/het_corr_df_v2.Rdata')
 
 ```
 
@@ -1086,50 +1027,51 @@ species_squared_error_df = data.frame(n_vec = n_vec, horse_error = horse_squared
                                       sheep_error = sheep_squared_error, goat_error = goat_squared_error, rat_error = rat_squared_error, 
                                       mouse_error = mouse_squared_error, macaca_error = macaca_squared_error, pig_error = pig_squared_error)
 
-pdf(file = '/home/werner/projects/cross_species_XCI/code/graphs/est_cell_num/error_plots/horse_x_cell_num_error.pdf', useDingbats = F, height = 4, width = 6)
+#pdf(file = '/home/werner/projects/cross_species_XCI/code/graphs/est_cell_num/error_plots/horse_x_cell_num_error.pdf', useDingbats = F, height = 4, width = 6)
 plot(species_squared_error_df$n_vec, species_squared_error_df$horse_error, main = 'Horse squared error', xlab = 'Cell number estimate', ylab = 'Sum squared error')
 abline(v = species_squared_error_df$n_vec[which.min(species_squared_error_df$horse_error)], col = 'red')
-dev.off()
+#dev.off()
 
-pdf(file = '/home/werner/projects/cross_species_XCI/code/graphs/est_cell_num/error_plots/dog_x_cell_num_error.pdf', useDingbats = F, height = 4, width = 6)
+#pdf(file = '/home/werner/projects/cross_species_XCI/code/graphs/est_cell_num/error_plots/dog_x_cell_num_error.pdf', useDingbats = F, height = 4, width = 6)
 plot(species_squared_error_df$n_vec, species_squared_error_df$dog_error, main = 'dog squared error', xlab = 'Cell number estimate', ylab = 'Sum squared error')
 abline(v = species_squared_error_df$n_vec[which.min(species_squared_error_df$dog_error)], col = 'red')
-dev.off()
+#dev.off()
 
-pdf(file = '/home/werner/projects/cross_species_XCI/code/graphs/est_cell_num/error_plots/cow_x_cell_num_error.pdf', useDingbats = F, height = 4, width = 6)
+#pdf(file = '/home/werner/projects/cross_species_XCI/code/graphs/est_cell_num/error_plots/cow_x_cell_num_error.pdf', useDingbats = F, height = 4, width = 6)
 plot(species_squared_error_df$n_vec, species_squared_error_df$cow_error, main = 'cow squared error', xlab = 'Cell number estimate', ylab = 'Sum squared error')
 abline(v = species_squared_error_df$n_vec[which.min(species_squared_error_df$cow_error)], col = 'red')
-dev.off()
+#dev.off()
 
-pdf(file = '/home/werner/projects/cross_species_XCI/code/graphs/est_cell_num/error_plots/sheep_x_cell_num_error.pdf', useDingbats = F, height = 4, width = 6)
+#pdf(file = '/home/werner/projects/cross_species_XCI/code/graphs/est_cell_num/error_plots/sheep_x_cell_num_error.pdf', useDingbats = F, height = 4, width = 6)
 plot(species_squared_error_df$n_vec, species_squared_error_df$sheep_error, main = 'sheep squared error', xlab = 'Cell number estimate', ylab = 'Sum squared error')
 abline(v = species_squared_error_df$n_vec[which.min(species_squared_error_df$sheep_error)], col = 'red')
-dev.off()
+#dev.off()
 
-pdf(file = '/home/werner/projects/cross_species_XCI/code/graphs/est_cell_num/error_plots/goat_x_cell_num_error.pdf', useDingbats = F, height = 4, width = 6)
+#pdf(file = '/home/werner/projects/cross_species_XCI/code/graphs/est_cell_num/error_plots/goat_x_cell_num_error.pdf', useDingbats = F, height = 4, width = 6)
 plot(species_squared_error_df$n_vec, species_squared_error_df$goat_error, main = 'goat squared error', xlab = 'Cell number estimate', ylab = 'Sum squared error')
 abline(v = species_squared_error_df$n_vec[which.min(species_squared_error_df$goat_error)], col = 'red')
-dev.off()
+#dev.off()
 
-pdf(file = '/home/werner/projects/cross_species_XCI/code/graphs/est_cell_num/error_plots/rat_x_cell_num_error.pdf', useDingbats = F, height = 4, width = 6)
+#pdf(file = '/home/werner/projects/cross_species_XCI/code/graphs/est_cell_num/error_plots/rat_x_cell_num_error.pdf', useDingbats = F, height = 4, width = 6)
 plot(species_squared_error_df$n_vec, species_squared_error_df$rat_error, main = 'rat squared error', xlab = 'Cell number estimate', ylab = 'Sum squared error')
 abline(v = species_squared_error_df$n_vec[which.min(species_squared_error_df$rat_error)], col = 'red')
-dev.off()
+#dev.off()
 
-pdf(file = '/home/werner/projects/cross_species_XCI/code/graphs/est_cell_num/error_plots/mouse_x_cell_num_error.pdf', useDingbats = F, height = 4, width = 6)
+#pdf(file = '/home/werner/projects/cross_species_XCI/code/graphs/est_cell_num/error_plots/mouse_x_cell_num_error.pdf', useDingbats = F, height = 4, width = 6)
 plot(species_squared_error_df$n_vec, species_squared_error_df$mouse_error, main = 'mouse squared error', xlab = 'Cell number estimate', ylab = 'Sum squared error')
 abline(v = species_squared_error_df$n_vec[which.min(species_squared_error_df$mouse_error)], col = 'red')
-dev.off()
+#dev.off()
 
-pdf(file = '/home/werner/projects/cross_species_XCI/code/graphs/est_cell_num/error_plots/macaca_x_cell_num_error.pdf', useDingbats = F, height = 4, width = 6)
+#pdf(file = '/home/werner/projects/cross_species_XCI/code/graphs/est_cell_num/error_plots/macaca_x_cell_num_error.pdf', useDingbats = F, height = 4, width = 6)
 plot(species_squared_error_df$n_vec, species_squared_error_df$macaca_error, main = 'macaca squared error', xlab = 'Cell number estimate', ylab = 'Sum squared error')
 abline(v = species_squared_error_df$n_vec[which.min(species_squared_error_df$macaca_error)], col = 'red')
-dev.off()
+#dev.off()
 
-pdf(file = '/home/werner/projects/cross_species_XCI/code/graphs/est_cell_num/error_plots/pig_x_cell_num_error.pdf', useDingbats = F, height = 4, width = 6)
+#pdf(file = '/home/werner/projects/cross_species_XCI/code/graphs/est_cell_num/error_plots/pig_x_cell_num_error.pdf', useDingbats = F, height = 4, width = 6)
 plot(species_squared_error_df$n_vec, species_squared_error_df$pig_error, main = 'pig squared error', xlab = 'Cell number estimate', ylab = 'Sum squared error')
 abline(v = species_squared_error_df$n_vec[which.min(species_squared_error_df$pig_error)], col = 'red')
-dev.off()
+#dev.off()
+
 
 ```
 
@@ -1235,13 +1177,53 @@ ggsave(plot = g, filename = 'cell_32_example_fit.pdf' ,
 
 
 
+Prep the human data
+use the aggregated vcfs per donor 
+```{r}
+
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/homo_sapiens/agg_gtex_skew_and_stats_df.Rdata')
+
+n_min = 2
+n_max = 200
+n_vec = n_min:n_max
+agg_gtex_squared_error = get_cell_num_error_ests(agg_gtex_skew_and_stats_df$est_skew[agg_gtex_skew_and_stats_df$num_good_snps >= 10], n_min, n_max)
+sprintf('Aggregated GTEx estimated cell num: %i', n_vec[which.min(agg_gtex_squared_error)])
+human_est_n = n_vec[which.min(agg_gtex_squared_error)]
+#Plot the error per cell number estimate
+#pdf(file = '/home/werner/projects/cross_species_XCI/code/graphs/est_cell_num/error_plots/human_x_cell_num_error.pdf', useDingbats = F, height = 4, width = 6)
+plot(n_vec, agg_gtex_squared_error, main = 'human squared error', xlab = 'Cell number estimate', ylab = 'Sum squared error')
+abline(v = human_est_n, col = 'red')
+#dev.off()
+
+
+#And get the confidence intervals
+human_ci = get_bootstrap_ci(agg_gtex_skew_and_stats_df$est_skew[agg_gtex_skew_and_stats_df$num_good_snps >= 10], cellN_min = 2, cellN_max = 200, num_bootstraps = 2000, ci = .95)
+
+
+```
+
+Save with the human data
+
+```{r}
+
+species_squared_error_df$human_error = agg_gtex_squared_error
+save(species_squared_error_df, file = '/home/werner/projects/cross_species_XCI/final_plots/R/data_for_plots/species_squared_error_df')
+```
+
+
+
+
 ```{r}
 
 all_skew_and_stats = list(horse_skew_and_stats_df, dog_skew_and_stats_df, cow_skew_and_stats_df, sheep_skew_and_stats_df, 
-                          goat_skew_and_stats_df, rat_skew_and_stats_df, mouse_skew_and_stats_df, macaca_skew_and_stats_df, pig_skew_and_stats_df)
+                          goat_skew_and_stats_df, rat_skew_and_stats_df, mouse_skew_and_stats_df, macaca_skew_and_stats_df, pig_skew_and_stats_df, agg_gtex_skew_and_stats_df)
  
-names(all_skew_and_stats) = c('Horse','Dog','Cow','Sheep','Goat','Rat','Mouse','Macaca','Pig')
+names(all_skew_and_stats) = c('Horse','Dog','Cow','Sheep','Goat','Rat','Mouse','Macaca','Pig', 'Human')
 all_skew_and_stats
+
+save(horse_skew_and_stats_df, dog_skew_and_stats_df, cow_skew_and_stats_df, sheep_skew_and_stats_df, 
+                          goat_skew_and_stats_df, rat_skew_and_stats_df, mouse_skew_and_stats_df, macaca_skew_and_stats_df, pig_skew_and_stats_df, agg_gtex_skew_and_stats_df, 
+     file = '/home/werner/projects/cross_species_XCI/final_plots/R/data_for_plots/all_species_skew_and_stats_df.Rdata')
 ```
 
 
@@ -1276,8 +1258,14 @@ for(j in 1:length(all_skew_and_stats)){
   color_vec = rep(specie_color, length(binned_x_axis))
   color_vec[binned_x_axis >= 0.4 & binned_x_axis <= 0.6] = 'grey'
   
-  skews = unfold(filter(species_skew_and_stat_df, num_good_snps_no_escape >= 10 & autosome_imbalance == F)$est_skew_no_escape)
-  df = data.frame(skews = skews)
+  
+  if(species_name == 'Human'){
+    skews = unfold(agg_gtex_skew_and_stats_df$est_skew[agg_gtex_skew_and_stats_df$num_good_snps >= 10])
+    df = data.frame(skews = skews)
+  }else{
+    skews = unfold(filter(species_skew_and_stat_df, num_good_snps_no_escape >= 10 & autosome_imbalance == F)$est_skew_no_escape)
+    df = data.frame(skews = skews)
+  }
   
   g = ggplot(df, aes(x = skews)) + geom_histogram(aes(y = ..density..), fill = fill_vec, color = color_vec, binwidth = 1/num_bins) +
     xlim(0,1)+ xlab(sprintf('%s XCI ratios', species_name)) + ggtitle(sprintf('%s population XCI ratio distribution', species_name)) +
@@ -1295,98 +1283,28 @@ for(j in 1:length(all_skew_and_stats)){
           legend.position = c(.8,.75))  
   print(g)
 
-  ggsave(plot = g, filename = sprintf('%s_normal_fits_binnedFilt_auto_balanced_v2.pdf', species_name) ,
-         path ='/home/werner/projects/cross_species_XCI/code/graphs/est_cell_num/', 
-         width = 6, height = 4, useDingbats = FALSE)
-
+  
+  if(species_name == 'Human'){
+    #ggsave(plot = g, filename = 'agg_donor_human_normal_fits_v2.pdf' ,
+    #path ='/home/werner/projects/cross_species_XCI/code/graphs/est_cell_num/', 
+    #width = 6, height = 4, useDingbats = FALSE)
+  }else{
+    #ggsave(plot = g, filename = sprintf('%s_normal_fits_binnedFilt_auto_balanced_v2.pdf', species_name) ,
+  #       path ='/home/werner/projects/cross_species_XCI/code/graphs/est_cell_num/', 
+  #       width = 6, height = 4, useDingbats = FALSE)
+  }
+  
 }
 
 ```
 
 
-Human distribution
-use the aggregated vcfs per donor 
-
-```{r}
-
-load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/homo_sapiens/agg_gtex_skew_and_stats_df.Rdata')
-agg_gtex_skew_and_stats_df
-
-hist(unfold(agg_gtex_skew_and_stats_df$est_skew), breaks = seq(0,1,.005))
-```
-
-```{r}
-
-n_min = 2
-n_max = 200
-n_vec = n_min:n_max
-agg_gtex_squared_error = get_cell_num_error_ests(agg_gtex_skew_and_stats_df$est_skew[agg_gtex_skew_and_stats_df$num_good_snps >= 10], n_min, n_max)
-sprintf('Aggregated GTEx estimated cell num: %i', n_vec[which.min(agg_gtex_squared_error)])
 
 
-human_est_n = n_vec[which.min(agg_gtex_squared_error)]
-
-#Plot the error per cell number estimate
-pdf(file = '/home/werner/projects/cross_species_XCI/code/graphs/est_cell_num/error_plots/human_x_cell_num_error.pdf', useDingbats = F, height = 4, width = 6)
-plot(n_vec, agg_gtex_squared_error, main = 'human squared error', xlab = 'Cell number estimate', ylab = 'Sum squared error')
-abline(v = human_est_n, col = 'red')
-dev.off()
 
 
-#And get the confidence intervals
-human_ci = get_bootstrap_ci(agg_gtex_skew_and_stats_df$est_skew[agg_gtex_skew_and_stats_df$num_good_snps >= 10], cellN_min = 2, cellN_max = 200, num_bootstraps = 2000, ci = .95)
 
 
-p = .5
-num_bins = 100
-binned_x_axis = seq(0,1,1/num_bins)
-
-#Greying out the .4-.6 skews
-fill_vec = rep(species_palette['Human'], length(binned_x_axis))
-fill_vec[binned_x_axis >= 0.4 & binned_x_axis <= 0.6] = 'grey'
-color_vec = rep(species_palette['Human'], length(binned_x_axis))
-color_vec[binned_x_axis >= 0.4 & binned_x_axis <= 0.6] = 'grey'
-
-
-fitted_normal_n = n_vec[which.min(agg_gtex_squared_error)]
-sigma = sqrt(p*(1-p)/fitted_normal_n)
-dnorm_x = 0:1000/1000
-
-fitted_normal = dnorm(dnorm_x, mean=p, sd = sigma)
-
-theoretical_norms = list()
-n = c(8,32)
-for(i in 1:length(n)){ 
-sigma_t = sqrt(p*(1-p)/n[i])
-theoretical_norms[[i]] = sigma_t
-}
-
-species_name = 'Human'
-skews = unfold(agg_gtex_skew_and_stats_df$est_skew[agg_gtex_skew_and_stats_df$num_good_snps >= 10])
-df = data.frame(skews = skews)
-
-g = ggplot(df, aes(x = skews)) + geom_histogram(aes(y = ..density..), fill = fill_vec, color = color_vec, binwidth = 1/num_bins) +
-  xlim(0,1)+ xlab(sprintf('%s XCI ratios', species_name)) + ggtitle(sprintf('%s population XCI ratio distribution', species_name)) +
-  stat_function(fun = dnorm, args = list(mean = .5, sd = theoretical_norms[[1]]), n = num_bins, size = .5, alpha = .5, aes(linetype = 'dashed')) +
-  stat_function(fun = dnorm, args = list(mean = .5, sd = theoretical_norms[[2]]), n = num_bins, size = .5, alpha = .5, aes(linetype = 'dotted')) + 
-  stat_function(fun = dnorm, args = list(mean = .5, sd = sigma), n = num_bins, size = .75, aes(linetype = 'solid')) +
-  scale_linetype_manual(name="Estimated cell number",values=c('dashed','dotted','solid'),
-                        labels = c('8 cells','32 cells',sprintf('Estimated %i cells', fitted_normal_n)),
-                        breaks=c('dashed','dotted','solid'), 
-                        guide = guide_legend(override.aes = list(size = c(.5, .5, 2)))) +
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
-        panel.background = element_rect(fill = 'white'), panel.border = element_rect(color = "black", fill=NA, size=1),  
-        axis.text.y = element_text(size=12), axis.text.x = element_text(size=12),
-        axis.title.y = element_text(size=12), axis.title.x = element_text(size=12), 
-        legend.position = c(.8,.75))   
-print(g)
-
-ggsave(plot = g, filename = 'agg_donor_human_normal_fits_v2.pdf' ,
- path ='/home/werner/projects/cross_species_XCI/code/graphs/est_cell_num/', 
- width = 6, height = 4, useDingbats = FALSE)
-
-
-```
 
 
 
@@ -1411,31 +1329,17 @@ all_ci_df$species = c('Human','Horse','Cow','Pig','Goat','Sheep','Macaca','Rat',
 all_ci_df = all_ci_df %>% arrange(cell_num_est)
 all_ci_df$species = factor(all_ci_df$species, levels = c(all_ci_df$species))
 
-ggplot(all_ci_df, aes(x = species, y = log2(cell_num_est), color = species)) + geom_point(size = 3) + geom_errorbar(aes(ymin = log2(lower_ci), ymax = log2(upper_ci))) +
-  scale_color_manual(values = species_palette) + ylim(1, 7) + ylab('Cell divisions (log2 cell # estimate)') + ggtitle('Chromosome X')
-ggsave(filename = 'log2_chrX_cellnumests_with_CI_v2.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/est_cell_num/', 
-       device = 'pdf', useDingbats = F, height = 4, width = 5)
-
-
-ggplot(all_ci_df, aes(x = species, y = cell_num_est, color = species)) + geom_point(size = 3) + geom_errorbar(aes(ymin = lower_ci, ymax = upper_ci)) +
-  scale_color_manual(values = species_palette) + ylim(1, 100) + ylab('Cell # estimate') + ggtitle('Chromosome X')
-ggsave(filename = 'chrX_cellnumests_with_CI_v2.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/est_cell_num/', 
-       device = 'pdf', useDingbats = F, height = 4, width = 5)
 
 #Species ordered by evolutionary relationships
 all_ci_df$species = factor(all_ci_df$species, levels = c('Dog','Horse','Cow','Goat','Sheep','Pig','Rat','Mouse','Human','Macaca'))
 ggplot(all_ci_df, aes(y = species, x = log2(cell_num_est), color = species)) + geom_point(size = 3) + geom_errorbar(aes(xmin = log2(lower_ci), xmax = log2(upper_ci))) +
   scale_color_manual(values = species_palette) + xlim(2, 7) + xlab('Cell divisions (log2 cell # estimate)') + ggtitle('Chromosome X') + ylab('') +
   scale_y_discrete(limits=rev)
-ggsave(filename = 'evo_log2_chrX_cellnumests_with_CI_v2.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/est_cell_num/', 
-       device = 'pdf', useDingbats = F, height = 4, width = 5)
+#ggsave(filename = 'evo_log2_chrX_cellnumests_with_CI_v2.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/est_cell_num/', 
+#       device = 'pdf', useDingbats = F, height = 4, width = 5)
 
 
-ggplot(all_ci_df, aes(y = species, x = cell_num_est, color = species)) + geom_point(size = 3) + geom_errorbar(aes(xmin = lower_ci, xmax = upper_ci)) +
-  scale_color_manual(values = species_palette) + xlab('Cell # estimate') + ggtitle('Chromosome X') + ylab('') +
-  scale_y_discrete(limits=rev) + scale_x_continuous(breaks=c(2,4, 8, 16, 32, 64, 128))
-ggsave(filename = 'evo_chrX_cellnumests_with_CI_log2_xaxisv2.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/est_cell_num/', 
-       device = 'pdf', useDingbats = F, height = 4, width = 5)
+save(all_ci_df, file = '/home/werner/projects/cross_species_XCI/final_plots/R/data_for_plots/all_ci_df.Rdata')
 
 ```
 
@@ -1457,28 +1361,21 @@ cell_num_stats_df
 
 ori_corr = cor(cell_num_stats_df$estimated_cell_num, cell_num_stats_df$sample_number, method = 'spearman')
 ggplot(cell_num_stats_df, aes(y = log10(sample_number), x = estimated_cell_num, color = species)) + geom_point(size = 3) +
-  scale_color_manual(values = species_palette) + ylab('log10( Total sample number )') + xlab('Cell # estimate') + ggtitle(sprintf('Correlation: %1.3f', ori_corr)) +
-  scale_x_continuous(breaks=c(2, 4, 8, 16, 32, 64, 128))
-ggsave(filename = 'cell_num_ests_and_sample_num_scatter_log2X.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/est_cell_num/', 
-       device = 'pdf', useDingbats = F, height = 4, width = 5)
-
-ggplot(cell_num_stats_df, aes(y = log10(sample_number), x = estimated_cell_num, color = species)) + geom_point(size = 3) +
   scale_color_manual(values = species_palette) + ylab('log10( Total sample number )') + xlab('Cell # estimate') + ggtitle(sprintf('Correlation: %1.3f', ori_corr))
-ggsave(filename = 'cell_num_ests_and_sample_num_scatter.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/est_cell_num/', 
-       device = 'pdf', useDingbats = F, height = 4, width = 5)
+#ggsave(filename = 'cell_num_ests_and_sample_num_scatter.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/est_cell_num/', 
+#       device = 'pdf', useDingbats = F, height = 4, width = 5)
 
 
 ori_corr = cor(cell_num_stats_df$estimated_cell_num, cell_num_stats_df$mean_snp, method = 'spearman')
 ggplot(cell_num_stats_df, aes(y =  mean_snp, x = estimated_cell_num, color = species)) + geom_point(size = 3) +
-  scale_color_manual(values = species_palette)  + ylab('Mean SNP # per sample') + xlab('Cell # estimate') + ggtitle(sprintf('Correlation: %1.3f', ori_corr)) +
-  scale_x_continuous(breaks=c(2,4, 8, 16, 32, 64, 128))
-ggsave(filename = 'cell_num_ests_and_mean_snp_scatter_log2X.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/est_cell_num/', 
-       device = 'pdf', useDingbats = F, height = 4, width = 5)
-
-ggplot(cell_num_stats_df, aes(y =  mean_snp, x = estimated_cell_num, color = species)) + geom_point(size = 3) +
   scale_color_manual(values = species_palette)  + ylab('Mean SNP # per sample') + xlab('Cell # estimate') + ggtitle(sprintf('Correlation: %1.3f', ori_corr))
-ggsave(filename = 'cell_num_ests_and_mean_snp_scatter.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/est_cell_num/', 
-       device = 'pdf', useDingbats = F, height = 4, width = 5)
+#ggsave(filename = 'cell_num_ests_and_mean_snp_scatter.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/est_cell_num/', 
+#       device = 'pdf', useDingbats = F, height = 4, width = 5)
+
+save(cell_num_stats_df, file = '/home/werner/projects/cross_species_XCI/final_plots/R/data_for_plots/cell_num_stats_df.Rdata')
+
+
+
 ```
 
 ################################################
@@ -1566,17 +1463,12 @@ ggplot(compare_ci_df, aes(y = species, x = log2(cell_num_est), color = color_lab
   scale_alpha_manual(values = c('Downsampled estimate' = .5, 'Original estimate' = 1)) +
   scale_color_manual(values = species_palette) + xlim(2, 7) + xlab('Cell divisions (log2 cell # estimate)') + ggtitle('Chromosome X') + ylab('') +
   scale_y_discrete(limits=rev)
-ggsave(filename = 'downsamp_cell_num_ests_to_macaca_log2X.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/est_cell_num/', 
-       device = 'pdf', useDingbats = F, height = 4, width = 7)
+#ggsave(filename = 'downsamp_cell_num_ests_to_macaca_log2X.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/est_cell_num/', 
+#       device = 'pdf', useDingbats = F, height = 4, width = 7)
 
 
-ggplot(compare_ci_df, aes(y = species, x = cell_num_est, color = color_label, alpha = label)) + geom_point(size = 3) + 
-  geom_errorbar(aes(xmin = lower_ci, xmax = upper_ci)) +
-  scale_alpha_manual(values = c('Downsampled estimate' = .5, 'Original estimate' = 1)) +
-  scale_color_manual(values = species_palette) + xlim(2, 7) + xlab('Cell # estimate') + ggtitle('Chromosome X') + ylab('') +
-  scale_y_discrete(limits=rev) + scale_x_continuous(breaks=c(2,4, 8, 16, 32, 64, 128))
-ggsave(filename = 'downsamp_cell_num_ests_to_macaca.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/est_cell_num/', 
-       device = 'pdf', useDingbats = F, height = 4, width = 7)
+save(compare_ci_df, file = '/home/werner/projects/cross_species_XCI/final_plots/R/data_for_plots/compare_ci_df.Rdata')
+
 
 ```
 
