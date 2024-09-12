@@ -1,0 +1,194 @@
+
+
+Checking out the X and Y chromosome expression of mouse bulk RNA-seq samples
+Need to identify the female samples, theoretically should be straight forward just from the sex chromosome expression
+
+
+STAR ReadsPerGene.out.tabs are here
+/grid/gillis/home/hover/work/cmxci.single/Mus_musculus
+/grid/gillis/home/hover/work/cmxci.paired/Mus_musculus
+
+Genome GTF is here
+/grid/gillis/home/hover/data/cross_mammal_xci/genomes/Mus_musculus/GCF_000001635.27_GRCm39_genomic.gtf
+
+Also copied over the genome directory here
+/home/werner/projects/cross_species_XCI/genomes/Mus_musculus
+
+```{r}
+library(data.table)
+library(dplyr)
+library(ggplot2)
+
+```
+
+
+
+
+```{r}
+
+
+mouse_gtf = rtracklayer::import('/home/werner/projects/cross_species_XCI/genomes/Mus_musculus/GCF_000001635.27_GRCm39_genomic.gtf')
+mouse_gtf = as.data.frame(mouse_gtf)
+
+#Genome specific x chromosome name
+mouse_x_chrom_name = readLines('/home/werner/projects/cross_species_XCI/genomes/Mus_musculus/chrXlabel.txt', n = 1)
+
+mouse_x_gtf = mouse_gtf[mouse_gtf$seqnames == mouse_x_chrom_name, ]
+
+mouse_x_meta = mouse_x_gtf[mouse_x_gtf$gbkey == 'Gene', ]
+mouse_x_genenames = unique(mouse_x_meta$gene)
+length(mouse_x_genenames)
+
+#Genome specific y chromosome name
+mouse_y_chrom_name = readLines('/home/werner/projects/cross_species_XCI/genomes/Mus_musculus/chrYlabel.txt', n = 1)
+
+mouse_y_gtf = mouse_gtf[mouse_gtf$seqnames == mouse_y_chrom_name, ]
+
+mouse_y_meta = mouse_y_gtf[mouse_y_gtf$gbkey == 'Gene', ]
+mouse_y_genenames = unique(mouse_y_meta$gene)
+length(mouse_y_genenames)
+
+
+```
+
+
+Go through the ReadsPerGene.out.tab files and get the aggregate expression of x and y genes
+
+Do I need to CPM normalize first? Check out the raw reads initially
+
+
+```{r}
+single_path = '/grid/gillis/home/hover/work/cmxci.single/Mus_musculus'
+processed_single_files = list.files(single_path)
+processed_single_files = processed_single_files[grepl('ReadsPerGene.out.tab',processed_single_files )]
+
+processed_single_paths = paste(single_path, processed_single_files, sep = '/')
+single_srrs = sapply( strsplit(processed_single_files, split = '.', fixed = T),'[[', 1)
+
+
+paired_path = '/grid/gillis/home/hover/work/cmxci.paired/Mus_musculus'
+processed_paired_files = list.files(paired_path)
+processed_paired_files = processed_paired_files[grepl('ReadsPerGene.out.tab',processed_paired_files )]
+
+processed_paired_paths = paste(paired_path, processed_paired_files, sep = '/')
+paired_srrs = sapply( strsplit(processed_paired_files, split = '.', fixed = T),'[[', 1)
+
+all_file_paths = c(processed_single_paths, processed_paired_paths)
+names(all_file_paths) = c(single_srrs, paired_srrs)
+
+length(all_file_paths)
+
+
+all_file_paths[1:5]
+
+length(processed_paired_files)
+
+```
+
+
+```{r}
+
+all_x_counts = vector(mode = 'numeric', length = length(all_file_paths))
+all_y_counts = vector(mode = 'numeric', length = length(all_file_paths))
+
+all_x_cpm_counts = vector(mode = 'numeric', length = length(all_file_paths))
+all_y_cpm_counts = vector(mode = 'numeric', length = length(all_file_paths))
+
+
+for(i in 1:length(all_file_paths)){
+
+  test_sample = fread(all_file_paths[i], skip = 4, select = c('V1','V2'), col.names = c('gene', 'counts'))
+  
+  total_counts = sum(test_sample$counts)
+  test_sample$cpm_counts = (test_sample$counts / total_counts)*1e6
+  
+  all_x_counts[i] = sum(filter(test_sample, gene %in% mouse_x_genenames)$counts)
+  all_y_counts[i] = sum(filter(test_sample, gene %in% mouse_y_genenames)$counts)
+  
+  all_x_cpm_counts[i] = sum(filter(test_sample, gene %in% mouse_x_genenames)$cpm_counts)
+  all_y_cpm_counts[i] = sum(filter(test_sample, gene %in% mouse_y_genenames)$cpm_counts)
+
+
+}
+
+par(pty = 's')
+plot(all_x_counts, all_y_counts, xlab = 'X-chromosome counts', ylab = 'Y-chromosome counts')
+plot(all_x_cpm_counts, all_y_cpm_counts, xlab = 'X-chromosome CPM counts', ylab = 'Y-chromosome CPM counts')
+
+
+
+mouse_sex_df = data.frame(sample_id = c(single_srrs, paired_srrs), 
+                          seq_type = c(rep('single', length = length(single_srrs)), rep('paired', length = length(paired_srrs))),
+                          y_counts = all_y_counts,
+                          y_cpm_counts = all_y_cpm_counts,
+                          x_counts = all_x_counts,
+                          x_cpm_counts = all_x_cpm_counts)
+
+
+
+```
+
+
+
+```{r}
+
+ggplot(mouse_sex_df, aes(x = x_counts, y = y_counts, color = seq_type)) + geom_point() + ylab('agg. Y-chromosome counts') + xlab('agg. X-chromosome counts') + 
+  ggtitle('Mouse sex chromosome expression')
+#ggsave(filename = 'mouse_sex_chrom_counts_scatter.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/mouse_sex', 
+#       device = 'pdf', useDingbats = F, height = 6, width = 6)
+
+
+ggplot(mouse_sex_df, aes(x = x_cpm_counts, y = y_cpm_counts, color = seq_type)) + geom_point() + ylab('agg. Y-chromosome CPM counts') + xlab('agg. X-chromosome CPM counts') + 
+  ggtitle('Mouse sex chromosome expression')
+#ggsave(filename = 'mouse_sex_chrom_CPM_counts_scatter.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/mouse_sex', 
+#       device = 'pdf', useDingbats = F, height = 6, width = 6)
+```
+
+
+```{r}
+save(mouse_sex_df, file = '/home/werner/projects/cross_species_XCI/final_plots/R/data_for_plots/mouse_sex_df.Rdata')
+
+```
+
+
+
+
+
+Double check all the single ended datasets come from the same study and it's the one with all annotated female samples
+
+```{r}
+
+genus_samples_df = read.table(file ='/home/werner/projects/cross_species_XCI/code/all_mammal_metadata.tsv', sep = '\t', header = T, fill = T, quote = "")
+
+dim(genus_samples_df)
+head(genus_samples_df)
+
+```
+
+SRP125176
+publication: https://academic.oup.com/genetics/article/209/1/335/5931013?login=false
+All 188 are annotated as female
+
+```{r}
+
+study_SRP125176_df = genus_samples_df[genus_samples_df$SRAStudy == 'SRP125176', ]
+study_SRP125176_df
+
+
+table(single_srrs %in% study_SRP125176_df$Run)
+```
+
+
+Calling all the samples with an aggregate CPM Y-chromosome less than 200 as a female sample
+
+```{r}
+
+conf_female_mouse = mouse_sex_df %>% filter(y_cpm_counts < 200) %>% pull(sample_id)
+
+writeLines(conf_female_mouse, '/home/werner/projects/cross_species_XCI/code/female_metadata/mus_musculus_confirmed_female_SRR.txt')
+
+length(conf_female_mouse)
+
+```
+
+

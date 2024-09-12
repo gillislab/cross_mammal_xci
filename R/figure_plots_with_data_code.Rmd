@@ -18,6 +18,7 @@ All data for these plots is provided at: https://github.com/gillislab/cross_mamm
 library(ggplot2)
 library(dplyr)
 library(ggrepel)
+library(ComplexHeatmap)
 
 ```
 
@@ -305,6 +306,141 @@ ggplot(het_corr_df, aes(x = corrs_label, y = corrs)) + geom_violin(scale = 'widt
   ylab('Correlation with sample heterozygousity (spearman)') + xlab('')
 
 ```
+
+
+## Figure 4 B
+
+```{r XCI_skew_variant_aurocs}
+
+#Contains the snp_skew_auc_df dataframe
+load('/home/werner/projects/cross_species_XCI/final_plots/R/data_for_plots/snp_skew_auc_df_4_10_24.Rdata')
+
+species_order_df = snp_skew_auc_df %>% filter(null_label == 'data') %>% group_by(species) %>% summarize(median = median(aucs)) %>% arrange(desc(median))
+ggplot(filter(snp_skew_auc_df, reference_bias_index == FALSE), aes(x = species, y = aucs, color = null_label, fill = species, alpha = null_label)) + 
+  geom_violin(scale = 'width', width = .75) +
+  scale_fill_manual(values = species_palette, breaks = levels(snp_skew_auc_df$species)) +
+  scale_color_manual(values = c('null' = 'grey', 'data' = 'black')) +
+  scale_alpha_manual(values = c('null' = .5, 'data' = 1)) +
+  ylim(0, 1) +
+  geom_hline(yintercept = .5, color = 'red', linetype = 'dashed')
+
+```
+## Figure 4C
+
+```{r variant_freq_and_xci_auroc}
+#contains the snp_skew_auc_with_meta_df dataframe
+load('/home/werner/projects/cross_species_XCI/final_plots/R/data_for_plots/snp_skew_auc_with_meta_4_10_24.Rdata')
+
+
+ggplot(snp_skew_auc_with_meta_df, aes(y = variant_prevalence, x = skew_auc)) + geom_point(size = 1, alpha = .25) + 
+  geom_vline(xintercept = .5, linetype = 'dashed', color = 'red') +
+  scale_color_manual(values = species_palette) +
+  xlab('Strength of XCI ratio and variant association (AUROC)') + ylab('Variant prevalence')
+
+
+
+```
+
+
+## Figure 4D
+
+```{r species_zoom}
+
+temp_skew_snp_df = snp_skew_auc_with_meta_df %>% filter(skew_auc >= .75 & skew_auc_significance == TRUE & label != 'Human')
+temp_skew_snp_df = temp_skew_snp_df %>% group_by(label, gene) %>% mutate(gene = replace(gene,  expression < max(expression), ""))
+#Keep the full annotated gene list to include in the paper text
+temp_skew_snp_df
+
+ggplot(temp_skew_snp_df, aes(x = skew_auc, y = variant_prevalence, color = label)) + geom_point(size = 2,show.legend = F) +
+  scale_color_manual(values = species_palette) + facet_wrap(~label,ncol = 3, scales = 'free_y') + geom_label_repel(aes(label = gene), size = 3, force = 3, show.legend = F, max.overlaps = 15) +
+  xlab('Strength of XCI ratio and variant association (AUROC)') + ylab('Variant prevalence') 
+
+
+```
+
+
+## Supp. Figure 8 A, B, C, and D
+
+```{r supp_fig_8_scatters}
+
+ggplot(snp_skew_auc_with_meta_df, aes(y = variant_prevalence, x = skew_auc, color = skew_auc_significance)) + geom_point(size = 1, alpha = .25) + 
+  geom_vline(xintercept = .75, linetype = 'dashed', color = 'red') +
+  scale_color_manual(values = c('TRUE' = 'red', 'FALSE' = 'black'), name = 'AUROC significance') +
+  xlab('Strength of XCI ratio and variant association (AUROC)') + ylab('Variant prevalence')
+
+ggplot(snp_skew_auc_with_meta_df, aes(y = skew_auc_power_significance, x = skew_auc, color = skew_auc_significance)) + geom_point(size = 1, alpha = .25) + 
+  scale_color_manual(values = c('TRUE' = 'red', 'FALSE' = 'black'), name = 'AUROC significance') +
+  xlab('AUROC') + ylab('Estimated AUROC power') +
+  geom_vline(xintercept = .75, linetype = 'dashed', color = 'red')
+
+ggplot(snp_skew_auc_with_meta_df, aes(y = skew_auc_power_effect_75, x = skew_auc, color = skew_auc_significance)) + geom_point(size = 1, alpha = .25) + 
+  scale_color_manual(values = c('TRUE' = 'red', 'FALSE' = 'black'), name = 'AUROC significance') +
+  geom_vline(xintercept = .75, linetype = 'dashed', color = 'red') +
+  xlab('AUROC') + ylab('Estimated AUROC power effect size .75')
+
+ggplot(snp_skew_auc_with_meta_df, aes(y = skew_auc_bootstrap_var, x = skew_auc, color = skew_auc_significance)) + geom_point(size = 1, alpha = .25) + 
+  scale_color_manual(values = c('TRUE' = 'red', 'FALSE' = 'black'), name = 'AUROC significance') +
+  geom_vline(xintercept = .75, linetype = 'dashed', color = 'red') +
+  xlab('AUROC') + ylab('Variance of bootstrapped AUROC distribution')
+
+```
+
+
+
+
+## Supp. Figure 10 A and B
+
+```{r mouse_haplotypes}
+#Contains the mouse_xist_present_mat and mouse_hap_df objects
+load(file = '/home/werner/projects/cross_species_XCI/final_plots/R/data_for_plots/mouse_haplotype_data.Rdata' )
+
+col_annot = HeatmapAnnotation(study = mouse_hap_df$study,
+                              col = list(study = c('Study_1_striatum' = '#F8766D', 'Study_2_pancreas' = '#00BFC4')))
+colors = structure(1:2, names = c(0, 1)) # black, red
+h1 = Heatmap(mouse_xist_present_mat, name = "mat", col = colors,top_annotation = col_annot,
+        clustering_distance_columns = function(m) dist(m, method = 'binary'),
+        clustering_distance_rows = function(m) dist(m, method = 'binary'),
+        show_column_names = F, show_row_names = F,
+        clustering_method_rows = "ward.D2", clustering_method_columns = "ward.D2", show_column_dend = T, column_split = 4)
+
+h1 = draw(h1)
+
+
+
+mouse_hap_df$label = rep('other', length = nrow(mouse_hap_df))
+mouse_hap_df$label[column_order(h1)[[1]]] = 'haplotype_group 1'
+mouse_hap_df$label[column_order(h1)[[2]]] = 'haplotype_group 2'
+mouse_hap_df$label[column_order(h1)[[3]]] = 'haplotype_group 3'
+mouse_hap_df$label[column_order(h1)[[4]]] = 'haplotype_group 4'
+
+ggplot(mouse_hap_df, aes(x = study, y = est_skew_no_escape, color = label)) + geom_boxplot() + xlab('Mouse XIST putative haplotypes') + ylab('Estimated XCI ratio') +
+  geom_point(position=position_dodge(width=0.75),aes(group=label), color = 'grey50')
+
+
+ggplot(mouse_hap_df, aes(x = label, y = est_skew_no_escape, color = study)) + geom_boxplot() + xlab('Mouse XIST putative haplotypes') + ylab('Estimated XCI ratio') +
+  scale_x_discrete(guide = guide_axis(n.dodge=2)) +
+  geom_point(position=position_dodge(width=0.75),aes(group=study), color = 'grey50')
+
+
+```
+
+
+
+## Supp. Figure 3A
+This plot is only showing the confirmed female samples that had y-chromosome CPM <200. We had deleted the male samples before I saved the data for the plot.
+```{r mouse_sex_classification}
+#Contains the mouse_sex_df dataframe
+load(file = '/home/werner/projects/cross_species_XCI/final_plots/R/data_for_plots/mouse_sex_df.Rdata')
+
+ggplot(mouse_sex_df, aes(x = x_cpm_counts, y = y_cpm_counts, color = seq_type)) + geom_point() + ylab('agg. Y-chromosome CPM counts') + xlab('agg. X-chromosome CPM counts') + 
+  ggtitle('Mouse sex chromosome expression')
+
+```
+
+
+
+
+
 
 
 
