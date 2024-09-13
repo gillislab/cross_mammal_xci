@@ -756,6 +756,47 @@ ggplot(dog_ref_check_df, aes(x = ref_biased_index, y = auc, fill = ref_biased_in
 
 ![](figure_plots_with_data_code_files/figure-gfm/ref_check_variants-10.png)<!-- -->
 
+## Supp. Figure 9A
+
+Human data does not include variant information
+
+``` r
+#Contains the tissue_specific_human_results,avg_human_results ,maxReads_human_results dataframes without variant information.
+load(file= '/home/werner/projects/cross_species_XCI/final_plots/R/data_for_plots/human_xci_variant_auc_dfs.Rdata')
+
+
+filt_index = tissue_specific_human_results$reference_biased_index == F
+
+ggplot(tissue_specific_human_results[filt_index, ], aes(x = auc, y = -log10(auc_adj_pval), color = auc_significance)) + geom_point() + 
+  geom_hline(yintercept = -log10(.05), color = 'red', linetype = 'dashed') + xlim(0,1) +
+  scale_color_manual(values = c('TRUE' = 'red', 'FALSE' = 'black'), name = 'AUROC significance') +
+  ylab('-log10( FDR corrected p-value)') + ggtitle('Human tissue-specific AUROCs')
+```
+
+![](figure_plots_with_data_code_files/figure-gfm/human_variant_aucs-1.png)<!-- -->
+
+``` r
+filt_index = avg_human_results$reference_biased_index == F
+
+ggplot(avg_human_results[filt_index, ], aes(x = auc, y = -log10(auc_adj_pval), color = auc_significance)) + geom_point() + 
+  geom_hline(yintercept = -log10(.05), color = 'red', linetype = 'dashed') + xlim(0,1) +
+  scale_color_manual(values = c('TRUE' = 'red', 'FALSE' = 'black'), name = 'AUROC significance') +
+  ylab('-log10( FDR corrected p-value)') + ggtitle('Averaged variant AUROC')
+```
+
+![](figure_plots_with_data_code_files/figure-gfm/human_variant_aucs-2.png)<!-- -->
+
+``` r
+filt_index = maxReads_human_results$reference_biased_index == F
+
+ggplot(maxReads_human_results[filt_index, ], aes(x = auc, y = -log10(auc_adj_pval), color = auc_significance)) + geom_point() + 
+  geom_hline(yintercept = -log10(.05), color = 'red', linetype = 'dashed') + xlim(0,1) +
+  scale_color_manual(values = c('TRUE' = 'red', 'FALSE' = 'black'), name = 'AUROC significance') +
+  ylab('-log10( FDR corrected p-value)') + ggtitle('Human Max reads sample')
+```
+
+![](figure_plots_with_data_code_files/figure-gfm/human_variant_aucs-3.png)<!-- -->
+
 ## Supp. Figure 9B
 
 ``` r
