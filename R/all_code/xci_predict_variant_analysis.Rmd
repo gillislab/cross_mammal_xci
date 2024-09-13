@@ -677,8 +677,8 @@ hist(rat_results$auc[fdr_index], main = 'Significant aurocs', breaks = seq(0,1,.
 rat_ref_check_df = data.frame(auc = rat_results$auc, ref_biased_index = rat_results$reference_biased_index)
 ggplot(rat_ref_check_df, aes(x = ref_biased_index, y = auc, fill = ref_biased_index)) + geom_violin(scale = 'width') + geom_boxplot(width = .25) + ggtitle('Rat') +
   xlab('Reference biased SNPs') + ylab('XCI ratio and variant AUROC') 
-ggsave(filename = 'rat_ref_biased_xci_ratio_auroc_violins_v2.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/',
-       device = 'pdf', useDingbats = F, height = 4, width = 5)
+#ggsave(filename = 'rat_ref_biased_xci_ratio_auroc_violins_v2.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/',
+#       device = 'pdf', useDingbats = F, height = 4, width = 5)
 
 ```
 
@@ -714,8 +714,8 @@ hist(mouse_results$auc[fdr_index], main = 'Significant aurocs', breaks = seq(0,1
 mouse_ref_check_df = data.frame(auc = mouse_results$auc, ref_biased_index = mouse_results$reference_biased_index)
 ggplot(mouse_ref_check_df, aes(x = ref_biased_index, y = auc, fill = ref_biased_index)) + geom_violin(scale = 'width') + geom_boxplot(width = .25) + ggtitle('Mouse') +
   xlab('Reference biased SNPs') + ylab('XCI ratio and variant AUROC') 
-ggsave(filename = 'mouse_ref_biased_xci_ratio_auroc_violins_v2.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/',
-       device = 'pdf', useDingbats = F, height = 4, width = 5)
+#ggsave(filename = 'mouse_ref_biased_xci_ratio_auroc_violins_v2.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/',
+#       device = 'pdf', useDingbats = F, height = 4, width = 5)
 
 ```
 
@@ -789,8 +789,8 @@ hist(macaca_results$auc[fdr_index], main = 'Significant aurocs', breaks = seq(0,
 macaca_ref_check_df = data.frame(auc = macaca_results$auc, ref_biased_index = macaca_results$reference_biased_index)
 ggplot(macaca_ref_check_df, aes(x = ref_biased_index, y = auc, fill = ref_biased_index)) + geom_violin(scale = 'width') + geom_boxplot(width = .25) + ggtitle('macaca') +
   xlab('Reference biased SNPs') + ylab('XCI ratio and variant AUROC') 
-ggsave(filename = 'macaca_ref_biased_xci_ratio_auroc_violins_v2.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/',
-       device = 'pdf', useDingbats = F, height = 4, width = 5)
+#ggsave(filename = 'macaca_ref_biased_xci_ratio_auroc_violins_v2.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/',
+#       device = 'pdf', useDingbats = F, height = 4, width = 5)
 ```
 
 
@@ -819,8 +819,8 @@ hist(dog_results$auc[fdr_index], main = 'Significant aurocs', breaks = seq(0,1,.
 dog_ref_check_df = data.frame(auc = dog_results$auc, ref_biased_index = dog_results$reference_biased_index)
 ggplot(dog_ref_check_df, aes(x = ref_biased_index, y = auc, fill = ref_biased_index)) + geom_violin(scale = 'width') + geom_boxplot(width = .25) + ggtitle('dog') +
   xlab('Reference biased SNPs') + ylab('XCI ratio and variant AUROC') 
-ggsave(filename = 'dog_ref_biased_xci_ratio_auroc_violins_v2.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/',
-       device = 'pdf', useDingbats = F, height = 4, width = 5)
+#ggsave(filename = 'dog_ref_biased_xci_ratio_auroc_violins_v2.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/',
+#       device = 'pdf', useDingbats = F, height = 4, width = 5)
 ```
 
 
@@ -848,8 +848,8 @@ hist(goat_results$auc[fdr_index], main = 'Significant aurocs', breaks = seq(0,1,
 goat_ref_check_df = data.frame(auc = goat_results$auc, ref_biased_index = goat_results$reference_biased_index)
 ggplot(goat_ref_check_df, aes(x = ref_biased_index, y = auc, fill = ref_biased_index)) + geom_violin(scale = 'width') + geom_boxplot(width = .25) + ggtitle('goat') +
   xlab('Reference biased SNPs') + ylab('XCI ratio and variant AUROC') 
-ggsave(filename = 'goat_ref_biased_xci_ratio_auroc_violins_v2.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/',
-       device = 'pdf', useDingbats = F, height = 4, width = 5)
+#ggsave(filename = 'goat_ref_biased_xci_ratio_auroc_violins_v2.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/',
+#       device = 'pdf', useDingbats = F, height = 4, width = 5)
 ```
 
 
@@ -877,8 +877,8 @@ hist(pig_results$auc[fdr_index], main = 'Significant aurocs', breaks = seq(0,1,.
 pig_ref_check_df = data.frame(auc = pig_results$auc, ref_biased_index = pig_results$reference_biased_index)
 ggplot(pig_ref_check_df, aes(x = ref_biased_index, y = auc, fill = ref_biased_index)) + geom_violin(scale = 'width') + geom_boxplot(width = .25) + ggtitle('pig') +
   xlab('Reference biased SNPs') + ylab('XCI ratio and variant AUROC') 
-ggsave(filename = 'pig_ref_biased_xci_ratio_auroc_violins_v2.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/',
-       device = 'pdf', useDingbats = F, height = 4, width = 5)
+#ggsave(filename = 'pig_ref_biased_xci_ratio_auroc_violins_v2.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/',
+#       device = 'pdf', useDingbats = F, height = 4, width = 5)
 ```
 
 
@@ -908,8 +908,8 @@ hist(horse_results$auc[fdr_index], main = 'Significant aurocs', breaks = seq(0,1
 horse_ref_check_df = data.frame(auc = horse_results$auc, ref_biased_index = horse_results$reference_biased_index)
 ggplot(horse_ref_check_df, aes(x = ref_biased_index, y = auc, fill = ref_biased_index)) + geom_violin(scale = 'width') + geom_boxplot(width = .25) + ggtitle('horse') +
   xlab('Reference biased SNPs') + ylab('XCI ratio and variant AUROC') 
-ggsave(filename = 'horse_ref_biased_xci_ratio_auroc_violins_v2.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/',
-       device = 'pdf', useDingbats = F, height = 4, width = 5)
+#ggsave(filename = 'horse_ref_biased_xci_ratio_auroc_violins_v2.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/',
+#       device = 'pdf', useDingbats = F, height = 4, width = 5)
 ```
 
 
@@ -938,8 +938,8 @@ hist(cow_results$auc[fdr_index], main = 'Significant aurocs', breaks = seq(0,1,.
 cow_ref_check_df = data.frame(auc = cow_results$auc, ref_biased_index = cow_results$reference_biased_index)
 ggplot(cow_ref_check_df, aes(x = ref_biased_index, y = auc, fill = ref_biased_index)) + geom_violin(scale = 'width') + geom_boxplot(width = .25) + ggtitle('cow') +
   xlab('Reference biased SNPs') + ylab('XCI ratio and variant AUROC') 
-ggsave(filename = 'cow_ref_biased_xci_ratio_auroc_violins_v2.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/',
-       device = 'pdf', useDingbats = F, height = 4, width = 5)
+#ggsave(filename = 'cow_ref_biased_xci_ratio_auroc_violins_v2.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/',
+#       device = 'pdf', useDingbats = F, height = 4, width = 5)
 ```
 
 
@@ -967,8 +967,8 @@ hist(sheep_results$auc[fdr_index], main = 'Significant aurocs', breaks = seq(0,1
 sheep_ref_check_df = data.frame(auc = sheep_results$auc, ref_biased_index = sheep_results$reference_biased_index)
 ggplot(sheep_ref_check_df, aes(x = ref_biased_index, y = auc, fill = ref_biased_index)) + geom_violin(scale = 'width') + geom_boxplot(width = .25) + ggtitle('sheep') +
   xlab('Reference biased SNPs') + ylab('XCI ratio and variant AUROC') 
-ggsave(filename = 'sheep_ref_biased_xci_ratio_auroc_violins_v2.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/',
-       device = 'pdf', useDingbats = F, height = 4, width = 5)
+#ggsave(filename = 'sheep_ref_biased_xci_ratio_auroc_violins_v2.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/',
+#       device = 'pdf', useDingbats = F, height = 4, width = 5)
 ```
 
 #human samples
@@ -1057,17 +1057,18 @@ hist(human_results$auc[fdr_index], main = 'Significant aurocs', breaks = seq(0,1
 human_ref_check_df = data.frame(auc = human_results$auc, ref_biased_index = human_results$reference_biased_index)
 ggplot(human_ref_check_df, aes(x = ref_biased_index, y = auc, fill = ref_biased_index)) + geom_violin(scale = 'width') + geom_boxplot(width = .25) + ggtitle('human') +
   xlab('Reference biased SNPs') + ylab('XCI ratio and variant AUROC') 
-ggsave(filename = 'human_ref_biased_xci_ratio_auroc_violins_v2.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/',
-       device = 'pdf', useDingbats = F, height = 4, width = 5)
+#ggsave(filename = 'human_ref_biased_xci_ratio_auroc_violins_v2.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/',
+#       device = 'pdf', useDingbats = F, height = 4, width = 5)
 
 ```
 
 
+Save the ref_check dataframes
 ```{r}
 
-temp_index = human_results$auc >= .75 & human_results$reference_biased_index == F
-table(temp_index)
-human_results$variants[temp_index]
+
+save(human_ref_check_df, cow_ref_check_df, pig_ref_check_df, sheep_ref_check_df, goat_ref_check_df, horse_ref_check_df, rat_ref_check_df, 
+     mouse_ref_check_df, macaca_ref_check_df, dog_ref_check_df, file = '/home/werner/projects/cross_species_XCI/final_plots/R/data_for_plots/all_ref_check_dfs.Rdata')
 
 
 
@@ -2126,121 +2127,6 @@ dev.off()
 
 
 
-
-
-
-```{r}
-all_sheep_downsample_df = data.frame(variants = c(), ref_index = c(),
-                                 n_pos = c(), n_neg = c(),
-                                 auc = c(), auc_pval = c(),
-                                 auc_fdr_pval = c(),
-                                 gene = c(), down_sample = c())
-for(s in 1:10){
-  #sheep
-  start = Sys.time()
-  sample_index = which(sheep_skew_and_stats_df$num_good_snps_no_escape >= 10 & sheep_skew_and_stats_df$autosome_imbalance == F)
-  #Get a sample of 300
-  down_sample_index = sample(sample_index, size = 300)
-  sheep_results_down_1 = xci_skew_predict_variant_experiment(sheep_skew_and_stats_df, annot_sheep_vcfs, down_sample_index, sheep_snp_stat_df)
-  Sys.time() - start
-  
-  #Get the gene annotations for the variants
-  sheep_variants = sheep_results_down_1$variants
-  sheep_snp_pos = as.numeric(sapply(1:length(sheep_variants), 
-                                         function(i) substr(sheep_variants[i],1,nchar(sheep_variants[i])-2)))
-  sheep_x_meta = sheep_x_gtf[sheep_x_gtf$gbkey == 'Gene'& !is.na(sheep_x_gtf$gbkey),]
-  x_gene_starts = sheep_x_meta$start
-  x_gene_ends = sheep_x_meta$end
-  #Add gene annotations
-  sheep_gene_annots = vector(mode = 'character', length = length(sheep_snp_pos))
-  for( i in 1:length(sheep_snp_pos)){
-  
-    test_gene_start = sheep_snp_pos[i]
-    gene_index = findInterval(test_gene_start, x_gene_starts)
-    if(gene_index == 0){next}
-    
-    if(test_gene_start <= x_gene_ends[gene_index]){
-      sheep_gene_annots[i] = sheep_x_meta$gene[gene_index]
-    }
-  }
-  #Put it all in a dataframe
-  sheep_temp_results_df = data.frame(variants = sheep_results_down_1$variants, ref_index = sheep_results_down_1$reference_biased_index,
-                                   n_pos = sheep_results_down_1$n_pos, n_neg = sheep_results_down_1$n_neg,
-                                   auc = sheep_results_down_1$auc, auc_pval = sheep_results_down_1$auc_pval,
-                                   auc_fdr_pval = p.adjust(sheep_results_down_1$auc_pval, method = 'BH'),
-                                   gene = sheep_gene_annots, down_sample = rep(sprintf('Sample %s', s), 
-                                                                             length = length(sheep_results_down_1$variants)))
-  
-  #Add to the complete dataframe
-  all_sheep_downsample_df = rbind(all_sheep_downsample_df,sheep_temp_results_df  )
-
-}
-
-all_sheep_downsample_df
-
-gene_hits_down_sheep = all_sheep_downsample_df %>% filter(auc >= .75 & auc_fdr_pval <= .05 & ref_index == F) %>% group_by(down_sample, gene) %>% summarize(n = length(gene)) %>% group_by(gene) %>% summarize(n = length(gene)) %>% arrange(desc(n))
-
-gene_hits_down_sheep$gene = factor(gene_hits_down_sheep$gene, levels = c(gene_hits_down_sheep$gene))
-ggplot(gene_hits_down_sheep, aes(x = gene, y = n)) + geom_col() + theme(axis.text.x = element_text(angle = 90)) +
-  ylab('Number of downsamples') + xlab('Genes with skew associated variants') + ggtitle('Sheep')
-```
-
-```{r}
-
-save(all_sheep_downsample_df, 
-     file = '/home/werner/projects/cross_species_XCI/data/species_data_analysis/snp_skew_auc/all_sheep_downsample_df.Rdata')
-
-```
-
-
-```{r}
-
-load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/snp_skew_auc/all_sheep_downsample_df.Rdata')
-
-```
-
-
-
-```{r}
-
-ori_variant_data = filter(snp_skew_auc_with_meta_df, label == 'Sheep' & gene == 'CXCR3')
-downSamp_variant_data = filter(all_sheep_downsample_df, gene == 'CXCR3') %>% group_by(variants) %>% summarize(mean_auc = mean(auc), max_auc = max(auc))
-
-index = match(ori_variant_data$variants, downSamp_variant_data$variants)
-downSamp_variant_data = downSamp_variant_data[index, ]
-downSamp_variant_data[ ,c(2,3)][is.na(downSamp_variant_data[ ,c(2,3)])] = 0
-
-par(pty = 's')
-plot(ori_variant_data$skew_auc, downSamp_variant_data$mean_auc, ylim = c(0, 1), xlim = c(0, 1), ylab = "Mean AUC of downsampled data", xlab='Original AUC of variant',
-     main = 'sheep: CXCR3' )
-abline(v = .75, col = 'red')
-abline(h = .75, col = 'red')
-
-
-ori_variant_data = filter(snp_skew_auc_with_meta_df, label == 'Sheep' & gene == 'LOC114111559')
-downSamp_variant_data = filter(all_sheep_downsample_df, gene == 'LOC114111559') %>% group_by(variants) %>% summarize(mean_auc = mean(auc), max_auc = max(auc))
-
-index = match(ori_variant_data$variants, downSamp_variant_data$variants)
-downSamp_variant_data = downSamp_variant_data[index, ]
-downSamp_variant_data[ ,c(2,3)][is.na(downSamp_variant_data[ ,c(2,3)])] = 0
-
-par(pty = 's')
-plot(ori_variant_data$skew_auc, downSamp_variant_data$mean_auc, ylim = c(0, 1), xlim = c(0, 1), ylab = "Mean AUC of downsampled data", xlab='Original AUC of variant',
-     main = 'sheep: LOC114111559' )
-abline(v = .75, col = 'red')
-abline(h = .75, col = 'red')
-
-
-
-
-
-```
-
-
-
-
-
-
 Checking out the Snps associated with XCI skews in horse
 ```{r}
 
@@ -2287,10 +2173,10 @@ arhgap6_var_1_df =  get_var_data(filt_annot_horse_vcfs,'8077217', horse_XCI_skew
 arhgap6_var_2_df =  get_var_data(filt_annot_horse_vcfs,'8077541', horse_XCI_skews)
 arhgap6_var_3_df =  get_var_data(filt_annot_horse_vcfs,'8083294', horse_XCI_skews)
 
-comb_test_df = Reduce(rbind, list(arhgap6_var_1_df, arhgap6_var_2_df, arhgap6_var_3_df))
-ggplot(comb_test_df, aes(y = skews, x = variant, fill = data_label)) + geom_boxplot() + xlab('Horse ARHGAP6') + ylab('XCI skews') + ggtitle('Horse ARHGAP6')
-ggsave(filename = 'horse_arhgap6_variants.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/variant_escape_examples/', 
-       device = 'pdf', height = 4, width = 6, useDingbats = F)
+comb_arhgap6_df = Reduce(rbind, list(arhgap6_var_1_df, arhgap6_var_2_df, arhgap6_var_3_df))
+ggplot(comb_arhgap6_df, aes(y = skews, x = variant, fill = data_label)) + geom_boxplot() + xlab('Horse ARHGAP6') + ylab('XCI skews') + ggtitle('Horse ARHGAP6')
+#ggsave(filename = 'horse_arhgap6_variants.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/variant_escape_examples/', 
+#       device = 'pdf', height = 4, width = 6, useDingbats = F)
 
 
 #GPC4
@@ -2300,10 +2186,10 @@ gpc4_var_3_df =  get_var_data(filt_annot_horse_vcfs,'110031506', horse_XCI_skews
 gpc4_var_4_df =  get_var_data(filt_annot_horse_vcfs,'110031002', horse_XCI_skews)
 gpc4_var_5_df =  get_var_data(filt_annot_horse_vcfs,'110031664', horse_XCI_skews)
 
-comb_test_df = Reduce(rbind, list(gpc4_var_1_df,gpc4_var_2_df, gpc4_var_3_df, gpc4_var_4_df, gpc4_var_5_df))
-ggplot(comb_test_df, aes(y = skews, x = variant, fill = data_label)) + geom_boxplot() + xlab('Horse GPC4') + ylab('XCI skews') + ggtitle('Horse GPC4')
-ggsave(filename = 'horse_gpc4_variants.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/variant_escape_examples/', 
-       device = 'pdf', height = 4, width = 6, useDingbats = F)
+comb_gpc4_df = Reduce(rbind, list(gpc4_var_1_df,gpc4_var_2_df, gpc4_var_3_df, gpc4_var_4_df, gpc4_var_5_df))
+ggplot(comb_gpc4_df, aes(y = skews, x = variant, fill = data_label)) + geom_boxplot() + xlab('Horse GPC4') + ylab('XCI skews') + ggtitle('Horse GPC4')
+#ggsave(filename = 'horse_gpc4_variants.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/variant_escape_examples/', 
+#       device = 'pdf', height = 4, width = 6, useDingbats = F)
 
 
 #PLCXD1
@@ -2315,22 +2201,23 @@ plcxd1_var_5_df =  get_var_data(filt_annot_horse_vcfs,'33906', horse_XCI_skews)
 plcxd1_var_6_df =  get_var_data(filt_annot_horse_vcfs,'34231', horse_XCI_skews)
 plcxd1_var_7_df =  get_var_data(filt_annot_horse_vcfs,'30849', horse_XCI_skews)
 
-comb_test_df = Reduce(rbind, list(plcxd1_var_1_df,plcxd1_var_2_df,plcxd1_var_3_df,plcxd1_var_4_df,plcxd1_var_5_df,plcxd1_var_6_df,plcxd1_var_7_df))
-ggplot(comb_test_df, aes(y = skews, x = variant, fill = data_label)) + geom_boxplot() + xlab('Horse PLCXD1') + ylab('XCI skews') + ggtitle('Horse PLCXD1')
-ggsave(filename = 'horse_plcxd1_variants.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/variant_escape_examples/', 
-       device = 'pdf', height = 4, width = 6, useDingbats = F)
+comb_plcxd1_df = Reduce(rbind, list(plcxd1_var_1_df,plcxd1_var_2_df,plcxd1_var_3_df,plcxd1_var_4_df,plcxd1_var_5_df,plcxd1_var_6_df,plcxd1_var_7_df))
+ggplot(comb_plcxd1_df, aes(y = skews, x = variant, fill = data_label)) + geom_boxplot() + xlab('Horse PLCXD1') + ylab('XCI skews') + ggtitle('Horse PLCXD1')
+#ggsave(filename = 'horse_plcxd1_variants.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/variant_escape_examples/', 
+#       device = 'pdf', height = 4, width = 6, useDingbats = F)
 
 
 #ARSE
 arse_var_1_df =  get_var_data(filt_annot_horse_vcfs,'1218988', horse_XCI_skews)
 arse_var_2_df =  get_var_data(filt_annot_horse_vcfs,'1218989', horse_XCI_skews)
 
-comb_test_df = Reduce(rbind, list(arse_var_1_df, arse_var_2_df))
-ggplot(comb_test_df, aes(y = skews, x = variant, fill = data_label)) + geom_boxplot() + xlab('Horse ARSE') + ylab('XCI skews') + ggtitle('Horse ARSE')
-ggsave(filename = 'horse_arse_variants.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/variant_escape_examples/', 
-       device = 'pdf', height = 4, width = 6, useDingbats = F)
+comb_arse_df = Reduce(rbind, list(arse_var_1_df, arse_var_2_df))
+ggplot(comb_arse_df, aes(y = skews, x = variant, fill = data_label)) + geom_boxplot() + xlab('Horse ARSE') + ylab('XCI skews') + ggtitle('Horse ARSE')
+#ggsave(filename = 'horse_arse_variants.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/variant_escape_examples/', 
+#       device = 'pdf', height = 4, width = 6, useDingbats = F)
 
-
+save(comb_arse_df, comb_plcxd1_df, comb_gpc4_df, comb_arhgap6_df, 
+     file = '/home/werner/projects/cross_species_XCI/final_plots/R/data_for_plots/horse_individual_variant_auc_boxplots.Rdata')
 
 
 ```
@@ -2401,10 +2288,10 @@ msl3_var_2_df =  get_var_data(filt_annot_goat_vcfs,'58375993', goat_XCI_skews)
 msl3_var_3_df =  get_var_data(filt_annot_goat_vcfs,'58377919', goat_XCI_skews)
 msl3_var_4_df =  get_var_data(filt_annot_goat_vcfs,'58364846', goat_XCI_skews)
 
-comb_test_df = Reduce(rbind, list(msl3_var_1_df, msl3_var_2_df, msl3_var_3_df, msl3_var_4_df))
-ggplot(comb_test_df, aes(y = skews, x = variant, fill = data_label)) + geom_boxplot() + xlab('goat MSL3') + ylab('XCI skews') + ggtitle('goat MSL3')
-ggsave(filename = 'goat_msl3_variants.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/variant_escape_examples/', 
-       device = 'pdf', height = 4, width = 6, useDingbats = F)
+comb_msl3_df = Reduce(rbind, list(msl3_var_1_df, msl3_var_2_df, msl3_var_3_df, msl3_var_4_df))
+ggplot(comb_msl3_df, aes(y = skews, x = variant, fill = data_label)) + geom_boxplot() + xlab('goat MSL3') + ylab('XCI skews') + ggtitle('goat MSL3')
+#ggsave(filename = 'goat_msl3_variants.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/variant_escape_examples/', 
+#       device = 'pdf', height = 4, width = 6, useDingbats = F)
 
 #MXRA5
 MXRA5_var_1_df =  get_var_data(filt_annot_goat_vcfs,'65380180', goat_XCI_skews)
@@ -2416,10 +2303,10 @@ MXRA5_var_6_df =  get_var_data(filt_annot_goat_vcfs,'65393664', goat_XCI_skews)
 MXRA5_var_7_df =  get_var_data(filt_annot_goat_vcfs,'65394420', goat_XCI_skews)
 MXRA5_var_8_df =  get_var_data(filt_annot_goat_vcfs,'65393460', goat_XCI_skews)
 
-comb_test_df = Reduce(rbind, list(MXRA5_var_1_df, MXRA5_var_2_df, MXRA5_var_3_df, MXRA5_var_4_df, MXRA5_var_5_df, MXRA5_var_6_df, MXRA5_var_7_df, MXRA5_var_8_df))
-ggplot(comb_test_df, aes(y = skews, x = variant, fill = data_label)) + geom_boxplot() + xlab('goat MXRA5') + ylab('XCI skews') + ggtitle('goat MXRA5')
-ggsave(filename = 'goat_mxra5_variants.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/variant_escape_examples/', 
-       device = 'pdf', height = 4, width = 6, useDingbats = F)
+comb_mxra5_df = Reduce(rbind, list(MXRA5_var_1_df, MXRA5_var_2_df, MXRA5_var_3_df, MXRA5_var_4_df, MXRA5_var_5_df, MXRA5_var_6_df, MXRA5_var_7_df, MXRA5_var_8_df))
+ggplot(comb_mxra5_df, aes(y = skews, x = variant, fill = data_label)) + geom_boxplot() + xlab('goat MXRA5') + ylab('XCI skews') + ggtitle('goat MXRA5')
+#ggsave(filename = 'goat_mxra5_variants.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/variant_escape_examples/', 
+#       device = 'pdf', height = 4, width = 6, useDingbats = F)
 
 #SHROOM2
 SHROOM2_var_1_df =  get_var_data(filt_annot_goat_vcfs,'60903653', goat_XCI_skews)
@@ -2431,10 +2318,10 @@ SHROOM2_var_6_df =  get_var_data(filt_annot_goat_vcfs,'60867055', goat_XCI_skews
 SHROOM2_var_7_df =  get_var_data(filt_annot_goat_vcfs,'60867365', goat_XCI_skews)
 SHROOM2_var_8_df =  get_var_data(filt_annot_goat_vcfs,'60917891', goat_XCI_skews)
 
-comb_test_df = Reduce(rbind, list(SHROOM2_var_1_df, SHROOM2_var_2_df, SHROOM2_var_3_df, SHROOM2_var_4_df, SHROOM2_var_5_df, SHROOM2_var_6_df, SHROOM2_var_7_df, SHROOM2_var_8_df))
-ggplot(comb_test_df, aes(y = skews, x = variant, fill = data_label)) + geom_boxplot() + xlab('goat SHROOM2') + ylab('XCI skews') + ggtitle('goat SHROOM2')
-ggsave(filename = 'goat_shroom2_variants.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/variant_escape_examples/', 
-       device = 'pdf', height = 4, width = 6, useDingbats = F)
+comb_shroom2_df = Reduce(rbind, list(SHROOM2_var_1_df, SHROOM2_var_2_df, SHROOM2_var_3_df, SHROOM2_var_4_df, SHROOM2_var_5_df, SHROOM2_var_6_df, SHROOM2_var_7_df, SHROOM2_var_8_df))
+ggplot(comb_shroom2_df, aes(y = skews, x = variant, fill = data_label)) + geom_boxplot() + xlab('goat SHROOM2') + ylab('XCI skews') + ggtitle('goat SHROOM2')
+#ggsave(filename = 'goat_shroom2_variants.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/variant_escape_examples/', 
+#       device = 'pdf', height = 4, width = 6, useDingbats = F)
 
 #loc102
 loc102_var_1_df =  get_var_data(filt_annot_goat_vcfs,'8677070', goat_XCI_skews)
@@ -2446,10 +2333,14 @@ loc102_var_6_df =  get_var_data(filt_annot_goat_vcfs,'8677624', goat_XCI_skews)
 loc102_var_7_df =  get_var_data(filt_annot_goat_vcfs,'8685099', goat_XCI_skews)
 loc102_var_8_df =  get_var_data(filt_annot_goat_vcfs,'8677596', goat_XCI_skews)
 
-comb_test_df = Reduce(rbind, list(loc102_var_1_df, loc102_var_2_df, loc102_var_3_df, loc102_var_4_df, loc102_var_5_df, loc102_var_6_df, loc102_var_7_df, loc102_var_8_df))
-ggplot(comb_test_df, aes(y = skews, x = variant, fill = data_label)) + geom_boxplot() + xlab('goat LOC102168615') + ylab('XCI skews') + ggtitle('goat LOC102168615')
-ggsave(filename = 'goat_loc102_variants.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/variant_escape_examples/', 
-       device = 'pdf', height = 4, width = 6, useDingbats = F)
+comb_loc102_df = Reduce(rbind, list(loc102_var_1_df, loc102_var_2_df, loc102_var_3_df, loc102_var_4_df, loc102_var_5_df, loc102_var_6_df, loc102_var_7_df, loc102_var_8_df))
+ggplot(comb_loc102_df, aes(y = skews, x = variant, fill = data_label)) + geom_boxplot() + xlab('goat LOC102168615') + ylab('XCI skews') + ggtitle('goat LOC102168615')
+#ggsave(filename = 'goat_loc102_variants.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/variant_escape_examples/', 
+#       device = 'pdf', height = 4, width = 6, useDingbats = F)
+
+save(comb_msl3_df, comb_mxra5_df, comb_shroom2_df, comb_loc102_df, 
+     file = '/home/werner/projects/cross_species_XCI/final_plots/R/data_for_plots/goat_individual_variant_auc_boxplots.Rdata')
+
 
 
 ```
@@ -2484,10 +2375,10 @@ MAMLD1_var_6_df =  get_var_data(filt_annot_cow_vcfs,'33128071', cow_XCI_skews)
 MAMLD1_var_7_df =  get_var_data(filt_annot_cow_vcfs,'33134000', cow_XCI_skews)
 MAMLD1_var_8_df =  get_var_data(filt_annot_cow_vcfs,'33138476', cow_XCI_skews)
 
-comb_test_df = Reduce(rbind, list(MAMLD1_var_1_df, MAMLD1_var_2_df, MAMLD1_var_3_df, MAMLD1_var_4_df, MAMLD1_var_5_df, MAMLD1_var_6_df, MAMLD1_var_7_df, MAMLD1_var_8_df))
-ggplot(comb_test_df, aes(y = skews, x = variant, fill = data_label)) + geom_boxplot() + xlab('cow MAMLD1') + ylab('XCI skews') + ggtitle('cow MAMLD1')
-ggsave(filename = 'cow_mamld1_variants.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/variant_escape_examples/', 
-       device = 'pdf', height = 4, width = 6, useDingbats = F)
+comb_mamld1_df = Reduce(rbind, list(MAMLD1_var_1_df, MAMLD1_var_2_df, MAMLD1_var_3_df, MAMLD1_var_4_df, MAMLD1_var_5_df, MAMLD1_var_6_df, MAMLD1_var_7_df, MAMLD1_var_8_df))
+ggplot(comb_mamld1_df, aes(y = skews, x = variant, fill = data_label)) + geom_boxplot() + xlab('cow MAMLD1') + ylab('XCI skews') + ggtitle('cow MAMLD1')
+#ggsave(filename = 'cow_mamld1_variants.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/variant_escape_examples/', 
+#       device = 'pdf', height = 4, width = 6, useDingbats = F)
 
 
 #MID2
@@ -2500,10 +2391,10 @@ MID2_var_6_df =  get_var_data(filt_annot_cow_vcfs,'56471967', cow_XCI_skews)
 MID2_var_7_df =  get_var_data(filt_annot_cow_vcfs,'56470399', cow_XCI_skews)
 MID2_var_8_df =  get_var_data(filt_annot_cow_vcfs,'56491067', cow_XCI_skews)
 
-comb_test_df = Reduce(rbind, list(MID2_var_1_df, MID2_var_2_df, MID2_var_3_df, MID2_var_4_df, MID2_var_5_df, MID2_var_6_df, MID2_var_7_df, MID2_var_8_df))
-ggplot(comb_test_df, aes(y = skews, x = variant, fill = data_label)) + geom_boxplot() + xlab('cow MID2') + ylab('XCI skews') + ggtitle('cow MID2')
-ggsave(filename = 'cow_mid2_variants.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/variant_escape_examples/', 
-       device = 'pdf', height = 4, width = 6, useDingbats = F)
+comb_mid2_df = Reduce(rbind, list(MID2_var_1_df, MID2_var_2_df, MID2_var_3_df, MID2_var_4_df, MID2_var_5_df, MID2_var_6_df, MID2_var_7_df, MID2_var_8_df))
+ggplot(comb_mid2_df, aes(y = skews, x = variant, fill = data_label)) + geom_boxplot() + xlab('cow MID2') + ylab('XCI skews') + ggtitle('cow MID2')
+#ggsave(filename = 'cow_mid2_variants.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/variant_escape_examples/', 
+#       device = 'pdf', height = 4, width = 6, useDingbats = F)
 
 #TMEM164
 TMEM164_var_1_df =  get_var_data(filt_annot_cow_vcfs,'58445235', cow_XCI_skews)
@@ -2515,10 +2406,10 @@ TMEM164_var_6_df =  get_var_data(filt_annot_cow_vcfs,'58432292', cow_XCI_skews)
 TMEM164_var_7_df =  get_var_data(filt_annot_cow_vcfs,'58466645', cow_XCI_skews)
 TMEM164_var_8_df =  get_var_data(filt_annot_cow_vcfs,'58441229', cow_XCI_skews)
 
-comb_test_df = Reduce(rbind, list(TMEM164_var_1_df, TMEM164_var_2_df, TMEM164_var_3_df, TMEM164_var_4_df, TMEM164_var_5_df, TMEM164_var_6_df, TMEM164_var_7_df, TMEM164_var_8_df))
-ggplot(comb_test_df, aes(y = skews, x = variant, fill = data_label)) + geom_boxplot() + xlab('cow TMEM164') + ylab('XCI skews') + ggtitle('cow TMEM164')
-ggsave(filename = 'cow_tmem164_variants.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/variant_escape_examples/', 
-       device = 'pdf', height = 4, width = 6, useDingbats = F)
+comb_tmem164_df = Reduce(rbind, list(TMEM164_var_1_df, TMEM164_var_2_df, TMEM164_var_3_df, TMEM164_var_4_df, TMEM164_var_5_df, TMEM164_var_6_df, TMEM164_var_7_df, TMEM164_var_8_df))
+ggplot(comb_tmem164_df, aes(y = skews, x = variant, fill = data_label)) + geom_boxplot() + xlab('cow TMEM164') + ylab('XCI skews') + ggtitle('cow TMEM164')
+#ggsave(filename = 'cow_tmem164_variants.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/variant_escape_examples/', 
+#       device = 'pdf', height = 4, width = 6, useDingbats = F)
 
 #KDM6A
 KDM6A_var_1_df =  get_var_data(filt_annot_cow_vcfs,'98666547', cow_XCI_skews)
@@ -2530,61 +2421,18 @@ KDM6A_var_6_df =  get_var_data(filt_annot_cow_vcfs,'98801035', cow_XCI_skews)
 KDM6A_var_7_df =  get_var_data(filt_annot_cow_vcfs,'98685885', cow_XCI_skews)
 KDM6A_var_8_df =  get_var_data(filt_annot_cow_vcfs,'98785159', cow_XCI_skews)
 
-comb_test_df = Reduce(rbind, list(KDM6A_var_1_df, KDM6A_var_2_df, KDM6A_var_3_df, KDM6A_var_4_df, KDM6A_var_5_df, KDM6A_var_6_df, KDM6A_var_7_df, KDM6A_var_8_df))
-ggplot(comb_test_df, aes(y = skews, x = variant, fill = data_label)) + geom_boxplot() + xlab('cow KDM6A') + ylab('XCI skews') + ggtitle('cow KDM6A')
-ggsave(filename = 'cow_kdm6a_variants.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/variant_escape_examples/', 
-       device = 'pdf', height = 4, width = 6, useDingbats = F)
+comb_kdm6a_df = Reduce(rbind, list(KDM6A_var_1_df, KDM6A_var_2_df, KDM6A_var_3_df, KDM6A_var_4_df, KDM6A_var_5_df, KDM6A_var_6_df, KDM6A_var_7_df, KDM6A_var_8_df))
+ggplot(comb_kdm6a_df, aes(y = skews, x = variant, fill = data_label)) + geom_boxplot() + xlab('cow KDM6A') + ylab('XCI skews') + ggtitle('cow KDM6A')
+#ggsave(filename = 'cow_kdm6a_variants.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/variant_escape_examples/', 
+#       device = 'pdf', height = 4, width = 6, useDingbats = F)
+
+save(comb_mamld1_df, comb_mid2_df, comb_tmem164_df, comb_kdm6a_df, 
+     file = '/home/werner/projects/cross_species_XCI/final_plots/R/data_for_plots/cow_individual_variant_auc_boxplots.Rdata')
 
 
 ```
 
 
-
-Checking out the Snps associated with XCI skews in pig
-```{r}
-
-snp_skew_auc_with_meta_df %>% filter(label == 'Pig', skew_auc >= .75 )
-
-```
-
-```{r}
-filter(pig_snp_stat_df, gene == 'PDZD11' & num_samples_present >= 10) %>% arrange(desc(num_samples_present))
-
-```
-
-
-```{r}
-sample_index = which(pig_skew_and_stats_df$num_good_snps_no_escape >= 10 & pig_skew_and_stats_df$autosome_imbalance == F)
-filt_annot_pig_vcfs = annot_pig_vcfs[sample_index]
-pig_XCI_skews = pig_skew_and_stats_df$est_skew_no_escape[sample_index]
-
-
-#EIF1AX
-EIF1AX_var_1_df =  get_var_data(filt_annot_pig_vcfs,'16432488', pig_XCI_skews)
-EIF1AX_var_2_df =  get_var_data(filt_annot_pig_vcfs,'16431676', pig_XCI_skews)
-EIF1AX_var_3_df =  get_var_data(filt_annot_pig_vcfs,'16430163', pig_XCI_skews)
-EIF1AX_var_4_df =  get_var_data(filt_annot_pig_vcfs,'16430537', pig_XCI_skews)
-EIF1AX_var_5_df =  get_var_data(filt_annot_pig_vcfs,'16430872', pig_XCI_skews)
-EIF1AX_var_6_df =  get_var_data(filt_annot_pig_vcfs,'16431193', pig_XCI_skews)
-EIF1AX_var_7_df =  get_var_data(filt_annot_pig_vcfs,'16429689', pig_XCI_skews)
-EIF1AX_var_8_df =  get_var_data(filt_annot_pig_vcfs,'16432829', pig_XCI_skews)
-
-comb_test_df = Reduce(rbind, list(EIF1AX_var_1_df, EIF1AX_var_2_df, EIF1AX_var_3_df, EIF1AX_var_4_df, EIF1AX_var_5_df, EIF1AX_var_6_df, EIF1AX_var_7_df, EIF1AX_var_8_df))
-ggplot(comb_test_df, aes(y = skews, x = variant, fill = data_label)) + geom_boxplot() + xlab('pig EIF1AX') + ylab('XCI skews') + ggtitle('pig EIF1AX')
-
-
-#PDZD11
-PDZD11_var_1_df =  get_var_data(filt_annot_pig_vcfs,'56316733', pig_XCI_skews)
-PDZD11_var_2_df =  get_var_data(filt_annot_pig_vcfs,'56316986', pig_XCI_skews)
-PDZD11_var_3_df =  get_var_data(filt_annot_pig_vcfs,'56316700', pig_XCI_skews)
-PDZD11_var_4_df =  get_var_data(filt_annot_pig_vcfs,'56318020', pig_XCI_skews)
-
-comb_test_df = Reduce(rbind, list(PDZD11_var_1_df, PDZD11_var_2_df, PDZD11_var_3_df, PDZD11_var_4_df))
-ggplot(comb_test_df, aes(y = skews, x = variant, fill = data_label)) + geom_boxplot() + xlab('pig PDZD11') + ylab('XCI skews') + ggtitle('pig PDZD11')
-
-
-
-```
 
 
 Checking out the Snps associated with XCI skews in sheep
@@ -2630,10 +2478,10 @@ MXRA5_var_6_df =  get_var_data(filt_annot_sheep_vcfs,'5814101', sheep_XCI_skews)
 MXRA5_var_7_df =  get_var_data(filt_annot_sheep_vcfs,'5805814', sheep_XCI_skews)
 MXRA5_var_8_df =  get_var_data(filt_annot_sheep_vcfs,'5797399', sheep_XCI_skews)
 
-comb_test_df = Reduce(rbind, list(MXRA5_var_1_df, MXRA5_var_2_df, MXRA5_var_3_df, MXRA5_var_4_df, MXRA5_var_5_df, MXRA5_var_6_df, MXRA5_var_7_df, MXRA5_var_8_df))
-ggplot(comb_test_df, aes(y = skews, x = variant, fill = data_label)) + geom_boxplot() + xlab('sheep MXRA5') + ylab('XCI skews') + ggtitle('sheep MXRA5')
-ggsave(filename = 'sheep_mxra5_variants.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/variant_escape_examples/', 
-       device = 'pdf', height = 4, width = 6, useDingbats = F)
+comb_mxra5_df = Reduce(rbind, list(MXRA5_var_1_df, MXRA5_var_2_df, MXRA5_var_3_df, MXRA5_var_4_df, MXRA5_var_5_df, MXRA5_var_6_df, MXRA5_var_7_df, MXRA5_var_8_df))
+ggplot(comb_mxra5_df, aes(y = skews, x = variant, fill = data_label)) + geom_boxplot() + xlab('sheep MXRA5') + ylab('XCI skews') + ggtitle('sheep MXRA5')
+#ggsave(filename = 'sheep_mxra5_variants.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/variant_escape_examples/', 
+#       device = 'pdf', height = 4, width = 6, useDingbats = F)
 
 #PRKX
 PRKX_var_1_df =  get_var_data(filt_annot_sheep_vcfs,'5660010', sheep_XCI_skews)
@@ -2672,276 +2520,14 @@ IL3RA_var_8_df =  get_var_data(filt_annot_sheep_vcfs,'6662926', sheep_XCI_skews)
 comb_test_df = Reduce(rbind, list(IL3RA_var_1_df, IL3RA_var_2_df, IL3RA_var_3_df, IL3RA_var_4_df, IL3RA_var_5_df, IL3RA_var_6_df, IL3RA_var_7_df, IL3RA_var_8_df))
 ggplot(comb_test_df, aes(y = skews, x = variant, fill = data_label)) + geom_boxplot() + xlab('sheep IL3RA') + ylab('XCI skews') + ggtitle('sheep IL3RA')
 
-
-
-```
-
-
-Checking out the Snps associated with XCI skews in dog
-```{r}
-
-snp_skew_auc_with_meta_df %>% filter(label == 'Dog', skew_auc >= .75 )
-
-```
-
-```{r}
-filter(dog_snp_stat_df, gene == 'SHROOM2' & num_samples_present >= 10) %>% arrange(desc(num_samples_present))
-
-```
-
-```{r}
-sample_index = which(dog_skew_and_stats_df$num_good_snps_no_escape >= 10 & dog_skew_and_stats_df$autosome_imbalance == F)
-filt_annot_dog_vcfs = annot_dog_vcfs[sample_index]
-dog_XCI_skews = dog_skew_and_stats_df$est_skew_no_escape[sample_index]
-
-
-#SHROOM2
-SHROOM2_var_1_df =  get_var_data(filt_annot_dog_vcfs,'6597148', dog_XCI_skews)
-SHROOM2_var_2_df =  get_var_data(filt_annot_dog_vcfs,'6544128', dog_XCI_skews)
-SHROOM2_var_3_df =  get_var_data(filt_annot_dog_vcfs,'6543788', dog_XCI_skews)
-SHROOM2_var_4_df =  get_var_data(filt_annot_dog_vcfs,'6545490', dog_XCI_skews)
-SHROOM2_var_5_df =  get_var_data(filt_annot_dog_vcfs,'6539771', dog_XCI_skews)
-SHROOM2_var_6_df =  get_var_data(filt_annot_dog_vcfs,'6597798', dog_XCI_skews)
-SHROOM2_var_7_df =  get_var_data(filt_annot_dog_vcfs,'6544974', dog_XCI_skews)
-SHROOM2_var_8_df =  get_var_data(filt_annot_dog_vcfs,'6598640', dog_XCI_skews)
-
-comb_test_df = Reduce(rbind, list(SHROOM2_var_1_df, SHROOM2_var_2_df, SHROOM2_var_3_df, SHROOM2_var_4_df, SHROOM2_var_5_df, SHROOM2_var_6_df, SHROOM2_var_7_df, SHROOM2_var_8_df))
-ggplot(comb_test_df, aes(y = skews, x = variant, fill = data_label)) + geom_boxplot() + xlab('dog SHROOM2') + ylab('XCI skews') + ggtitle('dog SHROOM2')
-
+save(comb_mxra5_df,
+     file = '/home/werner/projects/cross_species_XCI/final_plots/R/data_for_plots/sheep_individual_variant_auc_boxplots.Rdata')
 
 
 
 ```
 
 
-
-Checking out the Snps associated with XCI skews in macaca
-```{r}
-
-snp_skew_auc_with_meta_df %>% filter(label == 'Macaca', skew_auc >= .75 )
-
-```
-
-```{r}
-filter(macaca_snp_stat_df, gene == 'IKBKG' & num_samples_present >= 10) %>% arrange(desc(num_samples_present))
-
-```
-
-```{r}
-sample_index = which(macaca_skew_and_stats_df$num_good_snps_no_escape >= 10 & macaca_skew_and_stats_df$autosome_imbalance == F)
-filt_annot_macaca_vcfs = annot_macaca_vcfs[sample_index]
-macaca_XCI_skews = macaca_skew_and_stats_df$est_skew_no_escape[sample_index]
-
-
-#P2RY8
-P2RY8_var_1_df =  get_var_data(filt_annot_macaca_vcfs,'1251490', macaca_XCI_skews)
-P2RY8_var_2_df =  get_var_data(filt_annot_macaca_vcfs,'1323652', macaca_XCI_skews)
-P2RY8_var_3_df =  get_var_data(filt_annot_macaca_vcfs,'1252576', macaca_XCI_skews)
-P2RY8_var_4_df =  get_var_data(filt_annot_macaca_vcfs,'1252215', macaca_XCI_skews)
-P2RY8_var_5_df =  get_var_data(filt_annot_macaca_vcfs,'1252095', macaca_XCI_skews)
-P2RY8_var_6_df =  get_var_data(filt_annot_macaca_vcfs,'1252835', macaca_XCI_skews)
-P2RY8_var_7_df =  get_var_data(filt_annot_macaca_vcfs,'1252679', macaca_XCI_skews)
-P2RY8_var_8_df =  get_var_data(filt_annot_macaca_vcfs,'1252237', macaca_XCI_skews)
-
-comb_test_df = Reduce(rbind, list(P2RY8_var_1_df, P2RY8_var_2_df, P2RY8_var_3_df, P2RY8_var_4_df, P2RY8_var_5_df, P2RY8_var_6_df, P2RY8_var_7_df, P2RY8_var_8_df))
-ggplot(comb_test_df, aes(y = skews, x = variant, fill = data_label)) + geom_boxplot() + xlab('macaca P2RY8') + ylab('XCI skews') + ggtitle('macaca P2RY8')
-
-
-#AKAP17A
-AKAP17A_var_1_df =  get_var_data(filt_annot_macaca_vcfs,'1381506', macaca_XCI_skews)
-AKAP17A_var_2_df =  get_var_data(filt_annot_macaca_vcfs,'1381726', macaca_XCI_skews)
-AKAP17A_var_3_df =  get_var_data(filt_annot_macaca_vcfs,'1381438', macaca_XCI_skews)
-AKAP17A_var_4_df =  get_var_data(filt_annot_macaca_vcfs,'1381338', macaca_XCI_skews)
-AKAP17A_var_5_df =  get_var_data(filt_annot_macaca_vcfs,'1381629', macaca_XCI_skews)
-AKAP17A_var_6_df =  get_var_data(filt_annot_macaca_vcfs,'1380290', macaca_XCI_skews)
-AKAP17A_var_7_df =  get_var_data(filt_annot_macaca_vcfs,'1381625', macaca_XCI_skews)
-AKAP17A_var_8_df =  get_var_data(filt_annot_macaca_vcfs,'1381679', macaca_XCI_skews)
-
-comb_test_df = Reduce(rbind, list(AKAP17A_var_1_df, AKAP17A_var_2_df, AKAP17A_var_3_df, AKAP17A_var_4_df, AKAP17A_var_5_df, AKAP17A_var_6_df, AKAP17A_var_7_df, AKAP17A_var_8_df))
-ggplot(comb_test_df, aes(y = skews, x = variant, fill = data_label)) + geom_boxplot() + xlab('macaca AKAP17A') + ylab('XCI skews') + ggtitle('macaca AKAP17A')
-
-
-#IDS
-IDS_var_1_df =  get_var_data(filt_annot_macaca_vcfs,'145507086', macaca_XCI_skews)
-IDS_var_2_df =  get_var_data(filt_annot_macaca_vcfs,'145508674', macaca_XCI_skews)
-IDS_var_3_df =  get_var_data(filt_annot_macaca_vcfs,'145510929', macaca_XCI_skews)
-IDS_var_4_df =  get_var_data(filt_annot_macaca_vcfs,'145518493', macaca_XCI_skews)
-
-comb_test_df = Reduce(rbind, list(IDS_var_1_df, IDS_var_2_df, IDS_var_3_df, IDS_var_4_df))
-ggplot(comb_test_df, aes(y = skews, x = variant, fill = data_label)) + geom_boxplot() + xlab('macaca IDS') + ylab('XCI skews') + ggtitle('macaca IDS')
-
-
-#IKBKG
-IKBKG_var_1_df =  get_var_data(filt_annot_macaca_vcfs,'150651623', macaca_XCI_skews)
-IKBKG_var_2_df =  get_var_data(filt_annot_macaca_vcfs,'150664599', macaca_XCI_skews)
-IKBKG_var_3_df =  get_var_data(filt_annot_macaca_vcfs,'150652464', macaca_XCI_skews)
-IKBKG_var_4_df =  get_var_data(filt_annot_macaca_vcfs,'150662826', macaca_XCI_skews)
-IKBKG_var_5_df =  get_var_data(filt_annot_macaca_vcfs,'150661323', macaca_XCI_skews)
-IKBKG_var_6_df =  get_var_data(filt_annot_macaca_vcfs,'150656126', macaca_XCI_skews)
-IKBKG_var_7_df =  get_var_data(filt_annot_macaca_vcfs,'150656118', macaca_XCI_skews)
-IKBKG_var_8_df =  get_var_data(filt_annot_macaca_vcfs,'150656114', macaca_XCI_skews)
-
-comb_test_df = Reduce(rbind, list(IKBKG_var_1_df, IKBKG_var_2_df, IKBKG_var_3_df, IKBKG_var_4_df, IKBKG_var_5_df, IKBKG_var_6_df, IKBKG_var_7_df, IKBKG_var_8_df))
-ggplot(comb_test_df, aes(y = skews, x = variant, fill = data_label)) + geom_boxplot() + xlab('macaca IKBKG') + ylab('XCI skews') + ggtitle('macaca IKBKG')
-
-
-```
-
-Checking out the Snps associated with XCI skews in rat
-```{r}
-
-snp_skew_auc_with_meta_df %>% filter(label == 'Rat', skew_auc >= .75 )
-
-```
-
-```{r}
-filter(rat_snp_stat_df, gene == 'RGD1566265' & num_samples_present >= 10) %>% arrange(desc(num_samples_present))
-
-```
-
-```{r}
-sample_index = which(rat_skew_and_stats_df$num_good_snps_no_escape >= 10 & rat_skew_and_stats_df$autosome_imbalance == F)
-filt_annot_rat_vcfs = annot_rat_vcfs[sample_index]
-rat_XCI_skews = rat_skew_and_stats_df$est_skew_no_escape[sample_index]
-
-
-#Wwc3
-Wwc3_var_1_df =  get_var_data(filt_annot_rat_vcfs,'23697909', rat_XCI_skews)
-Wwc3_var_2_df =  get_var_data(filt_annot_rat_vcfs,'23700971', rat_XCI_skews)
-Wwc3_var_3_df =  get_var_data(filt_annot_rat_vcfs,'23691160', rat_XCI_skews)
-Wwc3_var_4_df =  get_var_data(filt_annot_rat_vcfs,'23681620', rat_XCI_skews)
-Wwc3_var_5_df =  get_var_data(filt_annot_rat_vcfs,'23681856', rat_XCI_skews)
-Wwc3_var_6_df =  get_var_data(filt_annot_rat_vcfs,'23697347', rat_XCI_skews)
-Wwc3_var_7_df =  get_var_data(filt_annot_rat_vcfs,'23699820', rat_XCI_skews)
-Wwc3_var_8_df =  get_var_data(filt_annot_rat_vcfs,'23699653', rat_XCI_skews)
-
-comb_test_df = Reduce(rbind, list(Wwc3_var_1_df, Wwc3_var_2_df, Wwc3_var_3_df, Wwc3_var_4_df, Wwc3_var_5_df, Wwc3_var_6_df, Wwc3_var_7_df, Wwc3_var_8_df))
-ggplot(comb_test_df, aes(y = skews, x = variant, fill = data_label)) + geom_boxplot() + xlab('rat Wwc3') + ylab('XCI skews') + ggtitle('rat Wwc3')
-
-
-#RGD1566265
-RGD1566265_var_1_df =  get_var_data(filt_annot_rat_vcfs,'72860521', rat_XCI_skews)
-RGD1566265_var_2_df =  get_var_data(filt_annot_rat_vcfs,'72860867', rat_XCI_skews)
-RGD1566265_var_3_df =  get_var_data(filt_annot_rat_vcfs,'72860806', rat_XCI_skews)
-
-
-comb_test_df = Reduce(rbind, list(RGD1566265_var_1_df, RGD1566265_var_2_df, RGD1566265_var_3_df))
-ggplot(comb_test_df, aes(y = skews, x = variant, fill = data_label)) + geom_boxplot() + xlab('rat RGD1566265') + ylab('XCI skews') + ggtitle('rat RGD1566265')
-
-
-
-
-
-```
-
-
-
-
-
-```{r}
-table(filter(snp_skew_auc_with_meta_df, label == 'Sheep' & skew_auc >= .75)$gene)
-
-```
-
-
-```{r}
-table(filter(snp_skew_auc_with_meta_df, label == 'Macaca' & skew_auc >= .75)$gene)
-
-```
-
-
-```{r}
-table(filter(snp_skew_auc_with_meta_df, label == 'Human' & skew_auc >= .75)$gene)
-
-```
-
-```{r}
-table(filter(snp_skew_auc_with_meta_df, label == 'Pig' & skew_auc >= .75)$gene)
-
-```
-
-
-
-```{r}
-table(filter(snp_skew_auc_with_meta_df, label == 'Cow' & skew_auc >= .75)$gene)
-
-```
-
-```{r}
-table(filter(snp_skew_auc_with_meta_df, label == 'Dog' & skew_auc >= .75)$gene)
-
-```
-
-
-```{r}
-table(filter(snp_skew_auc_with_meta_df, label == 'Goat' & skew_auc >= .75)$gene)
-
-```
-
-
-```{r}
-table(filter(snp_skew_auc_with_meta_df, label == 'Rat' & skew_auc >= .75)$gene)
-
-```
-
-
-
-```{r}
-table(filter(snp_skew_auc_with_meta_df, label == 'Horse' & skew_auc >= .75)$gene)
-
-```
-
-
-MXRA5 gene in sheep and goat
-SHROOM2 gene in dogs and goat
-IDS gene in macaca and humans
-
-
-```{r}
-temp_skew_snp_df[duplicated(temp_skew_snp_df$gene) & temp_skew_snp_df$gene != "", ]
-
-
-```
-
-
-```{r}
-
-escape_percent_vec = seq(.01, 1,.01)
-
-total_genes = length(unique(human_snp_stat_df$gene[human_snp_stat_df$filter ==T & human_snp_stat_df$num_samples_present >= 10 ])) - 1
-xci_associated_genes = 8
-xci_asso_and_escape_genes = 4
-
-enrich_pval_vec = vector(mode = 'numeric', length = length(escape_percent_vec))
-
-for(i in 1:length(escape_percent_vec)){
-  
-  all_escape_genes = ceiling(total_genes * escape_percent_vec[i])
-  enrich_pval_vec[i] = phyper(xci_asso_and_escape_genes-1, all_escape_genes, total_genes-all_escape_genes, xci_associated_genes,lower.tail= FALSE)
-
-}
-par(pty = 's')
-plot(escape_percent_vec, enrich_pval_vec, xlab = '% of genes escaping XCI', ylab = 'p-value for enriched X-escapers (Fishers exact test)', main = '4 out of 8 genes')
-abline(h = .05, col = 'red', lty = 'dashed')
-
-
-xci_associated_genes = 17
-xci_asso_and_escape_genes = 5
-
-enrich_pval_vec = vector(mode = 'numeric', length = length(escape_percent_vec))
-
-for(i in 1:length(escape_percent_vec)){
-  
-  all_escape_genes = ceiling(total_genes * escape_percent_vec[i])
-  enrich_pval_vec[i] = phyper(xci_asso_and_escape_genes-1, all_escape_genes, total_genes-all_escape_genes, xci_associated_genes,lower.tail= FALSE)
-
-}
-par(pty = 's')
-plot(escape_percent_vec, enrich_pval_vec, xlab = '% of genes escaping XCI', ylab = 'p-value for enriched X-escapers (Fishers exact test)')
-abline(h = .05, col = 'red', lty = 'dashed')
-
-
-```
 
 
 

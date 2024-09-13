@@ -679,6 +679,247 @@ ggplot(snp_skew_auc_with_meta_df, aes(y = skew_auc_bootstrap_var, x = skew_auc, 
 ```
 
 ![](figure_plots_with_data_code_files/figure-gfm/supp_fig_8_scatters-4.png)<!-- -->
+\## Supp. Figure 8E
+
+``` r
+#Contains the human_ref_check_df, cow_ref_check_df, pig_ref_check_df, sheep_ref_check_df, goat_ref_check_df, horse_ref_check_df, 
+#rat_ref_check_df, mouse_ref_check_df, macaca_ref_check_df, dog_ref_check_df dataframes
+load(file = '/home/werner/projects/cross_species_XCI/final_plots/R/data_for_plots/all_ref_check_dfs.Rdata')
+
+
+ggplot(human_ref_check_df, aes(x = ref_biased_index, y = auc, fill = ref_biased_index)) + geom_violin(scale = 'width') + geom_boxplot(width = .25) + ggtitle('human') +
+  xlab('Reference biased SNPs') + ylab('XCI ratio and variant AUROC') 
+```
+
+![](figure_plots_with_data_code_files/figure-gfm/ref_check_variants-1.png)<!-- -->
+
+``` r
+ggplot(cow_ref_check_df, aes(x = ref_biased_index, y = auc, fill = ref_biased_index)) + geom_violin(scale = 'width') + geom_boxplot(width = .25) + ggtitle('cow') +
+  xlab('Reference biased SNPs') + ylab('XCI ratio and variant AUROC') 
+```
+
+![](figure_plots_with_data_code_files/figure-gfm/ref_check_variants-2.png)<!-- -->
+
+``` r
+ggplot(pig_ref_check_df, aes(x = ref_biased_index, y = auc, fill = ref_biased_index)) + geom_violin(scale = 'width') + geom_boxplot(width = .25) + ggtitle('pig') +
+  xlab('Reference biased SNPs') + ylab('XCI ratio and variant AUROC') 
+```
+
+![](figure_plots_with_data_code_files/figure-gfm/ref_check_variants-3.png)<!-- -->
+
+``` r
+ggplot(sheep_ref_check_df, aes(x = ref_biased_index, y = auc, fill = ref_biased_index)) + geom_violin(scale = 'width') + geom_boxplot(width = .25) + ggtitle('sheep') +
+  xlab('Reference biased SNPs') + ylab('XCI ratio and variant AUROC') 
+```
+
+![](figure_plots_with_data_code_files/figure-gfm/ref_check_variants-4.png)<!-- -->
+
+``` r
+ggplot(goat_ref_check_df, aes(x = ref_biased_index, y = auc, fill = ref_biased_index)) + geom_violin(scale = 'width') + geom_boxplot(width = .25) + ggtitle('goat') +
+  xlab('Reference biased SNPs') + ylab('XCI ratio and variant AUROC') 
+```
+
+![](figure_plots_with_data_code_files/figure-gfm/ref_check_variants-5.png)<!-- -->
+
+``` r
+ggplot(horse_ref_check_df, aes(x = ref_biased_index, y = auc, fill = ref_biased_index)) + geom_violin(scale = 'width') + geom_boxplot(width = .25) + ggtitle('horse') +
+  xlab('Reference biased SNPs') + ylab('XCI ratio and variant AUROC') 
+```
+
+![](figure_plots_with_data_code_files/figure-gfm/ref_check_variants-6.png)<!-- -->
+
+``` r
+ggplot(rat_ref_check_df, aes(x = ref_biased_index, y = auc, fill = ref_biased_index)) + geom_violin(scale = 'width') + geom_boxplot(width = .25) + ggtitle('rat') +
+  xlab('Reference biased SNPs') + ylab('XCI ratio and variant AUROC') 
+```
+
+![](figure_plots_with_data_code_files/figure-gfm/ref_check_variants-7.png)<!-- -->
+
+``` r
+ggplot(mouse_ref_check_df, aes(x = ref_biased_index, y = auc, fill = ref_biased_index)) + geom_violin(scale = 'width') + geom_boxplot(width = .25) + ggtitle('mouse') +
+  xlab('Reference biased SNPs') + ylab('XCI ratio and variant AUROC') 
+```
+
+![](figure_plots_with_data_code_files/figure-gfm/ref_check_variants-8.png)<!-- -->
+
+``` r
+ggplot(macaca_ref_check_df, aes(x = ref_biased_index, y = auc, fill = ref_biased_index)) + geom_violin(scale = 'width') + geom_boxplot(width = .25) + ggtitle('macaca') +
+  xlab('Reference biased SNPs') + ylab('XCI ratio and variant AUROC') 
+```
+
+![](figure_plots_with_data_code_files/figure-gfm/ref_check_variants-9.png)<!-- -->
+
+``` r
+ggplot(dog_ref_check_df, aes(x = ref_biased_index, y = auc, fill = ref_biased_index)) + geom_violin(scale = 'width') + geom_boxplot(width = .25) + ggtitle('dog') +
+  xlab('Reference biased SNPs') + ylab('XCI ratio and variant AUROC') 
+```
+
+![](figure_plots_with_data_code_files/figure-gfm/ref_check_variants-10.png)<!-- -->
+
+## Supp. Figure 9B
+
+``` r
+#Contains the all_cow_downsample_df dataframe
+load('/home/werner/projects/cross_species_XCI/final_plots/R/data_for_plots/all_cow_downsample_df.Rdata')
+
+ori_variant_data = filter(snp_skew_auc_with_meta_df, label == 'Cow' & gene == 'KDM6A')
+downSamp_variant_data = filter(all_cow_downsample_df, gene == 'KDM6A') %>% group_by(variants) %>% summarize(mean_auc = mean(auc), max_auc = max(auc))
+
+index = match(ori_variant_data$variants, downSamp_variant_data$variants)
+downSamp_variant_data = downSamp_variant_data[index, ]
+downSamp_variant_data[ ,c(2,3)][is.na(downSamp_variant_data[ ,c(2,3)])] = 0
+
+par(pty = 's')
+plot(ori_variant_data$skew_auc, downSamp_variant_data$mean_auc, ylim = c(0, 1), xlim = c(0, 1), ylab = "Mean AUC of downsampled data", xlab='Original AUC of variant',
+     main = 'Cow: KDM6A' )
+abline(v = .75, col = 'red')
+abline(h = .75, col = 'red')
+```
+
+![](figure_plots_with_data_code_files/figure-gfm/cow_down_sample_variant_auc-1.png)<!-- -->
+
+``` r
+ori_variant_data = filter(snp_skew_auc_with_meta_df, label == 'Cow' & gene == 'TMEM164')
+downSamp_variant_data = filter(all_cow_downsample_df, gene == 'TMEM164') %>% group_by(variants) %>% summarize(mean_auc = mean(auc), max_auc = max(auc))
+
+index = match(ori_variant_data$variants, downSamp_variant_data$variants)
+downSamp_variant_data = downSamp_variant_data[index, ]
+downSamp_variant_data[ ,c(2,3)][is.na(downSamp_variant_data[ ,c(2,3)])] = 0
+
+par(pty = 's')
+plot(ori_variant_data$skew_auc, downSamp_variant_data$mean_auc, ylim = c(0, 1), xlim = c(0, 1), ylab = "Mean AUC of downsampled data", xlab='Original AUC of variant',
+     main = 'Cow: TMEM164' )
+abline(v = .75, col = 'red')
+abline(h = .75, col = 'red')
+```
+
+![](figure_plots_with_data_code_files/figure-gfm/cow_down_sample_variant_auc-2.png)<!-- -->
+
+``` r
+ori_variant_data = filter(snp_skew_auc_with_meta_df, label == 'Cow' & gene == 'MAMLD1')
+downSamp_variant_data = filter(all_cow_downsample_df, gene == 'MAMLD1') %>% group_by(variants) %>% summarize(mean_auc = mean(auc), max_auc = max(auc))
+
+index = match(ori_variant_data$variants, downSamp_variant_data$variants)
+downSamp_variant_data = downSamp_variant_data[index, ]
+downSamp_variant_data[ ,c(2,3)][is.na(downSamp_variant_data[ ,c(2,3)])] = 0
+
+par(pty = 's')
+plot(ori_variant_data$skew_auc, downSamp_variant_data$mean_auc, ylim = c(0, 1), xlim = c(0, 1), ylab = "Mean AUC of downsampled data", xlab='Original AUC of variant',
+     main = 'Cow: MAMLD1' )
+abline(v = .75, col = 'red')
+abline(h = .75, col = 'red')
+```
+
+![](figure_plots_with_data_code_files/figure-gfm/cow_down_sample_variant_auc-3.png)<!-- -->
+
+``` r
+ori_variant_data = filter(snp_skew_auc_with_meta_df, label == 'Cow' & gene == 'MID2')
+downSamp_variant_data = filter(all_cow_downsample_df, gene == 'MID2') %>% group_by(variants) %>% summarize(mean_auc = mean(auc), max_auc = max(auc))
+
+index = match(ori_variant_data$variants, downSamp_variant_data$variants)
+downSamp_variant_data = downSamp_variant_data[index, ]
+downSamp_variant_data[ ,c(2,3)][is.na(downSamp_variant_data[ ,c(2,3)])] = 0
+
+par(pty = 's')
+plot(ori_variant_data$skew_auc, downSamp_variant_data$mean_auc, ylim = c(0, 1), xlim = c(0, 1), ylab = "Mean AUC of downsampled data", xlab='Original AUC of variant',
+     main = 'Cow: MID2' )
+abline(v = .75, col = 'red')
+abline(h = .75, col = 'red')
+```
+
+![](figure_plots_with_data_code_files/figure-gfm/cow_down_sample_variant_auc-4.png)<!-- -->
+
+## Supp. Figure 9 C
+
+``` r
+#Contains the sheep comb_mxra5_df dataframe
+load(file = '/home/werner/projects/cross_species_XCI/final_plots/R/data_for_plots/sheep_individual_variant_auc_boxplots.Rdata')
+
+ggplot(comb_mxra5_df, aes(y = skews, x = variant, fill = data_label)) + geom_boxplot() + xlab('sheep MXRA5') + ylab('XCI skews') + ggtitle('sheep MXRA5')
+```
+
+![](figure_plots_with_data_code_files/figure-gfm/individual_variant_per_species-1.png)<!-- -->
+
+``` r
+#Contains the cow comb_mamld1_df, comb_mid2_df, comb_tmem164_df, comb_kdm6a_df dataframes
+load(file = '/home/werner/projects/cross_species_XCI/final_plots/R/data_for_plots/cow_individual_variant_auc_boxplots.Rdata')
+
+ggplot(comb_mamld1_df, aes(y = skews, x = variant, fill = data_label)) + geom_boxplot() + xlab('cow MAMLD1') + ylab('XCI skews') + ggtitle('cow MAMLD1')
+```
+
+![](figure_plots_with_data_code_files/figure-gfm/individual_variant_per_species-2.png)<!-- -->
+
+``` r
+ggplot(comb_mid2_df, aes(y = skews, x = variant, fill = data_label)) + geom_boxplot() + xlab('cow MID2') + ylab('XCI skews') + ggtitle('cow MID2')
+```
+
+![](figure_plots_with_data_code_files/figure-gfm/individual_variant_per_species-3.png)<!-- -->
+
+``` r
+ggplot(comb_tmem164_df, aes(y = skews, x = variant, fill = data_label)) + geom_boxplot() + xlab('cow TMEM164') + ylab('XCI skews') + ggtitle('cow TMEM164')
+```
+
+![](figure_plots_with_data_code_files/figure-gfm/individual_variant_per_species-4.png)<!-- -->
+
+``` r
+ggplot(comb_kdm6a_df, aes(y = skews, x = variant, fill = data_label)) + geom_boxplot() + xlab('cow KDM6A') + ylab('XCI skews') + ggtitle('cow KDM6A')
+```
+
+![](figure_plots_with_data_code_files/figure-gfm/individual_variant_per_species-5.png)<!-- -->
+
+``` r
+#Contains the goat comb_msl3_df, comb_mxra5_df, comb_shroom2_df, comb_loc102_df dataframes
+load(file = '/home/werner/projects/cross_species_XCI/final_plots/R/data_for_plots/goat_individual_variant_auc_boxplots.Rdata')
+
+ggplot(comb_msl3_df, aes(y = skews, x = variant, fill = data_label)) + geom_boxplot() + xlab('goat MSL3') + ylab('XCI skews') + ggtitle('goat MSL3')
+```
+
+![](figure_plots_with_data_code_files/figure-gfm/individual_variant_per_species-6.png)<!-- -->
+
+``` r
+ggplot(comb_mxra5_df, aes(y = skews, x = variant, fill = data_label)) + geom_boxplot() + xlab('goat MXRA5') + ylab('XCI skews') + ggtitle('goat MXRA5')
+```
+
+![](figure_plots_with_data_code_files/figure-gfm/individual_variant_per_species-7.png)<!-- -->
+
+``` r
+ggplot(comb_shroom2_df, aes(y = skews, x = variant, fill = data_label)) + geom_boxplot() + xlab('goat SHROOM2') + ylab('XCI skews') + ggtitle('goat SHROOM2')
+```
+
+![](figure_plots_with_data_code_files/figure-gfm/individual_variant_per_species-8.png)<!-- -->
+
+``` r
+ggplot(comb_loc102_df, aes(y = skews, x = variant, fill = data_label)) + geom_boxplot() + xlab('goat LOC102168615') + ylab('XCI skews') + ggtitle('goat LOC102168615')
+```
+
+![](figure_plots_with_data_code_files/figure-gfm/individual_variant_per_species-9.png)<!-- -->
+
+``` r
+#Contains the horse comb_arse_df, comb_plcxd1_df, comb_gpc4_df, comb_arhgap6_df dataframes
+load(file = '/home/werner/projects/cross_species_XCI/final_plots/R/data_for_plots/horse_individual_variant_auc_boxplots.Rdata')
+
+ggplot(comb_arhgap6_df, aes(y = skews, x = variant, fill = data_label)) + geom_boxplot() + xlab('Horse ARHGAP6') + ylab('XCI skews') + ggtitle('Horse ARHGAP6')
+```
+
+![](figure_plots_with_data_code_files/figure-gfm/individual_variant_per_species-10.png)<!-- -->
+
+``` r
+ggplot(comb_gpc4_df, aes(y = skews, x = variant, fill = data_label)) + geom_boxplot() + xlab('Horse GPC4') + ylab('XCI skews') + ggtitle('Horse GPC4')
+```
+
+![](figure_plots_with_data_code_files/figure-gfm/individual_variant_per_species-11.png)<!-- -->
+
+``` r
+ggplot(comb_plcxd1_df, aes(y = skews, x = variant, fill = data_label)) + geom_boxplot() + xlab('Horse PLCXD1') + ylab('XCI skews') + ggtitle('Horse PLCXD1')
+```
+
+![](figure_plots_with_data_code_files/figure-gfm/individual_variant_per_species-12.png)<!-- -->
+
+``` r
+ggplot(comb_arse_df, aes(y = skews, x = variant, fill = data_label)) + geom_boxplot() + xlab('Horse ARSE') + ylab('XCI skews') + ggtitle('Horse ARSE')
+```
+
+![](figure_plots_with_data_code_files/figure-gfm/individual_variant_per_species-13.png)<!-- -->
 
 ## Supp. Figure 10 A and B
 
