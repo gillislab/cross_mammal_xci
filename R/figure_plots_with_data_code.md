@@ -756,6 +756,584 @@ ggplot(dog_ref_check_df, aes(x = ref_biased_index, y = auc, fill = ref_biased_in
 
 ![](figure_plots_with_data_code_files/figure-gfm/ref_check_variants-10.png)<!-- -->
 
+## Supp. Figure 5A
+
+``` r
+#Contains the goat_chr19_skew_and_stats_df, goat_chr18_skew_and_stats_df, goat_skew_and_stats_df,
+#cow_chr1_skew_and_stats_df, cow_chr2_skew_and_stats_df, cow_skew_and_stats_df,
+#horse_chr1_skew_and_stats_df, horse_chr2_skew_and_stats_df, horse_skew_and_stats_df,
+#pig_chr4_skew_and_stats_df, pig_chr7_skew_and_stats_df, pig_skew_and_stats_df,
+#sheep_chr3_skew_and_stats_df, sheep_chr4_skew_and_stats_df, sheep_skew_and_stats_df,
+#rat_chr5_skew_and_stats_df, rat_chr6_skew_and_stats_df, rat_skew_and_stats_df,
+#mouse_chr2_skew_and_stats_df, mouse_chr3_skew_and_stats_df, mouse_skew_and_stats_df,
+#macaca_chr7_skew_and_stats_df, macaca_chr8_skew_and_stats_df, macaca_skew_and_stats_df,
+#dog_chr1_skew_and_stats_df, dog_chr3_skew_and_stats_df, dog_skew_and_stats_df,
+#human_chr7_skew_and_stats_df, human_chr8_skew_and_stats_df, human_skew_and_stats_df dataframes
+
+load(file = '/home/werner/projects/cross_species_XCI/final_plots/R/data_for_plots/all_x_and_auto_skew_and_stats_df.Rdata')
+
+#Adding sample Ids for the human X data
+#sample_metadata
+mapping = read.table('/home/werner/projects/cross_species_XCI/final_plots/R/data_for_plots/sample_metadata_with_v8.txt', sep="\t", header = TRUE)
+human_skew_and_stats_df$sample_id = mapping$Run_s[human_skew_and_stats_df$sample_index]
+
+
+snp_thresh = 10  #Number of SNPs needed per sample
+
+#Goat
+index = match(goat_chr19_skew_and_stats_df$sample_id, goat_chr18_skew_and_stats_df$sample_id )
+#Reorder to match chromosome 19
+temp_goat_chr18_skew_and_stats_df = goat_chr18_skew_and_stats_df[index, ]
+#Filter for samples with at least 10 SNPs on both chromosomes
+num_snp_index = temp_goat_chr18_skew_and_stats_df$num_good_snps >= snp_thresh & goat_chr19_skew_and_stats_df$num_good_snps >= snp_thresh
+
+
+par(pty = 's')
+plot(temp_goat_chr18_skew_and_stats_df$est_skew[num_snp_index], goat_chr19_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chr18 estimated skew', 
+     ylab = 'chr19 estimated skew', main = 'goat autosome skew estimates', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+```
+
+![](figure_plots_with_data_code_files/figure-gfm/X_autosome_compare-1.png)<!-- -->
+
+``` r
+#Compare to X chromosome
+index = match(goat_chr19_skew_and_stats_df$sample_id, goat_skew_and_stats_df$sample_id )
+#Reorder to match chromosome 19
+temp_goat_skew_and_stats_df = goat_skew_and_stats_df[index, ]
+#Filter for samples with at least 10 SNPs on each chromosome
+num_snp_index = goat_chr19_skew_and_stats_df$num_good_snps >= snp_thresh & temp_goat_skew_and_stats_df$num_good_snps_no_escape >= snp_thresh
+
+par(pty = 's')
+plot(temp_goat_skew_and_stats_df$est_skew_no_escape[num_snp_index], goat_chr19_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chrX estimated skew', 
+     ylab = 'chr19 estimated skew', main = 'goat chrX and chr19', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+```
+
+![](figure_plots_with_data_code_files/figure-gfm/X_autosome_compare-2.png)<!-- -->
+
+``` r
+#Compare to X chromosome
+index = match(goat_chr18_skew_and_stats_df$sample_id, goat_skew_and_stats_df$sample_id )
+#Reorder to match chromosome 18
+temp_goat_skew_and_stats_df = goat_skew_and_stats_df[index, ]
+#Filter for samples with at least 10 SNPs on each chromosome
+num_snp_index = goat_chr18_skew_and_stats_df$num_good_snps >= snp_thresh & temp_goat_skew_and_stats_df$num_good_snps_no_escape >= snp_thresh
+
+par(pty = 's')
+plot(temp_goat_skew_and_stats_df$est_skew_no_escape[num_snp_index], goat_chr18_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chrX estimated skew', 
+     ylab = 'chr18 estimated skew', main = 'goat chrX and chr18', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+```
+
+![](figure_plots_with_data_code_files/figure-gfm/X_autosome_compare-3.png)<!-- -->
+
+``` r
+#Dog
+index = match(dog_chr3_skew_and_stats_df$sample_id, dog_chr1_skew_and_stats_df$sample_id )
+#Reorder to match chromosome 3
+temp_dog_chr1_skew_and_stats_df = dog_chr1_skew_and_stats_df[index, ]
+#Filter for samples with at least 10 SNPs on both chromosomes
+num_snp_index = temp_dog_chr1_skew_and_stats_df$num_good_snps >= snp_thresh & dog_chr3_skew_and_stats_df$num_good_snps >= snp_thresh
+
+
+par(pty = 's')
+plot(temp_dog_chr1_skew_and_stats_df$est_skew[num_snp_index], dog_chr3_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chr1 estimated skew', 
+     ylab = 'chr3 estimated skew', main = 'dog autosome skew estimates', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+```
+
+![](figure_plots_with_data_code_files/figure-gfm/X_autosome_compare-4.png)<!-- -->
+
+``` r
+#Compare to X chromosome
+index = match(dog_chr3_skew_and_stats_df$sample_id, dog_skew_and_stats_df$sample_id )
+#Reorder to match chromosome 3
+temp_dog_skew_and_stats_df = dog_skew_and_stats_df[index, ]
+#Filter for samples with at least 10 SNPs on each chromosome
+num_snp_index = dog_chr3_skew_and_stats_df$num_good_snps >= snp_thresh & temp_dog_skew_and_stats_df$num_good_snps_no_escape >= snp_thresh
+
+par(pty = 's')
+plot(temp_dog_skew_and_stats_df$est_skew_no_escape[num_snp_index], dog_chr3_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chrX estimated skew', 
+     ylab = 'chr3 estimated skew', main = 'dog chrX and chr3', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+```
+
+![](figure_plots_with_data_code_files/figure-gfm/X_autosome_compare-5.png)<!-- -->
+
+``` r
+#Compare to X chromosome
+index = match(dog_chr1_skew_and_stats_df$sample_id, dog_skew_and_stats_df$sample_id )
+#Reorder to match chromosome 1
+temp_dog_skew_and_stats_df = dog_skew_and_stats_df[index, ]
+#Filter for samples with at least 10 SNPs on each chromosome
+num_snp_index = dog_chr1_skew_and_stats_df$num_good_snps >= snp_thresh & temp_dog_skew_and_stats_df$num_good_snps_no_escape >= snp_thresh
+
+par(pty = 's')
+plot(temp_dog_skew_and_stats_df$est_skew_no_escape[num_snp_index], dog_chr1_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chrX estimated skew', 
+     ylab = 'chr1 estimated skew', main = 'dog chrX and chr1', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+```
+
+![](figure_plots_with_data_code_files/figure-gfm/X_autosome_compare-6.png)<!-- -->
+
+``` r
+#Horse
+index = match(horse_chr2_skew_and_stats_df$sample_id, horse_chr1_skew_and_stats_df$sample_id )
+#Reorder to match chromosome 2
+temp_horse_chr1_skew_and_stats_df = horse_chr1_skew_and_stats_df[index, ]
+#Filter for samples with at least 10 SNPs on both chromosomes
+num_snp_index = temp_horse_chr1_skew_and_stats_df$num_good_snps >= snp_thresh & horse_chr2_skew_and_stats_df$num_good_snps >= snp_thresh
+
+
+par(pty = 's')
+plot(temp_horse_chr1_skew_and_stats_df$est_skew[num_snp_index], horse_chr2_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chr1 estimated skew', 
+     ylab = 'chr2 estimated skew', main = 'horse autosome skew estimates', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+```
+
+![](figure_plots_with_data_code_files/figure-gfm/X_autosome_compare-7.png)<!-- -->
+
+``` r
+#Compare to X chromosome
+index = match(horse_chr2_skew_and_stats_df$sample_id, horse_skew_and_stats_df$sample_id )
+#Reorder to match chromosome 2
+temp_horse_skew_and_stats_df = horse_skew_and_stats_df[index, ]
+#Filter for samples with at least 10 SNPs on each chromosome
+num_snp_index = horse_chr2_skew_and_stats_df$num_good_snps >= snp_thresh & temp_horse_skew_and_stats_df$num_good_snps_no_escape >= snp_thresh
+
+par(pty = 's')
+plot(temp_horse_skew_and_stats_df$est_skew_no_escape[num_snp_index], horse_chr2_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chrX estimated skew', 
+     ylab = 'chr2 estimated skew', main = 'horse chrX and chr2', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+```
+
+![](figure_plots_with_data_code_files/figure-gfm/X_autosome_compare-8.png)<!-- -->
+
+``` r
+#Compare to X chromosome
+index = match(horse_chr1_skew_and_stats_df$sample_id, horse_skew_and_stats_df$sample_id )
+#Reorder to match chromosome 1
+temp_horse_skew_and_stats_df = horse_skew_and_stats_df[index, ]
+#Filter for samples with at least 10 SNPs on each chromosome
+num_snp_index = horse_chr1_skew_and_stats_df$num_good_snps >= snp_thresh & temp_horse_skew_and_stats_df$num_good_snps_no_escape >= snp_thresh
+
+par(pty = 's')
+plot(temp_horse_skew_and_stats_df$est_skew_no_escape[num_snp_index], horse_chr1_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chrX estimated skew', 
+     ylab = 'chr1 estimated skew', main = 'horse chrX and chr1', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+```
+
+![](figure_plots_with_data_code_files/figure-gfm/X_autosome_compare-9.png)<!-- -->
+
+``` r
+#Macaca
+index = match(macaca_chr8_skew_and_stats_df$sample_id, macaca_chr7_skew_and_stats_df$sample_id )
+#Reorder to match chromosome 8
+temp_macaca_chr7_skew_and_stats_df = macaca_chr7_skew_and_stats_df[index, ]
+#Filter for samples with at least 10 SNPs on both chromosomes
+num_snp_index = temp_macaca_chr7_skew_and_stats_df$num_good_snps >= snp_thresh & macaca_chr8_skew_and_stats_df$num_good_snps >= snp_thresh
+
+
+par(pty = 's')
+plot(temp_macaca_chr7_skew_and_stats_df$est_skew[num_snp_index], macaca_chr8_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chr7 estimated skew', 
+     ylab = 'chr8 estimated skew', main = 'macaca autosome skew estimates', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+```
+
+![](figure_plots_with_data_code_files/figure-gfm/X_autosome_compare-10.png)<!-- -->
+
+``` r
+#Compare to X chromosome
+index = match(macaca_chr8_skew_and_stats_df$sample_id, macaca_skew_and_stats_df$sample_id )
+#Reorder to match chromosome 8
+temp_macaca_skew_and_stats_df = macaca_skew_and_stats_df[index, ]
+#Filter for samples with at least 10 SNPs on each chromosome
+num_snp_index = macaca_chr8_skew_and_stats_df$num_good_snps >= snp_thresh & temp_macaca_skew_and_stats_df$num_good_snps_no_escape >= snp_thresh
+
+par(pty = 's')
+plot(temp_macaca_skew_and_stats_df$est_skew_no_escape[num_snp_index], macaca_chr8_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chrX estimated skew', 
+     ylab = 'chr8 estimated skew', main = 'macaca chrX and chr8', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+```
+
+![](figure_plots_with_data_code_files/figure-gfm/X_autosome_compare-11.png)<!-- -->
+
+``` r
+#Compare to X chromosome
+index = match(macaca_chr7_skew_and_stats_df$sample_id, macaca_skew_and_stats_df$sample_id )
+#Reorder to match chromosome 7
+temp_macaca_skew_and_stats_df = macaca_skew_and_stats_df[index, ]
+#Filter for samples with at least 10 SNPs on each chromosome
+num_snp_index = macaca_chr7_skew_and_stats_df$num_good_snps >= snp_thresh & temp_macaca_skew_and_stats_df$num_good_snps_no_escape >= snp_thresh
+
+par(pty = 's')
+plot(temp_macaca_skew_and_stats_df$est_skew_no_escape[num_snp_index], macaca_chr7_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chrX estimated skew', 
+     ylab = 'chr7 estimated skew', main = 'macaca chrX and chr7', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+```
+
+![](figure_plots_with_data_code_files/figure-gfm/X_autosome_compare-12.png)<!-- -->
+
+``` r
+#Sheep
+index = match(sheep_chr4_skew_and_stats_df$sample_id, sheep_chr3_skew_and_stats_df$sample_id )
+#Reorder to match chromosome 4
+temp_sheep_chr3_skew_and_stats_df = sheep_chr3_skew_and_stats_df[index, ]
+#Filter for samples with at least 10 SNPs on both chromosomes
+num_snp_index = temp_sheep_chr3_skew_and_stats_df$num_good_snps >= snp_thresh & sheep_chr4_skew_and_stats_df$num_good_snps >= snp_thresh
+
+
+par(pty = 's')
+plot(temp_sheep_chr3_skew_and_stats_df$est_skew[num_snp_index], sheep_chr4_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chr3 estimated skew', 
+     ylab = 'chr4 estimated skew', main = 'sheep autosome skew estimates', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+```
+
+![](figure_plots_with_data_code_files/figure-gfm/X_autosome_compare-13.png)<!-- -->
+
+``` r
+#Compare to X chromosome
+index = match(sheep_chr4_skew_and_stats_df$sample_id, sheep_skew_and_stats_df$sample_id )
+#Reorder to match chromosome 4
+temp_sheep_skew_and_stats_df = sheep_skew_and_stats_df[index, ]
+#Filter for samples with at least 10 SNPs on each chromosome
+num_snp_index = sheep_chr4_skew_and_stats_df$num_good_snps >= snp_thresh & temp_sheep_skew_and_stats_df$num_good_snps_no_escape >= snp_thresh
+
+par(pty = 's')
+plot(temp_sheep_skew_and_stats_df$est_skew_no_escape[num_snp_index], sheep_chr4_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chrX estimated skew', 
+     ylab = 'chr4 estimated skew', main = 'sheep chrX and chr4', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+```
+
+![](figure_plots_with_data_code_files/figure-gfm/X_autosome_compare-14.png)<!-- -->
+
+``` r
+#Compare to X chromosome
+index = match(sheep_chr3_skew_and_stats_df$sample_id, sheep_skew_and_stats_df$sample_id )
+#Reorder to match chromosome 3
+temp_sheep_skew_and_stats_df = sheep_skew_and_stats_df[index, ]
+#Filter for samples with at least 10 SNPs on each chromosome
+num_snp_index = sheep_chr3_skew_and_stats_df$num_good_snps >= snp_thresh & temp_sheep_skew_and_stats_df$num_good_snps_no_escape >= snp_thresh
+
+par(pty = 's')
+plot(temp_sheep_skew_and_stats_df$est_skew_no_escape[num_snp_index], sheep_chr3_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chrX estimated skew', 
+     ylab = 'chr3 estimated skew', main = 'sheep chrX and chr3', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+```
+
+![](figure_plots_with_data_code_files/figure-gfm/X_autosome_compare-15.png)<!-- -->
+
+``` r
+#Pig
+index = match(pig_chr7_skew_and_stats_df$sample_id, pig_chr4_skew_and_stats_df$sample_id )
+#Reorder to match chromosome 7
+temp_pig_chr4_skew_and_stats_df = pig_chr4_skew_and_stats_df[index, ]
+#Filter for samples with at least 10 SNPs on both chromosomes
+num_snp_index = temp_pig_chr4_skew_and_stats_df$num_good_snps >= snp_thresh & pig_chr7_skew_and_stats_df$num_good_snps >= snp_thresh
+
+
+par(pty = 's')
+plot(temp_pig_chr4_skew_and_stats_df$est_skew[num_snp_index], pig_chr7_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chr4 estimated skew', 
+     ylab = 'chr7 estimated skew', main = 'pig autosome skew estimates', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+```
+
+![](figure_plots_with_data_code_files/figure-gfm/X_autosome_compare-16.png)<!-- -->
+
+``` r
+#Compare to X chromosome
+index = match(pig_chr7_skew_and_stats_df$sample_id, pig_skew_and_stats_df$sample_id )
+#Reorder to match chromosome 7
+temp_pig_skew_and_stats_df = pig_skew_and_stats_df[index, ]
+#Filter for samples with at least 10 SNPs on each chromosome
+num_snp_index = pig_chr7_skew_and_stats_df$num_good_snps >= snp_thresh & temp_pig_skew_and_stats_df$num_good_snps_no_escape >= snp_thresh
+
+par(pty = 's')
+plot(temp_pig_skew_and_stats_df$est_skew_no_escape[num_snp_index], pig_chr7_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chrX estimated skew', 
+     ylab = 'chr7 estimated skew', main = 'pig chrX and chr7', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+```
+
+![](figure_plots_with_data_code_files/figure-gfm/X_autosome_compare-17.png)<!-- -->
+
+``` r
+#Compare to X chromosome
+index = match(pig_chr4_skew_and_stats_df$sample_id, pig_skew_and_stats_df$sample_id )
+#Reorder to match chromosome 4
+temp_pig_skew_and_stats_df = pig_skew_and_stats_df[index, ]
+#Filter for samples with at least 10 SNPs on each chromosome
+num_snp_index = pig_chr4_skew_and_stats_df$num_good_snps >= snp_thresh & temp_pig_skew_and_stats_df$num_good_snps_no_escape >= snp_thresh
+
+par(pty = 's')
+plot(temp_pig_skew_and_stats_df$est_skew_no_escape[num_snp_index], pig_chr4_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chrX estimated skew', 
+     ylab = 'chr4 estimated skew', main = 'pig chrX and chr4', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+```
+
+![](figure_plots_with_data_code_files/figure-gfm/X_autosome_compare-18.png)<!-- -->
+
+``` r
+ #Cow
+index = match(cow_chr2_skew_and_stats_df$sample_id, cow_chr1_skew_and_stats_df$sample_id )
+#Reorder to match chromosome 2
+temp_cow_chr1_skew_and_stats_df = cow_chr1_skew_and_stats_df[index, ]
+#Filter for samples with at least 10 SNPs on both chromosomes
+num_snp_index = temp_cow_chr1_skew_and_stats_df$num_good_snps >= snp_thresh & cow_chr2_skew_and_stats_df$num_good_snps >= snp_thresh
+
+
+par(pty = 's')
+plot(temp_cow_chr1_skew_and_stats_df$est_skew[num_snp_index], cow_chr2_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chr1 estimated skew', 
+     ylab = 'chr2 estimated skew', main = 'cow autosome skew estimates', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+```
+
+![](figure_plots_with_data_code_files/figure-gfm/X_autosome_compare-19.png)<!-- -->
+
+``` r
+#Compare to X chromosome
+index = match(cow_chr2_skew_and_stats_df$sample_id, cow_skew_and_stats_df$sample_id )
+#Reorder to match chromosome 2
+temp_cow_skew_and_stats_df = cow_skew_and_stats_df[index, ]
+#Filter for samples with at least 10 SNPs on each chromosome
+num_snp_index = cow_chr2_skew_and_stats_df$num_good_snps >= snp_thresh & temp_cow_skew_and_stats_df$num_good_snps_no_escape >= snp_thresh
+
+par(pty = 's')
+plot(temp_cow_skew_and_stats_df$est_skew_no_escape[num_snp_index], cow_chr2_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chrX estimated skew', 
+     ylab = 'chr2 estimated skew', main = 'cow chrX and chr2', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+```
+
+![](figure_plots_with_data_code_files/figure-gfm/X_autosome_compare-20.png)<!-- -->
+
+``` r
+#Compare to X chromosome
+index = match(cow_chr1_skew_and_stats_df$sample_id, cow_skew_and_stats_df$sample_id )
+#Reorder to match chromosome 1
+temp_cow_skew_and_stats_df = cow_skew_and_stats_df[index, ]
+#Filter for samples with at least 10 SNPs on each chromosome
+num_snp_index = cow_chr1_skew_and_stats_df$num_good_snps >= snp_thresh & temp_cow_skew_and_stats_df$num_good_snps_no_escape >= snp_thresh
+
+par(pty = 's')
+plot(temp_cow_skew_and_stats_df$est_skew_no_escape[num_snp_index], cow_chr1_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chrX estimated skew', 
+     ylab = 'chr1 estimated skew', main = 'cow chrX and chr1', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+```
+
+![](figure_plots_with_data_code_files/figure-gfm/X_autosome_compare-21.png)<!-- -->
+
+``` r
+ #Rat
+index = match(rat_chr6_skew_and_stats_df$sample_id, rat_chr5_skew_and_stats_df$sample_id )
+#Reorder to match chromosome 6
+temp_rat_chr5_skew_and_stats_df = rat_chr5_skew_and_stats_df[index, ]
+#Filter for samples with at least 10 SNPs on both chromosomes
+num_snp_index = temp_rat_chr5_skew_and_stats_df$num_good_snps >= snp_thresh & rat_chr6_skew_and_stats_df$num_good_snps >= snp_thresh
+
+
+par(pty = 's')
+plot(temp_rat_chr5_skew_and_stats_df$est_skew[num_snp_index], rat_chr6_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chr5 estimated skew', 
+     ylab = 'chr6 estimated skew', main = 'rat autosome skew estimates', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+```
+
+![](figure_plots_with_data_code_files/figure-gfm/X_autosome_compare-22.png)<!-- -->
+
+``` r
+#Compare to X chromosome
+index = match(rat_chr6_skew_and_stats_df$sample_id, rat_skew_and_stats_df$sample_id )
+#Reorder to match chromosome 6
+temp_rat_skew_and_stats_df = rat_skew_and_stats_df[index, ]
+#Filter for samples with at least 10 SNPs on each chromosome
+num_snp_index = rat_chr6_skew_and_stats_df$num_good_snps >= snp_thresh & temp_rat_skew_and_stats_df$num_good_snps_no_escape >= snp_thresh
+
+par(pty = 's')
+plot(temp_rat_skew_and_stats_df$est_skew_no_escape[num_snp_index], rat_chr6_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chrX estimated skew', 
+     ylab = 'chr6 estimated skew', main = 'rat chrX and chr6', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+```
+
+![](figure_plots_with_data_code_files/figure-gfm/X_autosome_compare-23.png)<!-- -->
+
+``` r
+#Compare to X chromosome
+index = match(rat_chr5_skew_and_stats_df$sample_id, rat_skew_and_stats_df$sample_id )
+#Reorder to match chromosome 5
+temp_rat_skew_and_stats_df = rat_skew_and_stats_df[index, ]
+#Filter for samples with at least 10 SNPs on each chromosome
+num_snp_index = rat_chr5_skew_and_stats_df$num_good_snps >= snp_thresh & temp_rat_skew_and_stats_df$num_good_snps_no_escape >= snp_thresh
+
+par(pty = 's')
+plot(temp_rat_skew_and_stats_df$est_skew_no_escape[num_snp_index], rat_chr5_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chrX estimated skew', 
+     ylab = 'chr5 estimated skew', main = 'rat chrX and chr5', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+```
+
+![](figure_plots_with_data_code_files/figure-gfm/X_autosome_compare-24.png)<!-- -->
+
+``` r
+#Mouse
+index = match(mouse_chr2_skew_and_stats_df$sample_id, mouse_chr3_skew_and_stats_df$sample_id )
+#Reorder to match chromosome 2
+temp_mouse_chr3_skew_and_stats_df = mouse_chr3_skew_and_stats_df[index, ]
+#Filter for samples with at least 10 SNPs on both chromosomes
+num_snp_index = temp_mouse_chr3_skew_and_stats_df$num_good_snps >= snp_thresh & mouse_chr2_skew_and_stats_df$num_good_snps >= snp_thresh
+
+
+par(pty = 's')
+plot(mouse_chr2_skew_and_stats_df$est_skew[num_snp_index], temp_mouse_chr3_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chr2 estimated skew', 
+     ylab = 'chr3 estimated skew', main = 'mouse autosome skew estimates', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+```
+
+![](figure_plots_with_data_code_files/figure-gfm/X_autosome_compare-25.png)<!-- -->
+
+``` r
+#Compare to X chromosome
+index = match(mouse_chr2_skew_and_stats_df$sample_id, mouse_skew_and_stats_df$sample_id )
+#Reorder to match chromosome 2
+temp_mouse_skew_and_stats_df = mouse_skew_and_stats_df[index, ]
+#Filter for samples with at least 10 SNPs on each chromosome
+num_snp_index = mouse_chr2_skew_and_stats_df$num_good_snps >= snp_thresh & temp_mouse_skew_and_stats_df$num_good_snps_no_escape >= snp_thresh
+
+par(pty = 's')
+plot(temp_mouse_skew_and_stats_df$est_skew_no_escape[num_snp_index], mouse_chr2_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chrX estimated skew', 
+     ylab = 'chr2 estimated skew', main = 'mouse chrX and chr2', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+```
+
+![](figure_plots_with_data_code_files/figure-gfm/X_autosome_compare-26.png)<!-- -->
+
+``` r
+#Compare to X chromosome
+index = match(mouse_chr3_skew_and_stats_df$sample_id, mouse_skew_and_stats_df$sample_id )
+#Reorder to match chromosome 3
+temp_mouse_skew_and_stats_df = mouse_skew_and_stats_df[index, ]
+#Filter for samples with at least 10 SNPs on each chromosome
+num_snp_index = mouse_chr3_skew_and_stats_df$num_good_snps >= snp_thresh & temp_mouse_skew_and_stats_df$num_good_snps_no_escape >= snp_thresh
+
+par(pty = 's')
+plot(temp_mouse_skew_and_stats_df$est_skew_no_escape[num_snp_index], mouse_chr3_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chrX estimated skew', 
+     ylab = 'chr3 estimated skew', main = 'mouse chrX and chr3', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+```
+
+![](figure_plots_with_data_code_files/figure-gfm/X_autosome_compare-27.png)<!-- -->
+
+``` r
+#Human
+
+shared_samples = intersect(intersect(human_skew_and_stats_df$sample_id,human_chr8_skew_and_stats_df$sample_id ),human_chr7_skew_and_stats_df$sample_id  )
+
+index = match(human_chr8_skew_and_stats_df$sample_id, human_chr7_skew_and_stats_df$sample_id )
+#Reorder to match chromosome 8
+human_chr7_skew_and_stats_df = human_chr7_skew_and_stats_df[index, ]
+#Filter for samples with at least 10 SNPs on both chromosomes and in the shared sample space
+num_snp_index = human_chr7_skew_and_stats_df$num_good_snps >= snp_thresh & human_chr8_skew_and_stats_df$num_good_snps >= snp_thresh & 
+  human_chr7_skew_and_stats_df$sample_id %in% shared_samples
+
+
+par(pty = 's')
+plot(human_chr7_skew_and_stats_df$est_skew[num_snp_index], human_chr8_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chr7 estimated skew', 
+     ylab = 'chr8 estimated skew', main = 'human autosome skew estimates', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+```
+
+![](figure_plots_with_data_code_files/figure-gfm/X_autosome_compare-28.png)<!-- -->
+
+``` r
+#Compare to X chromosome
+index = match(human_chr8_skew_and_stats_df$sample_id, human_skew_and_stats_df$sample_id )
+#Reorder to match chromosome 8
+temp_human_skew_and_stats_df = human_skew_and_stats_df[index, ]
+#Filter for samples with at least 10 SNPs on each chromosome
+num_snp_index = human_chr8_skew_and_stats_df$num_good_snps >= snp_thresh & temp_human_skew_and_stats_df$num_snps >= snp_thresh &
+  human_chr8_skew_and_stats_df$sample_id %in% shared_samples
+
+par(pty = 's')
+plot(temp_human_skew_and_stats_df$skew[num_snp_index], human_chr8_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chrX estimated skew', 
+     ylab = 'chr8 estimated skew', main = 'human chrX and chr8', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+```
+
+![](figure_plots_with_data_code_files/figure-gfm/X_autosome_compare-29.png)<!-- -->
+
+``` r
+#Compare to X chromosome
+index = match(human_chr7_skew_and_stats_df$sample_id, human_skew_and_stats_df$sample_id )
+#Reorder to match chromosome 7
+temp_human_skew_and_stats_df = human_skew_and_stats_df[index, ]
+#Filter for samples with at least 10 SNPs on each chromosome
+num_snp_index = human_chr7_skew_and_stats_df$num_good_snps >= snp_thresh & temp_human_skew_and_stats_df$num_snps>= snp_thresh & human_chr7_skew_and_stats_df$sample_id %in% shared_samples
+
+par(pty = 's')
+plot(temp_human_skew_and_stats_df$skew[num_snp_index], human_chr7_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chrX estimated skew', 
+     ylab = 'chr7 estimated skew', main = 'human chrX and chr7', xlim = c(.5, 1), ylim = c(.5, 1), cex = .75)
+abline(a = 0, b = 1, col ='red' )
+abline(v = .6, lty = 'dashed')
+abline(h = .6, lty = 'dashed')
+```
+
+![](figure_plots_with_data_code_files/figure-gfm/X_autosome_compare-30.png)<!-- -->
+
 ## Supp. Figure 9A
 
 Human data does not include variant information
