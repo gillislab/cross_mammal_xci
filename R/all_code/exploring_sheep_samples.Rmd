@@ -1,0 +1,1767 @@
+
+
+Exploring the pig samples
+
+
+
+Checking out the cow samples
+
+
+data split between paired and single strand sequencing
+
+Processed samples are at 
+'/grid/gillis/data/hover/work/cmxci.paired/Ovis_aries'
+'/grid/gillis/data/hover/work/cmxci.single/Ovis_aries'
+
+```{r}
+library(ggplot2)
+library(ggExtra)
+library(stringr)
+library(parallel)
+library(ggridges)
+library(MetBrewer)
+
+```
+
+
+
+```{r}
+
+processed_files = list.files('/grid/gillis/home/hover/work/cmxci.paired/Ovis_aries')
+wasp_vcf_files_paired = processed_files[grepl('.wasp.chrX.snps_filtered.vcf',processed_files  )]
+#Ignore the .vcf.idx files
+wasp_vcf_files_paired = wasp_vcf_files_paired[!grepl('.idx',wasp_vcf_files_paired )]
+wasp_wig_files_paired = processed_files[grepl('.wasp.chrX.split.filtered.wig',processed_files  )]
+
+length(wasp_vcf_files_paired)
+length(wasp_wig_files_paired)
+
+head(wasp_vcf_files_paired)
+```
+
+
+```{r}
+
+processed_files = list.files('/grid/gillis/home/hover/work/cmxci.single/Ovis_aries')
+wasp_vcf_files_single = processed_files[grepl('.wasp.chrX.snps_filtered.vcf',processed_files  )]
+#Ignore the .vcf.idx files
+wasp_vcf_files_single = wasp_vcf_files_single[!grepl('.idx',wasp_vcf_files_single )]
+wasp_wig_files_single = processed_files[grepl('.wasp.chrX.split.filtered.wig',processed_files  )]
+
+#One extra file
+length(wasp_vcf_files_single)
+length(wasp_wig_files_single)
+
+head(wasp_vcf_files_single)
+```
+```{r}
+vcf_samps = sapply(strsplit(wasp_vcf_files_single, split = '.', fixed = T), '[[', 1)
+wig_samps = sapply(strsplit(wasp_wig_files_single, split = '.', fixed = T), '[[', 1)
+
+wasp_vcf_files_single = wasp_vcf_files_single[which(vcf_samps %in% wig_samps)]
+
+length(wasp_vcf_files_single)
+length(wasp_wig_files_single)
+
+vcf_samps = sapply(strsplit(wasp_vcf_files_single, split = '.', fixed = T), '[[', 1)
+wig_samps = sapply(strsplit(wasp_wig_files_single, split = '.', fixed = T), '[[', 1)
+
+table(vcf_samps == wig_samps)
+
+```
+
+
+```{r}
+wig_samples = sapply(strsplit(wasp_wig_files_paired, split = '.', fixed = T), '[[', 1)
+wig_samples = c(wig_samples, sapply(strsplit(wasp_wig_files_single, split = '.', fixed = T), '[[', 1) ) #Add the single samples 
+vcf_samples = sapply(strsplit(wasp_vcf_files_paired, split = '.', fixed = T), '[[', 1)
+vcf_samples = c(vcf_samples, sapply(strsplit(wasp_vcf_files_single, split = '.', fixed = T), '[[', 1) )
+table(wig_samples == vcf_samples)
+
+```
+
+```{r}
+
+
+wasp_vcf_files_paired = paste('/grid/gillis/home/hover/work/cmxci.paired/Ovis_aries/',wasp_vcf_files_paired, sep = '')
+wasp_vcf_files_single = paste('/grid/gillis/home/hover/work/cmxci.single/Ovis_aries/',wasp_vcf_files_single, sep = '')
+
+wasp_wig_files_paired = paste('/grid/gillis/home/hover/work/cmxci.paired/Ovis_aries/',wasp_wig_files_paired, sep = '')
+wasp_wig_files_single = paste('/grid/gillis/home/hover/work/cmxci.single/Ovis_aries/',wasp_wig_files_single, sep = '')
+
+
+wasp_vcf_files = c(wasp_vcf_files_paired, wasp_vcf_files_single)
+wasp_wig_files = c(wasp_wig_files_paired, wasp_wig_files_single)
+
+
+length(wasp_vcf_files)
+
+```
+
+###########################
+Screen for male samples using XIST and SRY expression from the STAR output
+###########################
+
+For cow, we used a female genome, so no SRY gene to map too. Start by looking at the distribution of XIST mapped reads
+
+
+
+```{r}
+
+star_output = paste(wig_samples, '.wasp.ReadsPerGene.out.tab', sep = '')
+star_output = paste("/grid/gillis/home/hover/work/cmxci.paired/Ovis_aries/", star_output, sep = '')
+star_output
+```
+
+
+Getting the genome annotations
+
+
+```{r}
+
+sheep_gtf = rtracklayer::import('/home/werner/projects/cross_species_XCI/genomes/Ovis_aries/annotation.gtf')
+sheep_gtf = as.data.frame(sheep_gtf)
+sheep_gtf
+#Genome specific x chromosome name
+sheep_x_chrom_name = readLines('/home/werner/projects/cross_species_XCI/genomes/Ovis_aries/chrXlabel.txt', n = 1)
+
+sheep_x_gtf = sheep_gtf[sheep_gtf$seqnames == sheep_x_chrom_name, ]
+
+sheep_x_genenames = unique(sheep_x_gtf$gene)
+length(sheep_x_genenames)
+```
+
+
+
+
+
+check out the gene annotations from a sample first
+```{r}
+temp_star_mapped_genes = read.table(star_output[1], skip = 4) 
+
+table(grepl('XIST', temp_star_mapped_genes$V1))
+
+```
+
+
+```{r}
+
+xist_reads = vector(mode = 'numeric', length = length(star_output))
+
+
+for(i in 1:length(star_output)){
+  
+  temp_star_mapped_genes = read.table(star_output[i], skip = 4)  
+  xist_reads[i] = temp_star_mapped_genes$V2[temp_star_mapped_genes$V1 == "XIST"]
+}
+
+
+hist(xist_reads)
+
+
+```
+```{r}
+hist(xist_reads[xist_reads <= 2000], breaks = seq(0, 2000, 5))
+potential_male = which(xist_reads == 0)
+
+```
+
+
+
+
+Function for merging the wig and vcf info, filtering for heterozygous SNPs with 2 alleles and a minimum of 10 reads per allele
+
+
+```{r}
+
+source('get_exp_vcf.R')
+  
+```
+
+
+```{r}
+Sys.time()
+wasp_filt_vcf = mclapply(1:length(wasp_vcf_files), function(i) get_exp_vcf(vcf_file_path = wasp_vcf_files[i], 
+                                                                           wig_file_path = wasp_wig_files[i]), mc.cores = 5)
+Sys.time()
+
+```
+
+
+```{r}
+
+head(wasp_filt_vcf)
+
+
+```
+
+
+
+
+Number of filtered SNPs kept
+```{r}
+
+num_snps = vector(mode = 'numeric', length = length(wasp_filt_vcf))
+
+for(i in 1:length(wasp_filt_vcf)){
+  data = wasp_filt_vcf[[i]]
+  
+  if(is.null(dim(data))){
+    num_snps[i] = 0
+  }else{num_snps[i] = dim(data)[1]}
+}
+
+hist(num_snps, breaks = seq(0,max(num_snps) +10, 10))
+
+
+```
+
+
+
+```{r}
+table(num_snps >= 1000)
+
+high_snp_index = which(num_snps >= 1000)
+
+for(i in high_snp_index){
+  
+  data = wasp_filt_vcf[[i]]
+  tot_counts = data$ref_counts + data$alt_counts
+  ref_ratios = data$ref_counts / tot_counts
+  
+  hist(ref_ratios, breaks = seq(0,1,.01))
+  
+}
+
+
+
+```
+
+
+
+Adding gene annotations to each sample
+
+
+
+```{r}
+sheep_x_meta = sheep_x_gtf[sheep_x_gtf$gbkey == 'Gene'& !is.na(sheep_x_gtf$gbkey),]
+x_gene_starts = sheep_x_meta$start
+x_gene_ends = sheep_x_meta$end
+
+
+annot_sheep_vcfs = wasp_filt_vcf
+
+for(j in 1:length(annot_sheep_vcfs)){
+  test = annot_sheep_vcfs[[j]]
+  if(is.null(dim(test))){next}
+  
+  
+  gene_annots = vector(mode = 'character', length = length(test$Pos))
+  gene_biotype = vector(mode = 'character', length = length(test$Pos))
+  for( i in 1:dim(test)[1]){
+  
+    test_gene_start = test$Pos[i]
+    gene_index = findInterval(test_gene_start, x_gene_starts)
+    if(gene_index == 0){next}
+    
+    if(test_gene_start <= x_gene_ends[gene_index]){
+      
+      gene_annots[i] = sheep_x_meta$gene[gene_index]
+      gene_biotype[i] = sheep_x_meta$gene_biotype[gene_index]
+    }
+  }
+  
+  test$gene = gene_annots
+  test$gene_biotype = gene_biotype
+  annot_sheep_vcfs[[j]] = test
+}
+
+head(annot_sheep_vcfs)
+
+```
+
+
+
+save the annotated vcfs with all the SNPs present
+
+
+```{r}
+#save(annot_sheep_vcfs, file = '/home/werner/projects/cross_species_XCI/data/species_data_analysis/ovis_aries/all_snp_vcf.Rdata')
+save(annot_sheep_vcfs, file = '/home/werner/projects/cross_species_XCI/data/species_data_analysis/ovis_aries/all_snp_vcf_3_15_23.Rdata')
+
+```
+
+```{r}
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/ovis_aries/all_snp_vcf_3_15_23.Rdata')
+
+```
+
+
+Looking at global distribution of reference ratios versus read counts for all SNPs
+```{r}
+all_total_counts = c()
+all_ref_ratios = c()
+
+for(i in 1:length(annot_sheep_vcfs)){
+
+  data = annot_sheep_vcfs[[i]]
+  if(is.null(dim(data))){next}
+  total_counts = data$ref_counts + data$alt_counts
+  ref_ratios = data$ref_counts / total_counts
+  
+  all_total_counts = c(all_total_counts, total_counts)
+  all_ref_ratios = c(all_ref_ratios, ref_ratios)
+
+}
+
+length(all_total_counts)
+
+
+plot(all_ref_ratios, log10(all_total_counts), cex = .5)
+
+
+```
+
+
+Looking at gene specific expression 
+
+
+```{r}
+
+captured_genes = c()
+for( i in 1:length(annot_sheep_vcfs)){
+  suppressWarnings(if(is.null(dim(annot_sheep_vcfs[[i]]))){next})
+  captured_genes = c(captured_genes, annot_sheep_vcfs[[i]]$gene)
+}
+
+captured_genes = unique(captured_genes)
+captured_genes = captured_genes[captured_genes != ""]
+
+length(captured_genes)
+```
+
+
+
+```{r}
+for(i in 201:300){
+  
+  current_gene = captured_genes[i]
+  
+  gene_ref_exp = c()
+  for(j in 1:length(annot_sheep_vcfs)){
+    suppressWarnings(if(is.null(dim(annot_sheep_vcfs[[j]]))){next})
+    gene_index = annot_sheep_vcfs[[j]]$gene == current_gene
+    ref_counts = annot_sheep_vcfs[[j]]$ref_counts[gene_index]
+    alt_counts = annot_sheep_vcfs[[j]]$alt_counts[gene_index]
+    total_counts = ref_counts + alt_counts
+    gene_ref_exp = c(gene_ref_exp, ref_counts / total_counts )
+
+  }
+  
+  
+  hist(gene_ref_exp, main = current_gene, xlim = c(0,1), breaks = seq(0,1, .025))  
+  
+}
+
+```
+
+Checking SNP specific ratio distributions, seems to be only certain SNPs that are causing problems
+
+```{r}
+
+captured_SNPs = c()
+for( i in 1:length(annot_sheep_vcfs)){
+  suppressWarnings(if(is.null(dim(annot_sheep_vcfs[[i]]))){next})
+  captured_SNPs = c(captured_SNPs, annot_sheep_vcfs[[i]]$Pos)
+}
+
+captured_SNPs = unique(captured_SNPs)
+captured_SNPs = captured_SNPs[captured_SNPs != ""]
+
+length(captured_SNPs)
+```
+
+
+Grab the mean read counts and variance in read counts as well
+
+```{r}
+
+snp_stat_df = data.frame(snp_pos = integer(length(captured_SNPs)), num_samples_present = integer(length(captured_SNPs)), 
+                         mean_ref_ratio = integer(length(captured_SNPs)), mean_total_counts = integer(length(captured_SNPs)), sd_total_counts = integer(length(captured_SNPs)))
+
+for(i in 1:length(captured_SNPs)){
+
+  if(i %% 1000 == 0){print(i)}
+  current_SNP = captured_SNPs[i]
+  
+  snp_ref_exp = c()
+  snp_total_reads = c()
+  for(j in 1:length(annot_sheep_vcfs)){
+    suppressWarnings(if(is.null(dim(annot_sheep_vcfs[[j]]))){next})
+    gene_index = annot_sheep_vcfs[[j]]$Pos == current_SNP
+    ref_counts = annot_sheep_vcfs[[j]]$ref_counts[gene_index]
+    alt_counts = annot_sheep_vcfs[[j]]$alt_counts[gene_index]
+    total_counts = ref_counts + alt_counts
+    snp_ref_exp = c(snp_ref_exp, ref_counts / total_counts )
+    snp_total_reads = c(snp_total_reads, total_counts)
+  }
+  
+  snp_stat_df$snp_pos[i] = current_SNP
+  snp_stat_df$num_samples_present[i] = length(snp_ref_exp)
+  snp_stat_df$mean_ref_ratio[i] = mean(snp_ref_exp)
+  snp_stat_df$mean_total_counts[i] = mean(snp_total_reads)
+  snp_stat_df$sd_total_counts[i] = sd(snp_total_reads)
+}
+
+```
+
+
+
+```{r}
+hist(snp_stat_df$mean_ref_ratio, breaks = seq(0,1,.01), xlab = 'Mean reference ratio per SNP', main = 'Ovis aries')
+hist(snp_stat_df$num_samples_present)
+par(pty = 's')
+plot(snp_stat_df$mean_ref_ratio,snp_stat_df$num_samples_present, cex = .25, xlab = 'Mean reference ratio', 
+     ylab = '# of samples SNP is detected', main = 'Ovis aries Het SNPs')
+abline(v = .5, col = 'red')
+abline(h = 2100, col = 'blue')
+abline(v = .4, col = 'blue')
+abline(v = .6, col = 'blue')
+```
+
+```{r}
+
+plot(snp_stat_df$mean_total_counts, snp_stat_df$sd_total_counts, cex = .5)
+
+```
+
+
+Filter out SNPs that have a mean reference ratio < .4 or > .6, 
+Should get rid of SNPs with consistent reference bias without excluding whole genes
+
+```{r}
+
+snp_stat_df$filter = !(snp_stat_df$mean_ref_ratio < .4 | snp_stat_df$mean_ref_ratio > .6)
+table(snp_stat_df$filter)
+
+```
+
+
+Save the SNP dataframe
+
+```{r}
+
+save(snp_stat_df, file = '/home/werner/projects/cross_species_XCI/data/species_data_analysis/ovis_aries/detected_het_snps_df_3_15_23.Rdata')
+
+sheep_snp_stat_df = snp_stat_df
+save(sheep_snp_stat_df, file = '/home/werner/projects/cross_species_XCI/final_plots/R/data_for_plots/sheep_snp_stat_df.Rdata')
+```
+
+```{r}
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/ovis_aries/detected_het_snps_df_3_15_23.Rdata')
+
+```
+
+
+plot for supplemental figures of SNP filtering
+
+```{r}
+
+library(gridExtra)
+
+p1 = ggplot(snp_stat_df, aes(x = mean_ref_ratio)) + geom_histogram(binwidth = .025, color = 'black', fill = 'grey') + 
+  xlab(' ') + ylab('Number of SNPs') + ggtitle('Ovis aries') +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), aspect.ratio = 1, 
+      panel.background = element_rect(fill = 'white'), panel.border = element_rect(color = "black", fill=NA),  
+      axis.text.y = element_text(size=12), axis.text.x = element_text(size=12),
+      axis.title.y = element_text(size=12), axis.title.x = element_text(size=12)) 
+
+p2 = ggplot(snp_stat_df, aes(x = mean_ref_ratio, y = num_samples_present)) + geom_point(alpha = .5, size = 1) + 
+  geom_vline(xintercept = c(.4, .6), color = 'blue') + geom_vline(xintercept = .5, color = 'red') +
+  xlab('Mean reference ratio') + ylab('Number of samples SNP is detected') +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), aspect.ratio = 1, 
+    panel.background = element_rect(fill = 'white'), panel.border = element_rect(color = "black", fill=NA),  
+    axis.text.y = element_text(size=12), axis.text.x = element_text(size=12),
+    axis.title.y = element_text(size=12), axis.title.x = element_text(size=12))
+
+p3 = grid.arrange(p1, p2, ncol = 1)
+
+#ggsave(plot = p3, filename = 'sheep_x_ref_snp_filtering_plots.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/ref_snp_filtering/', device = 'pdf',
+#       useDingbats = F, width = 5, height = 8)
+
+```
+
+
+Filtering the vcfs for only annotated genes and the max powered SNP per gene
+
+
+```{r}
+filt_sheep_vcfs = annot_sheep_vcfs
+
+for(i in 1:length(filt_sheep_vcfs)){
+  test = filt_sheep_vcfs[[i]]
+  
+  suppressWarnings(if(is.null(dim(test))){next})
+  
+  #Get rid of SNPs in nonannotated genes
+  test = test[test$gene != "", ]
+  suppressWarnings(if(dim(test)[1] == 0){filt_sheep_vcfs[[i]] = NA; next})
+
+  #Get the unique number of genes
+  sample_genes = unique(test$gene)
+  test_2 = data.frame(matrix(NA, 
+                             nrow = length(sample_genes), 
+                             ncol = dim(test)[2]))
+  colnames(test_2) = colnames(test)
+  
+  
+  for(j in 1:length(sample_genes)){
+    
+    current_gene_data = test[test$gene == sample_genes[j], ]
+    if(dim(current_gene_data)[1] == 1){
+      test_2[j, ] = current_gene_data
+    }else{
+      
+      current_tot_exp = current_gene_data$ref_counts + current_gene_data$alt_counts
+      test_2[j, ] = current_gene_data[which.max(current_tot_exp), ]
+    }
+  }
+
+  filt_sheep_vcfs[[i]] = test_2
+}
+
+```
+
+
+
+
+save the filtered vcf list
+
+```{r}
+save(filt_sheep_vcfs, file = '/home/werner/projects/cross_species_XCI/data/species_data_analysis/ovis_aries/max_snp_vcf_3_15_23.Rdata')
+
+
+```
+
+```{r}
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/ovis_aries/max_snp_vcf_3_15_23.Rdata')
+
+```
+
+
+
+Number of genes per samples
+
+
+```{r}
+num_filt_genes = vector(mode = 'numeric', length = length(filt_sheep_vcfs))
+for(i in 1:length(filt_sheep_vcfs)){
+  
+  suppressWarnings(if(is.null(dim(filt_sheep_vcfs[[i]]))){
+    num_filt_genes[i] = 0
+    next
+  })
+  num_filt_genes[i] = dim(filt_sheep_vcfs[[i]])[1]
+}
+```
+
+```{r}
+max(num_filt_genes)
+hist(num_filt_genes, breaks = seq(0,310,10))
+
+sum(num_filt_genes >= 10)
+```
+
+look at the SNP distributions, with and without including the potentially reference biased SNPs
+
+```{r}
+
+index_num_samps = which(num_filt_genes >= 30)
+
+```
+
+```{r}
+
+index = seq(100,200,1)
+
+for(i in index){
+
+  data = filt_sheep_vcfs[[index_num_samps[i]]]
+  
+  snp_filter = data$Pos %in% snp_stat_df$snp_pos[snp_stat_df$filter]
+  
+  
+  total_exp = data$ref_counts + data$alt_counts
+  ref_ratios = data$ref_counts[snp_filter] / total_exp[snp_filter]
+  
+  #ref_ratios = data$ref_counts / total_exp
+  
+  hist(ref_ratios, xlim = c(0,1), breaks = seq(0,1, .025))
+  abline(v = .5, col = 'red')
+
+}
+```
+
+
+
+
+```{r}
+
+
+# Functions to fold and unfold ratios 
+folded <- function(x) { apply( cbind(x,1-x), 1, max)} 
+unfold <- function(x) { c(x,1-x) } 
+
+#Sara's MLE function
+# Maximum likelihood estimate function. Note, x is a global variable! Should fix but this lets me use it in the bootstrap later.  
+mle_folded <- function(x){ 
+  mus = seq(0.5,1, by = 0.001)
+  sigmas = seq(0,0.5, by = 0.01)
+  
+  mles = sapply(mus, function(mu)
+    sapply(sigmas, function(sigma)
+      -sum( log(dnorm( x,   mean = mu, sd = sigma )
+                + dnorm( x,   mean = 1-mu, sd = sigma ) )  )))
+  mles[!is.finite(mles)] = NA
+  coefs = which(mles==min(mles, na.rm=T), arr.ind=T)
+  return (list( mus[coefs[2]] , sigmas[coefs[1]]))
+} 
+
+```
+
+
+
+```{r}
+Ns = vector(mode='numeric', length = length(filt_sheep_vcfs))
+
+for(i in 1:length(filt_sheep_vcfs)){
+  
+  suppressWarnings(if(is.null(dim(filt_sheep_vcfs[[i]]))){Ns[i] = 0}
+  else{Ns[i] = dim(filt_sheep_vcfs[[i]])[1]})
+  
+}
+
+```
+
+```{r}
+
+ratios.max = list()
+for(i in 1: length(filt_sheep_vcfs)){
+  
+  if(Ns[i] == 0){next}
+  
+  total_exp = filt_sheep_vcfs[[i]]$ref_counts + filt_sheep_vcfs[[i]]$alt_counts
+  ref_ratios = filt_sheep_vcfs[[i]]$ref_counts / total_exp
+  ratios.max[[i]] = ref_ratios
+
+}
+
+head(ratios.max)
+
+```
+
+
+```{r}
+
+est_skew_func = function(list.skew.max, Ns, ratios.max, snp_stat_df, filter_snps = T){
+  
+  #If there's only 1 or 0 SNPs, don't estimate a skew
+  if(Ns <= 0){return(NA)}
+  
+  #Filter for the good snps
+  if(filter_snps){
+    snp_index = list.skew.max$Pos %in% snp_stat_df$snp_pos[snp_stat_df$filter]
+    #Fold the reference skews
+    folded_ref_skews = folded(ratios.max[snp_index])
+  }else{
+    folded_ref_skews = folded(ratios.max)
+  }
+  #return the mean and sigma estimates
+  return(mle_folded(folded_ref_skews))
+}
+
+```
+
+
+
+
+```{r}
+
+Sys.time()
+folded_norm_fits = mclapply(1:length(filt_sheep_vcfs), function(i) est_skew_func(filt_sheep_vcfs[[i]], Ns[i], ratios.max[[i]], snp_stat_df), mc.cores = 20)
+Sys.time()
+
+
+Sys.time()
+folded_norm_fits_bad_snps = mclapply(1:length(filt_sheep_vcfs), function(i) est_skew_func(filt_sheep_vcfs[[i]], Ns[i], ratios.max[[i]], snp_stat_df, filter_snps = F), mc.cores = 20)
+Sys.time()
+
+#Grab the skew and variance estimates
+est_skew = vector(mode = 'numeric', length = length(folded_norm_fits))
+est_var = vector(mode = 'numeric', length = length(folded_norm_fits))
+for(i in 1:length(folded_norm_fits)){
+  
+  if(is.na(folded_norm_fits[i])){
+    est_skew[i] = NA
+    est_var[i] = NA
+    next
+  }
+  
+  est_skew[i] = folded_norm_fits[[i]][[1]]
+  est_var[i] = folded_norm_fits[[i]][[2]]
+}
+
+#Grab the skew and variance estimates
+est_skew_bad_snps = vector(mode = 'numeric', length = length(folded_norm_fits_bad_snps))
+est_var_bad_snps = vector(mode = 'numeric', length = length(folded_norm_fits_bad_snps))
+for(i in 1:length(folded_norm_fits_bad_snps)){
+  
+  if(is.na(folded_norm_fits_bad_snps[i])){
+    est_skew_bad_snps[i] = NA
+    est_var_bad_snps[i] = NA
+    next
+  }
+  
+  est_skew_bad_snps[i] = folded_norm_fits_bad_snps[[i]][[1]]
+  est_var_bad_snps[i] = folded_norm_fits_bad_snps[[i]][[2]]
+}
+
+```
+
+```{r}
+
+hist(est_skew, main = 'sheep skew estimates filtering out bad SNPs', breaks=64)
+hist(est_var, main = 'Variance estimates', breaks = 32)
+plot(est_skew, est_var)
+
+
+
+```
+
+```{r}
+par(pty = 's')
+plot(est_skew, est_skew_bad_snps, cex = .5)
+abline(a = 0, b = 1, col = 'red')
+```
+
+Make a dataframe from with the estimated skew stats
+
+```{r}
+
+num_good_snps = vector(length = length(filt_sheep_vcfs), mode = 'numeric')
+total_snps = vector(length = length(filt_sheep_vcfs), mode = 'numeric')
+
+for(i in 1:length(filt_sheep_vcfs)){
+  
+  data = filt_sheep_vcfs[[i]]
+  suppressWarnings(if(is.null(dim(data))){num_good_snps[i] = 0; total_snps[i] = 0; next})
+  
+  snp_filter = data$Pos %in% snp_stat_df$snp_pos[snp_stat_df$filter]
+  
+  total_snps[i] = length(data$Pos)
+  num_good_snps[i] = length(data$Pos[snp_filter])
+}
+par(pty = 's')
+plot(total_snps, num_good_snps)
+
+```
+
+
+
+
+
+
+
+
+
+```{r}
+plot(est_skew, num_good_snps)
+
+```
+
+
+
+
+
+###########################################
+Instead of a per gene approach for identifying escape genes, trying a chromosome binning approach
+Using just the skewed samples, get the average reference ratio for all SNPs within a bin and check the distribution. Think on a threshold and then exclude any bins that exhibit balanced biallelic expression. Null distribution should be centered around the skew threshold
+###########################################
+
+
+```{r}
+bin_width = 1e6 #1MB bins
+
+#sheep
+#Use the reference biased SNPs too, more powered to find bins that have balanced biallelic expression in opposition to skew and reference bias
+all_ref_ratios = c()
+all_snp_pos = c()
+sheep_het_index = which(est_skew >= .7)
+for(i in 1:length(sheep_het_index)){
+
+  data = annot_sheep_vcfs[[sheep_het_index[i]]]
+  if(is.null(dim(data))){next}
+  #data = data[data$Pos %in% snp_stat_df$snp_pos[snp_stat_df$filter], ]
+  ref_ratios = data$ref_counts /(data$ref_counts + data$alt_counts)
+  
+  all_ref_ratios = c(all_ref_ratios, ref_ratios)
+  all_snp_pos = c(all_snp_pos, data$Pos)
+  
+}
+
+bins = seq(0,max(all_snp_pos), bin_width)
+mean_bin_ref_ratio = sapply(1:(length(bins) - 1), function(i) mean(folded(all_ref_ratios[all_snp_pos >= bins[i] & all_snp_pos < bins[i+1]])))
+num_snps_bin = sapply(1:(length(bins) - 1), function(i) sum(all_snp_pos >= bins[i] & all_snp_pos < bins[i+1]) )
+binned_chrom_df = data.frame(bin = bins[1:(length(bins)-1)], mean_bin_ref_ratio = mean_bin_ref_ratio, num_snps = num_snps_bin)
+p1 = ggplot(binned_chrom_df, aes(x = bin, y = mean_bin_ref_ratio, size = num_snps)) + geom_point(alpha = .5) + geom_hline(yintercept = .7, color = 'red') +
+  ylab('Mean folded SNP ratio per bin') + xlab('X chromosome position (1MB bins)') + ggtitle('sheep All SNPs')+ ylim(.5, 1)
+ggMarginal(p1, margins = 'y', type = 'histogram', yparams = list(binwidth = .005))
+
+
+#Excluding the first 9MB as likely pseudo-autosomal regions
+#And excluding 1MB bins with a mean reference ratio below .65
+bad_sheep_bins = which(mean_bin_ref_ratio<= .65)
+bad_sheep_bins = c(c(1,2,3,4,5,6,7,8,9), bad_sheep_bins)
+bad_sheep_bins = unique(bad_sheep_bins)
+
+
+binned_chrom_df$keep_label = rep('Kept 1MB bin', length = nrow(binned_chrom_df))
+binned_chrom_df$keep_label[(binned_chrom_df$bin/1e6) %in% (bad_sheep_bins - 1)] = 'Excluded 1MB bin'
+p1 = ggplot(binned_chrom_df, aes(x = bin, y = mean_bin_ref_ratio, size = num_snps, color = keep_label)) + geom_point(alpha = .5) + geom_hline(yintercept = .65, color = 'red') +
+  ylab('Mean folded SNP ratio per bin') + xlab('X chromosome position (1MB bins)') + ggtitle('sheep All SNPs')+ ylim(.5, 1) +
+  scale_color_manual(values = c('Kept 1MB bin' = 'black', 'Excluded 1MB bin' = 'red'))  
+ggMarginal(p1, margins = 'y', type = 'histogram', yparams = list(binwidth = .005))
+#ggsave(filename = 'sheep_binnedMB_escape_scatter.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/escape/', device = 'pdf', 
+#       useDingbats = F, height = 4, width = 6)
+
+sheep_binned_chrom_df = binned_chrom_df
+save(sheep_binned_chrom_df, file = '/home/werner/projects/cross_species_XCI/final_plots/R/data_for_plots/sheep_binned_chrom_df.Rdata')
+```
+
+
+```{r}
+
+#Filter out any SNPs that land within these bins
+bad_sheep_coordinates = unlist(lapply(1:length(bad_sheep_bins), function(i) ((bad_sheep_bins - 1)*1e6)[i]:((bad_sheep_bins)*1e6)[i]))
+
+```
+
+
+################################
+Get skew estimates excluding these bad chromosome bins
+
+################################
+
+
+save the vcfs without the bad bins
+
+```{r}
+
+filter_bad_bins = function(data){
+  if(is.null(dim(data))){return(NA)}
+  else{
+    escape_index = data$Pos %in% bad_sheep_coordinates
+    data = data[!escape_index, ]
+    return(data)
+  }
+}
+
+filt_sheep_vcfs_noBadbins = mclapply(filt_sheep_vcfs, filter_bad_bins, mc.cores = 10)
+save(filt_sheep_vcfs_noBadbins, file = '/home/werner/projects/cross_species_XCI/data/species_data_analysis/ovis_aries/max_snp_vcf_binFilt_4_27_23.Rdata')
+```
+
+```{r}
+
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/ovis_aries/max_snp_vcf_binFilt_4_27_23.Rdata')
+
+num_snp_good_bins = vector(mode = 'numeric', length = length(filt_sheep_vcfs_noBadbins))
+for(i in 1:length(filt_sheep_vcfs_noBadbins)){
+  
+  data = filt_sheep_vcfs_noBadbins[[i]]
+  if(is.null(dim(data))){num_snp_good_bins[i] = 0}
+  else{
+    data = data[data$Pos %in% snp_stat_df$snp_pos[snp_stat_df$filter], ]
+    num_snp_good_bins[i] = nrow(data)}
+}
+  
+hist(num_snp_good_bins)
+
+sum(num_snp_good_bins >= 10)
+```
+
+
+
+```{r}
+Ns.escape = vector(mode='numeric', length = length(filt_sheep_vcfs_noBadbins))
+
+for(i in 1:length(filt_sheep_vcfs_noBadbins)){
+  
+  suppressWarnings(if(is.null(dim(filt_sheep_vcfs_noBadbins[[i]]))){Ns.escape[i] = 0}
+  else{Ns.escape[i] = dim(filt_sheep_vcfs_noBadbins[[i]])[1]})
+  
+}
+
+```
+
+```{r}
+
+ratios.escape.max = list()
+for(i in 1: length(filt_sheep_vcfs_noBadbins)){
+  
+  if(Ns.escape[i] == 0){next}
+  
+  total_exp = filt_sheep_vcfs_noBadbins[[i]]$ref_counts + filt_sheep_vcfs_noBadbins[[i]]$alt_counts
+  ref_ratios = filt_sheep_vcfs_noBadbins[[i]]$ref_counts / total_exp
+  ratios.escape.max[[i]] = ref_ratios
+
+}
+
+head(ratios.escape.max)
+
+```
+
+
+```{r}
+
+Sys.time()
+folded_norm_fits_no_escape = mclapply(1:length(filt_sheep_vcfs_noBadbins), function(i) 
+  est_skew_func(filt_sheep_vcfs_noBadbins[[i]], Ns.escape[i], ratios.escape.max[[i]], snp_stat_df), mc.cores = 20)
+Sys.time()
+
+#Grab the skew and variance estimates
+est_skew_no_escape = vector(mode = 'numeric', length = length(folded_norm_fits_no_escape))
+est_var_no_escape = vector(mode = 'numeric', length = length(folded_norm_fits_no_escape))
+for(i in 1:length(folded_norm_fits)){
+  
+  if(is.na(folded_norm_fits_no_escape[i])){
+    est_skew_no_escape[i] = NA
+    est_var_no_escape[i] = NA
+    next
+  }
+  
+  est_skew_no_escape[i] = folded_norm_fits_no_escape[[i]][[1]]
+  est_var_no_escape[i] = folded_norm_fits_no_escape[[i]][[2]]
+}
+
+
+```
+
+
+
+
+```{r}
+
+sample_index = which(num_snp_good_bins >= 10 & est_skew_no_escape >= .7)
+
+for(i in 1:length(sample_index)){
+  
+  data = filt_sheep_vcfs_noBadbins[[sample_index[i]]]
+  data = data[data$Pos %in% snp_stat_df$snp_pos[snp_stat_df$filter], ]
+  ref_ratios = data$ref_counts / (data$ref_counts + data$alt_counts)
+  hist(ref_ratios, breaks = seq(0,1,.025), main = est_skew_no_escape[sample_index[i]])
+
+}
+
+```
+
+
+
+```{r}
+
+sample_index = which(num_snp_good_bins >= 10)
+
+hist(unfold(est_skew_no_escape[sample_index]), breaks = seq(0,1,.01))
+
+```
+
+
+```{r}
+par(pty = 's')
+plot(est_skew, est_skew_no_escape, xlim = c(.5, 1), ylim = c(.5, 1))
+abline(a = 0, b = 1, col = 'red')
+
+plot(est_skew_no_escape, num_snp_good_bins, xlim = c(.5, 1))
+abline(h = 10, col = 'red')
+
+
+```
+
+
+
+```{r}
+
+chrX_skewed_index = which(est_skew_no_escape >= .7 & num_snp_good_bins >= 10)
+
+all_chrX_skewed_snps = c()
+for(i in 1:length(chrX_skewed_index)){
+  
+  data = filt_sheep_vcfs_noBadbins[[chrX_skewed_index[i]]]
+  data = data[data$Pos %in% snp_stat_df$snp_pos[snp_stat_df$filter], ]
+  ref_ratios = data$ref_counts / (data$ref_counts + data$alt_counts)
+  hist(ref_ratios, breaks = seq(0,1,.025), main = sprintf('Sample index: %i est skew: %0.3f',chrX_skewed_index[i], est_skew_no_escape[chrX_skewed_index[i]]))
+  all_chrX_skewed_snps = c(all_chrX_skewed_snps, ref_ratios)
+  
+}
+
+hist(all_chrX_skewed_snps, breaks = seq(0,1,.025), main = 'All compiled SNPs')
+
+
+chrX_Nonskewed_index = which(est_skew_no_escape < .7 & num_snp_good_bins >= 10)
+
+all_chrX_Nonskewed_snps = c()
+for(i in 1:length(chrX_Nonskewed_index)){
+  
+  data = filt_sheep_vcfs_noBadbins[[chrX_Nonskewed_index[i]]]
+  data = data[data$Pos %in% snp_stat_df$snp_pos[snp_stat_df$filter], ]
+  ref_ratios = data$ref_counts / (data$ref_counts + data$alt_counts)
+  all_chrX_Nonskewed_snps = c(all_chrX_Nonskewed_snps, ref_ratios)
+  
+}
+
+hist(all_chrX_Nonskewed_snps, breaks = seq(0,1,.025), main = 'All compiled SNPs')
+
+```
+
+```{r}
+
+species_colors = met.brewer("Tiepolo", n=10,type="continuous")
+
+enoughSNPs_index = which(num_snp_good_bins >= 10)
+
+all_ref_ratios = c()
+all_skews = c()
+for(i in 1:length(enoughSNPs_index)){
+  
+  data = filt_sheep_vcfs_noBadbins[[enoughSNPs_index[i]]]
+  data = data[data$Pos %in% snp_stat_df$snp_pos[snp_stat_df$filter], ]
+  ref_ratios = data$ref_counts / (data$ref_counts + data$alt_counts)
+  all_ref_ratios = c(all_ref_ratios, ref_ratios)
+  all_skews = c(all_skews, rep(est_skew_no_escape[enoughSNPs_index[i]], length = length(ref_ratios)))
+  
+}
+
+
+skew_bin_snp_df = data.frame(ref_ratios = all_ref_ratios, est_skew_no_escape = all_skews)
+skew_bin_snp_df$bin_label = rep('0.50 <= XCI ratio < 0.55', length = nrow(skew_bin_snp_df))
+skew_bin_snp_df$bin_label[skew_bin_snp_df$est_skew_no_escape >= .55 & skew_bin_snp_df$est_skew_no_escape < 0.60] = '0.55 <= XCI ratio < 0.60'
+skew_bin_snp_df$bin_label[skew_bin_snp_df$est_skew_no_escape >= .60 & skew_bin_snp_df$est_skew_no_escape < 0.65] = '0.60 <= XCI ratio < 0.65'
+skew_bin_snp_df$bin_label[skew_bin_snp_df$est_skew_no_escape >= .65 & skew_bin_snp_df$est_skew_no_escape < 0.70] = '0.65 <= XCI ratio < 0.70'
+skew_bin_snp_df$bin_label[skew_bin_snp_df$est_skew_no_escape >= .70 & skew_bin_snp_df$est_skew_no_escape < 0.75] = '0.70 <= XCI ratio < 0.75'
+skew_bin_snp_df$bin_label[skew_bin_snp_df$est_skew_no_escape >= .75 & skew_bin_snp_df$est_skew_no_escape < 0.80] = '0.75 <= XCI ratio < 0.80'
+skew_bin_snp_df$bin_label[skew_bin_snp_df$est_skew_no_escape >= .80 & skew_bin_snp_df$est_skew_no_escape < 0.85] = '0.80 <= XCI ratio < 0.85'
+skew_bin_snp_df$bin_label[skew_bin_snp_df$est_skew_no_escape >= .85 & skew_bin_snp_df$est_skew_no_escape < 0.90] = '0.85 <= XCI ratio < 0.90'
+skew_bin_snp_df$bin_label[skew_bin_snp_df$est_skew_no_escape >= .90 & skew_bin_snp_df$est_skew_no_escape < 0.95] = '0.90 <= XCI ratio < 0.95'
+skew_bin_snp_df
+
+
+ggplot(skew_bin_snp_df, aes(x = ref_ratios, y = bin_label)) + geom_density_ridges(rel_min_height = 0.01, scale = 0.95, fill = species_colors[6] ) + xlim(0,1) +
+  scale_y_discrete(limits=rev) + ylab('Binned sample XCI ratio') + xlab('Unfolded SNP reference expression ratios') + ggtitle('Ovis aries')
+#ggsave(filename = 'sheep_chrX_skew_binned_refRatio_ridgePlot.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/species_skew_binned_refRatios/', 
+#       device = 'pdf', useDingbats = F, height = 6, width = 6)
+
+sheep_skew_bin_snp_df = skew_bin_snp_df
+save(sheep_skew_bin_snp_df, file = '/home/werner/projects/cross_species_XCI/final_plots/R/data_for_plots/sheep_skew_bin_snp_df.Rdata')
+```
+
+
+
+```{r}
+sheep_skew_and_stats_df = data.frame(sample_id = wig_samples, 
+                                   est_skew = est_skew, est_var = est_var,  #Skew estimates filtering out bad genes
+                                   est_skew_total_snps = est_skew_bad_snps, est_var_total_snps = est_var_bad_snps,   #Skew estimates with all genes 
+                                   est_skew_no_escape = est_skew_no_escape, est_var_no_escape = est_var_no_escape,   #Skew estimates filtering out escape
+                                   num_good_snps = num_good_snps, total_snps = total_snps, num_good_snps_no_escape = num_snp_good_bins)
+
+sheep_skew_and_stats_df
+```
+
+
+```{r}
+
+save(sheep_skew_and_stats_df, file = '/home/werner/projects/cross_species_XCI/data/species_data_analysis/ovis_aries/sheep_skew_and_stats_binFilt_df_4_27_23.Rdata')
+
+```
+
+
+
+
+Check the binned chromosome expression again
+```{r}
+bin_width = 1e6 #1MB bins
+
+#sheep
+#Use the reference biased SNPs too, more powered to find bins that have balanced biallelic expression in opposition to skew and reference bias
+all_ref_ratios = c()
+all_snp_pos = c()
+sheep_het_index = which(est_skew_no_escape >= .7)
+for(i in 1:length(sheep_het_index)){
+
+  data = filt_sheep_vcfs_noBadbins[[sheep_het_index[i]]]
+  if(is.null(dim(data))){next}
+  #data = data[data$Pos %in% snp_stat_df$snp_pos[snp_stat_df$filter], ]
+  ref_ratios = data$ref_counts /(data$ref_counts + data$alt_counts)
+  
+  all_ref_ratios = c(all_ref_ratios, ref_ratios)
+  all_snp_pos = c(all_snp_pos, data$Pos)
+  
+}
+
+bins = seq(0,max(all_snp_pos), bin_width)
+mean_bin_ref_ratio = sapply(1:(length(bins) - 1), function(i) mean(folded(all_ref_ratios[all_snp_pos >= bins[i] & all_snp_pos < bins[i+1]])))
+num_snps_bin = sapply(1:(length(bins) - 1), function(i) sum(all_snp_pos >= bins[i] & all_snp_pos < bins[i+1]) )
+binned_chrom_df = data.frame(bin = bins[1:(length(bins)-1)], mean_bin_ref_ratio = mean_bin_ref_ratio, num_snps = num_snps_bin)
+p1 = ggplot(binned_chrom_df, aes(x = bin, y = mean_bin_ref_ratio, size = num_snps)) + geom_point(alpha = .5) + geom_hline(yintercept = .7, color = 'red') +
+  ylab('Mean folded SNP ratio per bin') + xlab('X chromosome position (1MB bins)') + ggtitle('sheep All SNPs')+ ylim(.5, 1)
+ggMarginal(p1, margins = 'y', type = 'histogram', yparams = list(binwidth = .005))
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+######################################
+Trying to find escape genes
+
+######################################
+
+
+```{r}
+
+all_genes = c()
+
+for(i in 1:length(filt_sheep_vcfs)){
+  if(is.null(dim(filt_sheep_vcfs[[i]]))){next}
+  all_genes = c(all_genes,filt_sheep_vcfs[[i]]$gene )
+}
+
+all_genes = unique(all_genes)
+length(all_genes)
+
+```
+
+```{r}
+
+gene_thresh = 20
+
+gene_chi_right_p_values = vector(mode = 'numeric', length = length(all_genes))
+names(gene_chi_right_p_values) = all_genes
+gene_chi_left_p_values = vector(mode = 'numeric', length = length(all_genes))
+names(gene_chi_left_p_values) = all_genes
+num_pvalues =  vector(mode = 'numeric', length = length(all_genes))
+skewed_index = which(est_skew_bad_snps >= .6)
+
+for(j in 1:length(all_genes)){
+
+  p_value_vec = c()
+  num_genes_vec = c()
+  for(i in 1:length(skewed_index)){
+  
+    if(is.null(dim(filt_sheep_vcfs[[skewed_index[i]]]))){next}
+    
+    data = filt_sheep_vcfs[[skewed_index[i]]]
+    #data = data[data$Pos %in% snp_stat_df$snp_pos[snp_stat_df$filter], ]
+    
+    if(!all_genes[j] %in% data$gene){next}
+    
+    gene_index = data$gene == all_genes[j]
+    ratios = data$ref_counts / (data$ref_counts + data$alt_counts)
+    deviations = abs(ratios - .5)
+    gene_deviation = deviations[gene_index]
+    deviations = deviations[!gene_index]
+    p_value = sum(deviations <= gene_deviation) / (length(deviations)+1)
+    num_genes = length(deviations)
+    p_value_vec = c(p_value_vec, p_value)
+    num_genes_vec = c(num_genes_vec, num_genes)
+  
+  }
+  
+  if(length(p_value_vec) == 0){next}
+  p_value_vec[p_value_vec == 0] = 1e-5
+  #hist(p_value_vec[num_genes_vec >= gene_thresh], breaks = seq(0,1,.025), main = all_genes[j])
+  
+  #Get the Fishers method p-value for this gene
+  chi_stat = -2 * sum(log(p_value_vec[num_genes_vec >= gene_thresh]))
+  gene_chi_right_p_values[j] = pchisq(chi_stat, 2*sum(num_genes_vec >= gene_thresh), lower.tail = F)
+  gene_chi_left_p_values[j] = pchisq(chi_stat, 2*sum(num_genes_vec >= gene_thresh), lower.tail = T)
+  num_pvalues[j] = sum(num_genes_vec >= gene_thresh)
+     
+}
+
+```
+
+
+```{r}
+
+adj_gene_chi_right_p_values = p.adjust(gene_chi_right_p_values, method = 'BH')
+adj_gene_chi_left_p_values = p.adjust(gene_chi_left_p_values, method = 'BH')
+
+
+hist(adj_gene_chi_right_p_values, breaks = seq(0,1,.025))
+hist(adj_gene_chi_right_p_values[num_pvalues >= gene_thresh], breaks = seq(0,1,.025))
+
+escape_gene_index = which(adj_gene_chi_right_p_values <= .001 & num_pvalues >=gene_thresh)
+adj_gene_chi_right_p_values[escape_gene_index]
+all_genes[escape_gene_index]
+
+
+```
+
+
+
+p-value distributions of genes called as escape
+
+```{r}
+
+skewed_index = which(est_skew_bad_snps >= .6)
+
+for(j in 1:length(all_genes[escape_gene_index])){
+
+  gene = all_genes[escape_gene_index][j]
+  
+  p_value_vec = c()
+  num_genes_vec = c()
+  for(i in 1:length(skewed_index)){
+  
+    if(is.null(dim(filt_sheep_vcfs[[skewed_index[i]]]))){next}
+    
+    data = filt_sheep_vcfs[[skewed_index[i]]]
+    #data = data[data$Pos %in% snp_stat_df$snp_pos[snp_stat_df$filter], ]
+    
+    if(!gene %in% data$gene){next}
+    
+    gene_index = data$gene == gene
+    ratios = data$ref_counts / (data$ref_counts + data$alt_counts)
+    deviations = abs(ratios - .5)
+    gene_deviation = deviations[gene_index]
+    deviations = deviations[!gene_index]
+    p_value = sum(deviations <= gene_deviation) / length(deviations)
+    num_genes = length(deviations)
+    p_value_vec = c(p_value_vec, p_value)
+    num_genes_vec = c(num_genes_vec, num_genes)
+  
+  }
+  
+  p_value_vec[p_value_vec == 0] = 1e-5
+  hist(p_value_vec[num_genes_vec >= gene_thresh], breaks = seq(0,1,.025), main =gene)
+  
+    
+     
+}
+
+```
+
+
+
+
+
+```{r}
+
+escape_genes = all_genes[escape_gene_index]
+
+
+sample_index = which(total_snps >= 10 & est_skew_bad_snps >= .6)
+all_escape_ratios = c()
+all_non_ratios  = c()
+for(i in 1:length(sample_index)){
+  
+  data = filt_sheep_vcfs[[sample_index[i]]]
+  #data = data[data$Pos %in% snp_stat_df$snp_pos[snp_stat_df$filter], ]
+  
+  ref_ratios = data$ref_counts/ (data$ref_counts + data$alt_counts)
+  escape_index = data$gene %in% escape_genes
+  
+  escape_ratios = ref_ratios[escape_index]
+  nonescape_ratios = ref_ratios[!escape_index]
+  hist(nonescape_ratios, breaks = seq(0,1,.025))
+  hist(escape_ratios, add = T, col = 'red', breaks = seq(0,1,.025))
+  all_escape_ratios = c(all_escape_ratios, escape_ratios)
+  all_non_ratios  = c(all_non_ratios , nonescape_ratios)
+  
+}
+
+
+hist(all_non_ratios, breaks = seq(0,1,.025))
+hist(all_escape_ratios, add = T, col = 'red', breaks = seq(0,1,.025))
+
+```
+
+
+
+
+pull together a dataframe of the escape stats per gene to save 
+
+```{r}
+
+escape_label = rep('non-escape', length = length(all_genes))
+escape_label[adj_gene_chi_right_p_values <= .001 & num_pvalues >=gene_thresh] = 'escape'
+escape_sheep_df = data.frame(gene = all_genes, num_pvalues = num_pvalues,
+                           chi_right_p_values = gene_chi_right_p_values, chi_left_p_values = gene_chi_left_p_values,
+                           adj_chi_right_p_values = adj_gene_chi_right_p_values, adj_chi_left_p_values = adj_gene_chi_left_p_values,
+                           escape_label = escape_label)
+
+escape_sheep_df
+
+save(escape_sheep_df, file = '/home/werner/projects/cross_species_XCI/data/species_data_analysis/ovis_aries/escape_sheep_df_3_15_23.Rdata')
+
+
+
+```
+
+
+```{r}
+
+load( '/home/werner/projects/cross_species_XCI/data/species_data_analysis/ovis_aries/escape_sheep_df.Rdata')
+
+sheep_escape = escape_sheep_df$gene[escape_sheep_df$escape_label == 'escape']
+
+```
+
+
+################################
+Get skew estimates excluding these potential escape genes
+
+################################
+
+
+save the vcfs without the escape genes
+
+```{r}
+filt_sheep_vcfs_noEscape = filt_sheep_vcfs
+num_snp_escape = vector(mode = 'numeric', length = length(filt_sheep_vcfs_noEscape))
+for(i in 1:length(filt_sheep_vcfs_noEscape)){
+  
+  if(is.null(dim(filt_sheep_vcfs_noEscape[[i]]))){next}
+  escape_index = filt_sheep_vcfs_noEscape[[i]]$gene %in% escape_genes
+  filt_sheep_vcfs_noEscape[[i]] = filt_sheep_vcfs_noEscape[[i]][!escape_index, ]
+  num_snp_escape[i] = dim(filt_sheep_vcfs_noEscape[[i]])
+}
+
+
+save(filt_sheep_vcfs_noEscape, file = '/home/werner/projects/cross_species_XCI/data/species_data_analysis/ovis_aries/max_snp_vcf_noEscape_3_15_23.Rdata')
+
+```
+
+
+```{r}
+
+length(filt_sheep_vcfs_noEscape)
+hist(num_snp_escape)
+```
+
+
+
+```{r}
+load(file = '/home/werner/projects/cross_species_XCI/data/species_data_analysis/ovis_aries/max_snp_vcf_noEscape.Rdata')
+filt_sheep_vcfs_noEscape[1:5]
+```
+
+
+```{r}
+Ns.escape = vector(mode='numeric', length = length(filt_sheep_vcfs_noEscape))
+
+for(i in 1:length(filt_sheep_vcfs_noEscape)){
+  
+  suppressWarnings(if(is.null(dim(filt_sheep_vcfs_noEscape[[i]]))){Ns.escape[i] = 0}
+  else{Ns.escape[i] = dim(filt_sheep_vcfs_noEscape[[i]])[1]})
+  
+}
+
+```
+
+```{r}
+
+ratios.escape.max = list()
+for(i in 1: length(filt_sheep_vcfs_noEscape)){
+  
+  if(Ns.escape[i] == 0){next}
+  
+  total_exp = filt_sheep_vcfs_noEscape[[i]]$ref_counts + filt_sheep_vcfs_noEscape[[i]]$alt_counts
+  ref_ratios = filt_sheep_vcfs_noEscape[[i]]$ref_counts / total_exp
+  ratios.escape.max[[i]] = ref_ratios
+
+}
+
+head(ratios.escape.max)
+
+```
+
+
+```{r}
+
+Sys.time()
+folded_norm_fits_no_escape = mclapply(1:length(filt_sheep_vcfs_noEscape), function(i) 
+  est_skew_func(filt_sheep_vcfs_noEscape[[i]], Ns.escape[i], ratios.escape.max[[i]], snp_stat_df), mc.cores = 20)
+Sys.time()
+
+folded_norm_fits_no_escape 
+
+#Grab the skew and variance estimates
+est_skew_no_escape = vector(mode = 'numeric', length = length(folded_norm_fits_no_escape))
+est_var_no_escape = vector(mode = 'numeric', length = length(folded_norm_fits_no_escape))
+for(i in 1:length(folded_norm_fits_no_escape)){
+  
+  if(is.na(folded_norm_fits_no_escape[i])){
+    est_skew_no_escape[i] = NA
+    est_var_no_escape[i] = NA
+    next
+  }
+  
+  est_skew_no_escape[i] = folded_norm_fits_no_escape[[i]][[1]]
+  est_var_no_escape[i] = folded_norm_fits_no_escape[[i]][[2]]
+}
+
+
+```
+
+
+Compare skew estimates with and without escape
+
+first get the number of SNPs per sample now excluding escape
+```{r}
+
+num_good_snps_escape = vector(length = length(filt_sheep_vcfs_noEscape), mode = 'numeric')
+
+for(i in 1:length(filt_sheep_vcfs_noEscape)){
+  
+  data = filt_sheep_vcfs_noEscape[[i]]
+  suppressWarnings(if(is.null(dim(data))){num_good_snps_escape[i] = 0; next})
+  
+  snp_filter = data$Pos %in% snp_stat_df$snp_pos[snp_stat_df$filter]
+  num_good_snps_escape[i] = length(data$Pos[snp_filter])
+}
+
+hist(num_good_snps_escape)
+
+```
+
+
+
+
+```{r}
+hist(est_skew_no_escape[num_good_snps_escape >= 10], breaks = seq(.5, 1, .005))
+hist(est_skew[num_good_snps >= 10], breaks = seq(.5, 1, .005))
+
+par(pty = 's')
+plot(est_skew, est_skew_no_escape)
+abline(a = 0, b = 1, col = 'red')
+
+
+
+plot(est_skew_no_escape, est_var_no_escape)
+```
+```{r}
+hist(est_skew_no_escape[num_good_snps_escape >= 10], breaks = seq(.5, 1, .005))
+hist(est_skew[num_good_snps >= 10], breaks = seq(.5, 1, .005))
+
+par(pty = 's')
+plot(est_skew, est_skew_no_escape)
+abline(a = 0, b = 1, col = 'red')
+
+
+
+plot(est_skew_no_escape, est_var_no_escape)
+```
+
+
+
+check out the chromosomal position of the escape genes, probably detecting the pseudo-autosomal regions.
+
+
+```{r}
+#same gene metadata as before
+sheep_x_meta = sheep_x_gtf[sheep_x_gtf$gbkey == 'Gene'& !is.na(sheep_x_gtf$gbkey),]
+x_gene_starts = sheep_x_meta$start
+x_gene_ends = sheep_x_meta$end
+
+
+escape_genes = escape_sheep_df$gene[escape_sheep_df$escape_label == 'escape']
+
+#Get the mean expression of each gene. Take the mean of the mean total counts of the SNPs within that gene
+gene_name_vec = vector(mode = 'character', length = nrow(snp_stat_df))
+for(i in 1:nrow(snp_stat_df)){
+  gene_index = findInterval(snp_stat_df$snp_pos[i], sheep_x_meta$start)
+  if(gene_index == 0){gene_name_vec[i] = NA; next}
+  
+  if(snp_stat_df$snp_pos[i] <= sheep_x_meta$end[gene_index]){
+    gene_name_vec[i] = sheep_x_meta$gene[gene_index]
+  }else{gene_name_vec[i] = NA}
+}
+
+#Add gene names to the snp stat df
+snp_stat_df$gene = gene_name_vec
+#Ignore SNPs not in annotated genes
+temp_snp_stat_df = snp_stat_df[!is.na(snp_stat_df$gene), ]
+mean_gene_df = temp_snp_stat_df %>% dplyr::group_by(gene) %>% dplyr::summarize(mean_exp = mean(mean_total_counts), num_snps = length(mean_total_counts))
+
+
+gene_pos_df = data.frame(gene_name = sheep_x_meta$gene, gene_start = sheep_x_meta$start, gene_end = sheep_x_meta$end, 
+                         gene_biotype = sheep_x_meta$gene_biotype, escape_label = sheep_x_meta$gene %in% escape_genes)
+
+index = match(gene_pos_df$gene_name, mean_gene_df$gene)
+gene_pos_df$mean_exp = mean_gene_df$mean_exp[index]
+gene_pos_df$num_snps = mean_gene_df$num_snps[index]
+
+gene_pos_df
+
+ggplot(gene_pos_df, aes(x = gene_start, y = log10(mean_exp), color = escape_label)) + geom_point(aes(size = escape_label)) +
+  scale_color_manual(values = c('TRUE' = 'red', 'FALSE' = 'black')) +
+  scale_size_manual(values = c('TRUE' = 2, 'FALSE' = 1))
+ggplot(gene_pos_df, aes(x = gene_start, y = log10(num_snps), color = escape_label)) + geom_point(aes(size = escape_label)) +
+  scale_color_manual(values = c('TRUE' = 'red', 'FALSE' = 'black')) +
+  scale_size_manual(values = c('TRUE' = 2, 'FALSE' = 1))
+```
+
+potential pseudo autosomal genes, any SNP that comes before
+
+
+```{r}
+gene_pos_df
+
+ggplot(gene_pos_df, aes(x = gene_start, y = log10(mean_exp), color = escape_label)) + geom_point(aes(size = escape_label)) +
+  geom_vline(xintercept = 12000000, col = 'red') +
+  scale_color_manual(values = c('TRUE' = 'red', 'FALSE' = 'black')) +
+  scale_size_manual(values = c('TRUE' = 2, 'FALSE' = 1))
+
+```
+check out the potential psuedo autosomal genes expression ratios
+```{r}
+pseudo_end = 11798562
+sample_index = which(sheep_skew_and_stats_no_escape_df$est_skew_no_escape > .6 & sheep_skew_and_stats_no_escape_df$num_good_snps_no_escape >= 10)
+length(sample_index)
+
+
+for(i in 1:length(sample_index)){
+  
+  data = filt_sheep_vcfs_noEscape[[sample_index[i]]]
+  ref_ratios = data$ref_counts / (data$ref_counts + data$alt_counts)
+  pseudo_label = data$Pos <= pseudo_end
+  hist(ref_ratios[!pseudo_label], breaks = seq(0,1, .025))
+  hist(ref_ratios[pseudo_label], breaks = seq(0,1, .025), col = 'red', add = T)
+  
+}
+
+
+
+
+```
+
+sheep genes in that potential pseudo autosomal region do not look like strong escapers at all in skewed samples
+
+
+```{r}
+
+quantile(est_var_no_escape, probs = seq(0,1,.10), na.rm = T)
+sample_index = which(num_good_snps_escape >= 10 & est_var_no_escape < .12)
+
+hist(unfold(est_skew_no_escape[sample_index]), breaks = seq(0,1,.01))
+
+
+
+```
+
+
+
+
+
+
+
+Redo the bootstrap without escape genes
+
+
+```{r}
+
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/ovis_aries/bootstrapping_results_3_15_23.Rdata')
+length(boots)
+boots[1:5]
+```
+
+
+
+
+```{r}
+lower_CI = vector(mode = 'numeric', length = length(boots))
+upper_CI = vector(mode = 'numeric', length = length(boots))
+
+for(i in 1:length(boots)){
+  
+  if(length(boots[[i]])==1){lower_CI[i] = NA; upper_CI[i] = NA; next} #NA boot
+  
+  bootstrapped_ests = boots[[i]]$t[ ,1]  #Grab the bootstrapped estimate distribution for the ith sample
+  bootstrapped_ests = bootstrapped_ests[order(bootstrapped_ests)]  #Order and get the 95th percentile CI
+  lower_CI[i] = bootstrapped_ests[5]
+  upper_CI[i] = bootstrapped_ests[195]
+}
+
+CI_width = upper_CI - lower_CI
+
+length(CI_width)
+
+
+```
+
+
+
+
+##################
+save all the stats
+#################
+
+```{r}
+sheep_skew_and_stats_df = data.frame(sample_id = wig_samples, est_skew = est_skew, est_var = est_var,
+                                               est_skew_total_snps = est_skew_bad_snps, est_var_bad_snps = est_var_bad_snps,
+                                               est_skew_no_escape = est_skew_no_escape, est_var_no_escape = est_var_no_escape, 
+                                               num_good_snps = num_good_snps, total_snps = total_snps, num_good_snps_no_escape = num_good_snps_escape,
+                                               lower_CI = lower_CI, upper_CI = upper_CI, CI_width = CI_width)
+
+sheep_skew_and_stats_df
+```
+
+
+```{r}
+
+save(sheep_skew_and_stats_df, file = '/home/werner/projects/cross_species_XCI/data/species_data_analysis/ovis_aries/sheep_skew_and_stats_df_3_15_23.Rdata')
+
+```
+
+```{r}
+
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/ovis_aries/sheep_skew_and_stats_df_3_15_23.Rdata')
+
+```
+
+#Save the samples that have enough X data to get autosomal data for the same samples
+```{r}
+
+writeLines(sheep_skew_and_stats_df$sample_id[sheep_skew_and_stats_df$num_good_snps_no_escape >= 10],
+           '/home/werner/projects/cross_species_XCI/code/female_metadata/verified_X_samples/ovis_aries_verified_X_SRR.txt')
+
+```
+
+
+
+```{r}
+dim(sheep_skew_and_stats_df)
+sum(sheep_skew_and_stats_df$num_good_snps_no_escape >= 10)
+hist(sheep_skew_and_stats_df$est_skew_no_escape[sheep_skew_and_stats_df$num_good_snps_no_escape >= 10], breaks = seq(.5,1, .005))
+
+```
+
+Get a plot looking the the percent of samples each SNP shows up in the dataset, comparing across species is somewhat of a sense of how inbred the population is? 
+Good question for Dan and Adam
+
+```{r}
+num_samples = length(filt_sheep_vcfs)
+snp_stat_df$prop_samples_present = snp_stat_df$num_samples_present / num_samples
+
+snp_filter = snp_stat_df$filter
+num_snps_present = sum(snp_filter, na.rm = T)
+
+ggplot(snp_stat_df[snp_filter, ], aes(x = snp_pos, y = prop_samples_present)) + geom_point(alpha = .5, size = .5) + xlab('X chromosome coordinate') + 
+  ylab('% of samples SNP is present and passed QC') + ggtitle(sprintf('Het SNPs (%i) present in Ovis aries bulk RNA-seq samples (%i) ',num_snps_present, num_samples))
+
+
+ggplot(snp_stat_df[snp_filter, ], aes(x = snp_pos, y = mean_total_counts)) + geom_point(alpha = .5, size = .5) + xlab('X chromosome coordinate') + 
+  ylab('mean total reads') + ggtitle(sprintf('Het SNPs (%i) present in Ovis aries bulk RNA-seq samples (%i) ',num_snps_present, num_samples))
+
+
+ggplot(snp_stat_df[snp_filter, ], aes(x = mean_total_counts, y = prop_samples_present)) + geom_point(alpha = .5, size = .5) + xlab('mean read counts per SNP') + 
+  ylab('% of samples SNP is present and passed QC') + ggtitle(sprintf('Het SNPs (%i) present in Ovis aries bulk RNA-seq samples (%i) ',num_snps_present, num_samples))
+
+
+
+```
+
+
+```{r}
+
+p1 = ggplot(sheep_skew_and_stats_df, aes(x = est_skew, y = num_good_snps)) + geom_point(alpha = .5, size = .5) + xlab('Estimated XCI skew') + ylab("Number of SNPs skew estimate is derived from") + ggtitle('Ovis aries samples') + xlim(.5,1)
+
+
+ggMarginal(p1, type = 'histogram', margin = 'x', breaks = seq(.5,1, .005))
+
+```
+
+sheep genes in that potential pseudo autosomal region do not look like strong escapers at all in skewed samples
+
+
+
+
+
+```{r}
+
+plot(sheep_skew_and_stats_df$CI_width, sheep_skew_and_stats_df$est_var_no_escape)
+
+
+
+quantile(est_var_no_escape, probs = seq(0,1,.05), na.rm = T)
+quantile(CI_width, probs = seq(0,1,.05), na.rm = T)
+
+sample_index = which(num_good_snps_escape >= 10 & CI_width > .152)
+
+for(i in 1:length(sample_index)){
+  data = filt_sheep_vcfs_noEscape[[sample_index[i]]]
+  data = data[data$Pos %in% snp_stat_df$snp_pos[snp_stat_df$filter], ]
+  ref_ratios = data$ref_counts / (data$ref_counts + data$alt_counts)
+  hist(ref_ratios, breaks = seq(0,1,.025), main = sprintf('skew: %1.3f CI: %1.3f', est_skew_no_escape[sample_index[i]], CI_width[sample_index[i]]))
+  
+}
+
+
+```
+
+
+
+
+
+
+
+
+
+
+```{r}
+
+sample_index = sheep_skew_and_stats_no_escape_df$num_good_snps_no_escape >= 10
+hist(sheep_skew_and_stats_no_escape_df$CI_width_no_escape[sample_index], breaks = 32)
+
+```
+
+```{r}
+quantile(sheep_skew_and_stats_df$est_var_no_escape, probs = seq(0,1,.10), na.rm = T)
+sample_index = sheep_skew_and_stats_df$num_good_snps_no_escape >= 10 & sheep_skew_and_stats_df$est_var_no_escape < .13
+sum(sample_index)
+hist(sheep_skew_and_stats_df$est_skew_no_escape[sample_index], breaks = seq(.5, 1, .005))
+
+hist(unfold(sheep_skew_and_stats_df$est_skew_no_escape[sample_index]), breaks = seq(0, 1, .01), 
+     main = 'sheep', xlab = 'Unfolded population skews')
+
+```
+
+###################################
+Cell number modeling
+
+##################################
+
+
+
+
+
+
+
