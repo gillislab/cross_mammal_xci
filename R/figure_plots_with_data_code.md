@@ -55,6 +55,22 @@ library(ComplexHeatmap)
     ## ========================================
 
 ``` r
+library(gridExtra)
+```
+
+    ## 
+    ## Attaching package: 'gridExtra'
+
+    ## The following object is masked from 'package:dplyr':
+    ## 
+    ##     combine
+
+``` r
+library(ggExtra)
+library(ggridges)
+```
+
+``` r
 library(MetBrewer)
 species_colors = met.brewer("Tiepolo", n=10,type="continuous")
 
@@ -755,6 +771,62 @@ ggplot(dog_ref_check_df, aes(x = ref_biased_index, y = auc, fill = ref_biased_in
 ```
 
 ![](figure_plots_with_data_code_files/figure-gfm/ref_check_variants-10.png)<!-- -->
+
+## Supp. Figure 1
+
+``` r
+load('/home/werner/projects/cross_species_XCI/final_plots/R/data_for_plots/horse_snp_stat_df.Rdata')
+
+p1 = ggplot(horse_snp_stat_df, aes(x = mean_ref_ratio)) + geom_histogram(binwidth = .025, color = 'black', fill = 'grey') + 
+  xlab(' ') + ylab('Number of SNPs') + ggtitle('Equus caballus') +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), aspect.ratio = 1, 
+      panel.background = element_rect(fill = 'white'), panel.border = element_rect(color = "black", fill=NA),  
+      axis.text.y = element_text(size=12), axis.text.x = element_text(size=12),
+      axis.title.y = element_text(size=12), axis.title.x = element_text(size=12)) 
+
+p2 = ggplot(horse_snp_stat_df, aes(x = mean_ref_ratio, y = num_samples_present)) + geom_point(alpha = .5, size = 1) + 
+  geom_vline(xintercept = c(.4, .6), color = 'blue') + geom_vline(xintercept = .5, color = 'red') +
+  xlab('Mean reference ratio') + ylab('Number of samples SNP is detected') +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), aspect.ratio = 1, 
+    panel.background = element_rect(fill = 'white'), panel.border = element_rect(color = "black", fill=NA),  
+    axis.text.y = element_text(size=12), axis.text.x = element_text(size=12),
+    axis.title.y = element_text(size=12), axis.title.x = element_text(size=12))
+
+p3 = grid.arrange(p1, p2, ncol = 1)
+```
+
+![](figure_plots_with_data_code_files/figure-gfm/reference_snp_bias-1.png)<!-- -->
+
+## Supp. Figure 2
+
+``` r
+load('/home/werner/projects/cross_species_XCI/final_plots/R/data_for_plots/horse_binned_chrom_df.Rdata')
+
+p1 = ggplot(horse_binned_chrom_df, aes(x = bin, y = mean_bin_ref_ratio, size = num_snps, color = keep_label)) + geom_point(alpha = .5) + geom_hline(yintercept = .65, color = 'red') +
+  ylab('Mean folded SNP ratio per bin') + xlab('X chromosome position (1MB bins)') + ggtitle('horse All SNPs')+ ylim(.5, 1) +
+  scale_color_manual(values = c('Kept 1MB bin' = 'black', 'Excluded 1MB bin' = 'red'))  
+ggMarginal(p1, margins = 'y', type = 'histogram', yparams = list(binwidth = .005))
+```
+
+    ## Warning: Removed 39 rows containing missing values or values outside the scale range
+    ## (`geom_point()`).
+    ## Removed 39 rows containing missing values or values outside the scale range
+    ## (`geom_point()`).
+
+![](figure_plots_with_data_code_files/figure-gfm/binned_escape-1.png)<!-- -->
+
+## Supp. Figure 4
+
+``` r
+load('/home/werner/projects/cross_species_XCI/final_plots/R/data_for_plots/horse_skew_bin_snp_df.Rdata')
+
+ggplot(horse_skew_bin_snp_df, aes(x = ref_ratios, y = bin_label)) + geom_density_ridges(rel_min_height = 0.01, scale = 0.95, fill = species_colors[5] ) + xlim(0,1) +
+  scale_y_discrete(limits=rev) + ylab('Binned sample XCI ratio') + xlab('Unfolded SNP reference expression ratios') + ggtitle('Equus Caballus')
+```
+
+    ## Picking joint bandwidth of 0.0497
+
+![](figure_plots_with_data_code_files/figure-gfm/binned_skew_distrs-1.png)<!-- -->
 
 ## Supp. Figure 5A
 
