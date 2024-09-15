@@ -776,7 +776,14 @@ ggplot(dog_ref_check_df, aes(x = ref_biased_index, y = auc, fill = ref_biased_in
 
 ``` r
 load('/home/werner/projects/cross_species_XCI/final_plots/R/data_for_plots/horse_snp_stat_df.Rdata')
+load('/home/werner/projects/cross_species_XCI/final_plots/R/data_for_plots/dog_snp_stat_df.Rdata')
+load('/home/werner/projects/cross_species_XCI/final_plots/R/data_for_plots/goat_snp_stat_df.Rdata')
+load('/home/werner/projects/cross_species_XCI/final_plots/R/data_for_plots/macaca_snp_stat_df.Rdata')
+load('/home/werner/projects/cross_species_XCI/final_plots/R/data_for_plots/mouse_snp_stat_df.Rdata')
+load('/home/werner/projects/cross_species_XCI/final_plots/R/data_for_plots/pig_snp_stat_df.Rdata')
+load('/home/werner/projects/cross_species_XCI/final_plots/R/data_for_plots/rat_snp_stat_df.Rdata')
 
+#Horse
 p1 = ggplot(horse_snp_stat_df, aes(x = mean_ref_ratio)) + geom_histogram(binwidth = .025, color = 'black', fill = 'grey') + 
   xlab(' ') + ylab('Number of SNPs') + ggtitle('Equus caballus') +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), aspect.ratio = 1, 
@@ -797,15 +804,154 @@ p3 = grid.arrange(p1, p2, ncol = 1)
 
 ![](figure_plots_with_data_code_files/figure-gfm/reference_snp_bias-1.png)<!-- -->
 
+``` r
+#Dog
+p1 = ggplot(dog_snp_stat_df, aes(x = mean_ref_ratio)) + geom_histogram(binwidth = .025, color = 'black', fill = 'grey') + 
+  xlab(' ') + ylab('Number of SNPs') + ggtitle('Canis lupus familiaris') +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), aspect.ratio = 1, 
+      panel.background = element_rect(fill = 'white'), panel.border = element_rect(color = "black", fill=NA),  
+      axis.text.y = element_text(size=12), axis.text.x = element_text(size=12),
+      axis.title.y = element_text(size=12), axis.title.x = element_text(size=12)) 
+
+p2 = ggplot(dog_snp_stat_df, aes(x = mean_ref_ratio, y = num_samples_present)) + geom_point(alpha = .5, size = 1) + 
+  geom_vline(xintercept = c(.4, .6), color = 'blue') + geom_vline(xintercept = .5, color = 'red') +
+  xlab('Mean reference ratio') + ylab('Number of samples SNP is detected') +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), aspect.ratio = 1, 
+    panel.background = element_rect(fill = 'white'), panel.border = element_rect(color = "black", fill=NA),  
+    axis.text.y = element_text(size=12), axis.text.x = element_text(size=12),
+    axis.title.y = element_text(size=12), axis.title.x = element_text(size=12))
+
+p3 = grid.arrange(p1, p2, ncol = 1)
+```
+
+![](figure_plots_with_data_code_files/figure-gfm/reference_snp_bias-2.png)<!-- -->
+
+``` r
+#Goat
+p1 = ggplot(goat_snp_stat_df, aes(x = mean_ref_ratio)) + geom_histogram(binwidth = .025, color = 'black', fill = 'grey') + 
+  xlab(' ') + ylab('Number of SNPs') + ggtitle('Capra hircus') +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), aspect.ratio = 1, 
+      panel.background = element_rect(fill = 'white'), panel.border = element_rect(color = "black", fill=NA),  
+      axis.text.y = element_text(size=12), axis.text.x = element_text(size=12),
+      axis.title.y = element_text(size=12), axis.title.x = element_text(size=12)) 
+
+p2 = ggplot(goat_snp_stat_df, aes(x = mean_ref_ratio, y = num_samples_present)) + geom_point(alpha = .5, size = 1) + 
+  geom_vline(xintercept = c(.4, .6), color = 'blue') + geom_vline(xintercept = .5, color = 'red') +
+  xlab('Mean reference ratio') + ylab('Number of samples SNP is detected') +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), aspect.ratio = 1, 
+    panel.background = element_rect(fill = 'white'), panel.border = element_rect(color = "black", fill=NA),  
+    axis.text.y = element_text(size=12), axis.text.x = element_text(size=12),
+    axis.title.y = element_text(size=12), axis.title.x = element_text(size=12))
+
+p3 = grid.arrange(p1, p2, ncol = 1)
+```
+
+![](figure_plots_with_data_code_files/figure-gfm/reference_snp_bias-3.png)<!-- -->
+
+``` r
+#Macaca
+p1 = ggplot(macaca_snp_stat_df, aes(x = mean_ref_ratio)) + geom_histogram(binwidth = .025, color = 'black', fill = 'grey') + 
+  xlab(' ') + ylab('Number of SNPs') + ggtitle('Macaca mulatta') +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), aspect.ratio = 1, 
+      panel.background = element_rect(fill = 'white'), panel.border = element_rect(color = "black", fill=NA),  
+      axis.text.y = element_text(size=12), axis.text.x = element_text(size=12),
+      axis.title.y = element_text(size=12), axis.title.x = element_text(size=12)) 
+
+p2 = ggplot(macaca_snp_stat_df, aes(x = mean_ref_ratio, y = num_samples_present)) + geom_point(alpha = .5, size = 1) + 
+  geom_vline(xintercept = c(.4, .6), color = 'blue') + geom_vline(xintercept = .5, color = 'red') +
+  xlab('Mean reference ratio') + ylab('Number of samples SNP is detected') +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), aspect.ratio = 1, 
+    panel.background = element_rect(fill = 'white'), panel.border = element_rect(color = "black", fill=NA),  
+    axis.text.y = element_text(size=12), axis.text.x = element_text(size=12),
+    axis.title.y = element_text(size=12), axis.title.x = element_text(size=12))
+
+p3 = grid.arrange(p1, p2, ncol = 1)
+```
+
+![](figure_plots_with_data_code_files/figure-gfm/reference_snp_bias-4.png)<!-- -->
+
+``` r
+#mouse
+p1 = ggplot(mouse_snp_stat_df, aes(x = mean_ref_ratio)) + geom_histogram(binwidth = .025, color = 'black', fill = 'grey') + 
+  xlab(' ') + ylab('Number of SNPs') + ggtitle('Mus musculus') +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), aspect.ratio = 1, 
+      panel.background = element_rect(fill = 'white'), panel.border = element_rect(color = "black", fill=NA),  
+      axis.text.y = element_text(size=12), axis.text.x = element_text(size=12),
+      axis.title.y = element_text(size=12), axis.title.x = element_text(size=12)) 
+
+p2 = ggplot(mouse_snp_stat_df, aes(x = mean_ref_ratio, y = num_samples_present)) + geom_point(alpha = .5, size = 1) + 
+  geom_vline(xintercept = c(.4, .6), color = 'blue') + geom_vline(xintercept = .5, color = 'red') +
+  xlab('Mean reference ratio') + ylab('Number of samples SNP is detected') +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), aspect.ratio = 1, 
+    panel.background = element_rect(fill = 'white'), panel.border = element_rect(color = "black", fill=NA),  
+    axis.text.y = element_text(size=12), axis.text.x = element_text(size=12),
+    axis.title.y = element_text(size=12), axis.title.x = element_text(size=12))
+
+p3 = grid.arrange(p1, p2, ncol = 1)
+```
+
+![](figure_plots_with_data_code_files/figure-gfm/reference_snp_bias-5.png)<!-- -->
+
+``` r
+#Pig
+p1 = ggplot(pig_snp_stat_df, aes(x = mean_ref_ratio)) + geom_histogram(binwidth = .025, color = 'black', fill = 'grey') + 
+  xlab(' ') + ylab('Number of SNPs') + ggtitle('Sus scrofa') +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), aspect.ratio = 1, 
+      panel.background = element_rect(fill = 'white'), panel.border = element_rect(color = "black", fill=NA),  
+      axis.text.y = element_text(size=12), axis.text.x = element_text(size=12),
+      axis.title.y = element_text(size=12), axis.title.x = element_text(size=12)) 
+
+p2 = ggplot(pig_snp_stat_df, aes(x = mean_ref_ratio, y = num_samples_present)) + geom_point(alpha = .5, size = 1) + 
+  geom_vline(xintercept = c(.4, .6), color = 'blue') + geom_vline(xintercept = .5, color = 'red') +
+  xlab('Mean reference ratio') + ylab('Number of samples SNP is detected') +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), aspect.ratio = 1, 
+    panel.background = element_rect(fill = 'white'), panel.border = element_rect(color = "black", fill=NA),  
+    axis.text.y = element_text(size=12), axis.text.x = element_text(size=12),
+    axis.title.y = element_text(size=12), axis.title.x = element_text(size=12))
+
+p3 = grid.arrange(p1, p2, ncol = 1)
+```
+
+![](figure_plots_with_data_code_files/figure-gfm/reference_snp_bias-6.png)<!-- -->
+
+``` r
+#Rat
+p1 = ggplot(rat_snp_stat_df, aes(x = mean_ref_ratio)) + geom_histogram(binwidth = .025, color = 'black', fill = 'grey') + 
+  xlab(' ') + ylab('Number of SNPs') + ggtitle('Rattus norvegicus') +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), aspect.ratio = 1, 
+      panel.background = element_rect(fill = 'white'), panel.border = element_rect(color = "black", fill=NA),  
+      axis.text.y = element_text(size=12), axis.text.x = element_text(size=12),
+      axis.title.y = element_text(size=12), axis.title.x = element_text(size=12)) 
+
+p2 = ggplot(rat_snp_stat_df, aes(x = mean_ref_ratio, y = num_samples_present)) + geom_point(alpha = .5, size = 1) + 
+  geom_vline(xintercept = c(.4, .6), color = 'blue') + geom_vline(xintercept = .5, color = 'red') +
+  xlab('Mean reference ratio') + ylab('Number of samples SNP is detected') +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), aspect.ratio = 1, 
+    panel.background = element_rect(fill = 'white'), panel.border = element_rect(color = "black", fill=NA),  
+    axis.text.y = element_text(size=12), axis.text.x = element_text(size=12),
+    axis.title.y = element_text(size=12), axis.title.x = element_text(size=12))
+
+p3 = grid.arrange(p1, p2, ncol = 1)
+```
+
+![](figure_plots_with_data_code_files/figure-gfm/reference_snp_bias-7.png)<!-- -->
+
 ## Supp. Figure 2
 
 ``` r
 load('/home/werner/projects/cross_species_XCI/final_plots/R/data_for_plots/horse_binned_chrom_df.Rdata')
+load('/home/werner/projects/cross_species_XCI/final_plots/R/data_for_plots/dog_binned_chrom_df.Rdata')
+load('/home/werner/projects/cross_species_XCI/final_plots/R/data_for_plots/goat_binned_chrom_df.Rdata')
+load('/home/werner/projects/cross_species_XCI/final_plots/R/data_for_plots/macaca_binned_chrom_df.Rdata')
+load('/home/werner/projects/cross_species_XCI/final_plots/R/data_for_plots/mouse_binned_chrom_df.Rdata')
+load('/home/werner/projects/cross_species_XCI/final_plots/R/data_for_plots/pig_binned_chrom_df.Rdata')
+load('/home/werner/projects/cross_species_XCI/final_plots/R/data_for_plots/rat_binned_chrom_df.Rdata')
 
+#Horse
 p1 = ggplot(horse_binned_chrom_df, aes(x = bin, y = mean_bin_ref_ratio, size = num_snps, color = keep_label)) + geom_point(alpha = .5) + geom_hline(yintercept = .65, color = 'red') +
   ylab('Mean folded SNP ratio per bin') + xlab('X chromosome position (1MB bins)') + ggtitle('horse All SNPs')+ ylim(.5, 1) +
   scale_color_manual(values = c('Kept 1MB bin' = 'black', 'Excluded 1MB bin' = 'red'))  
-ggMarginal(p1, margins = 'y', type = 'histogram', yparams = list(binwidth = .005))
+p1 = ggMarginal(p1, margins = 'y', type = 'histogram', yparams = list(binwidth = .005))
 ```
 
     ## Warning: Removed 39 rows containing missing values or values outside the scale range
@@ -813,13 +959,137 @@ ggMarginal(p1, margins = 'y', type = 'histogram', yparams = list(binwidth = .005
     ## Removed 39 rows containing missing values or values outside the scale range
     ## (`geom_point()`).
 
+``` r
+print(p1)
+```
+
 ![](figure_plots_with_data_code_files/figure-gfm/binned_escape-1.png)<!-- -->
+
+``` r
+#Dog
+p2 = ggplot(dog_binned_chrom_df, aes(x = bin, y = mean_bin_ref_ratio, size = num_snps, color = keep_label)) + geom_point(alpha = .5) + geom_hline(yintercept = .675, color = 'red') +
+  ylab('Mean folded SNP ratio per bin') + xlab('X chromosome position (1MB bins)') + ggtitle('dog All SNPs')+ ylim(.5, 1) +
+  scale_color_manual(values = c('Kept 1MB bin' = 'black', 'Excluded 1MB bin' = 'red'))  
+p2 = ggMarginal(p2, margins = 'y', type = 'histogram', yparams = list(binwidth = .005))
+```
+
+    ## Warning: Removed 28 rows containing missing values or values outside the scale range
+    ## (`geom_point()`).
+    ## Removed 28 rows containing missing values or values outside the scale range
+    ## (`geom_point()`).
+
+``` r
+print(p2)
+```
+
+![](figure_plots_with_data_code_files/figure-gfm/dog_escape-1.png)<!-- -->
+
+``` r
+#Goat
+p3 = ggplot(goat_binned_chrom_df, aes(x = bin, y = mean_bin_ref_ratio, size = num_snps, color = keep_label)) + geom_point(alpha = .5) + geom_hline(yintercept = .65, color = 'red') +
+  ylab('Mean folded SNP ratio per bin') + xlab('X chromosome position (1MB bins)') + ggtitle('goat All SNPs')+ ylim(.5, 1) +
+  scale_color_manual(values = c('Kept 1MB bin' = 'black', 'Excluded 1MB bin' = 'red'))  
+p3 = ggMarginal(p3, margins = 'y', type = 'histogram', yparams = list(binwidth = .005))
+```
+
+    ## Warning: Removed 5 rows containing missing values or values outside the scale range
+    ## (`geom_point()`).
+    ## Removed 5 rows containing missing values or values outside the scale range
+    ## (`geom_point()`).
+
+``` r
+print(p3)
+```
+
+![](figure_plots_with_data_code_files/figure-gfm/goat_escape-1.png)<!-- -->
+
+``` r
+#Macaca
+p4 = ggplot(macaca_binned_chrom_df, aes(x = bin, y = mean_bin_ref_ratio, size = num_snps, color = keep_label)) + geom_point(alpha = .5) + geom_hline(yintercept = .6, color = 'red') +
+  ylab('Mean folded SNP ratio per bin') + xlab('X chromosome position (1MB bins)') + ggtitle('macaca All SNPs')+ ylim(.5, 1) +
+  scale_color_manual(values = c('Kept 1MB bin' = 'black', 'Excluded 1MB bin' = 'red'))  
+p4 = ggMarginal(p4, margins = 'y', type = 'histogram', yparams = list(binwidth = .005))
+```
+
+    ## Warning: Removed 49 rows containing missing values or values outside the scale range
+    ## (`geom_point()`).
+    ## Removed 49 rows containing missing values or values outside the scale range
+    ## (`geom_point()`).
+
+``` r
+print(p4)
+```
+
+![](figure_plots_with_data_code_files/figure-gfm/macaca_escape-1.png)<!-- -->
+
+``` r
+#Mouse
+p5 = ggplot(mouse_binned_chrom_df, aes(x = bin, y = mean_bin_ref_ratio, size = num_snps, color = keep_label)) + geom_point(alpha = .5) + geom_hline(yintercept = .65, color = 'red') +
+  ylab('Mean folded SNP ratio per bin') + xlab('X chromosome position (1MB bins)') + ggtitle('mouse All SNPs')+ ylim(.5, 1) +
+  scale_color_manual(values = c('Kept 1MB bin' = 'black', 'Excluded 1MB bin' = 'red'))  
+p5 = ggMarginal(p5, margins = 'y', type = 'histogram', yparams = list(binwidth = .005))
+```
+
+    ## Warning: Removed 53 rows containing missing values or values outside the scale range
+    ## (`geom_point()`).
+    ## Removed 53 rows containing missing values or values outside the scale range
+    ## (`geom_point()`).
+
+``` r
+print(p5)
+```
+
+![](figure_plots_with_data_code_files/figure-gfm/mouse_escape-1.png)<!-- -->
+
+``` r
+#Pig
+p6 = ggplot(pig_binned_chrom_df, aes(x = bin, y = mean_bin_ref_ratio, size = num_snps, color = keep_label)) + geom_point(alpha = .5) + geom_hline(yintercept = .65, color = 'red') +
+  ylab('Mean folded SNP ratio per bin') + xlab('X chromosome position (1MB bins)') + ggtitle('pig All SNPs')+ ylim(.5, 1) +
+  scale_color_manual(values = c('Kept 1MB bin' = 'black', 'Excluded 1MB bin' = 'red'))  
+p6 = ggMarginal(p6, margins = 'y', type = 'histogram', yparams = list(binwidth = .005))
+```
+
+    ## Warning: Removed 38 rows containing missing values or values outside the scale range
+    ## (`geom_point()`).
+    ## Removed 38 rows containing missing values or values outside the scale range
+    ## (`geom_point()`).
+
+``` r
+print(p6)
+```
+
+![](figure_plots_with_data_code_files/figure-gfm/pig_escape-1.png)<!-- -->
+
+``` r
+#Rat
+p7 = ggplot(rat_binned_chrom_df, aes(x = bin, y = mean_bin_ref_ratio, size = num_snps, color = keep_label)) + geom_point(alpha = .5) + geom_hline(yintercept = .6, color = 'red') +
+  ylab('Mean folded SNP ratio per bin') + xlab('X chromosome position (1MB bins)') + ggtitle('rat All SNPs')+ ylim(.5, 1) +
+  scale_color_manual(values = c('Kept 1MB bin' = 'black', 'Excluded 1MB bin' = 'red'))  
+p7 = ggMarginal(p7, margins = 'y', type = 'histogram', yparams = list(binwidth = .005))
+```
+
+    ## Warning: Removed 25 rows containing missing values or values outside the scale range
+    ## (`geom_point()`).
+    ## Removed 25 rows containing missing values or values outside the scale range
+    ## (`geom_point()`).
+
+``` r
+print(p7)
+```
+
+![](figure_plots_with_data_code_files/figure-gfm/rat_escape-1.png)<!-- -->
 
 ## Supp. Figure 4
 
 ``` r
 load('/home/werner/projects/cross_species_XCI/final_plots/R/data_for_plots/horse_skew_bin_snp_df.Rdata')
-
+load('/home/werner/projects/cross_species_XCI/final_plots/R/data_for_plots/dog_skew_bin_snp_df.Rdata')
+load('/home/werner/projects/cross_species_XCI/final_plots/R/data_for_plots/goat_skew_bin_snp_df.Rdata')
+load('/home/werner/projects/cross_species_XCI/final_plots/R/data_for_plots/macaca_skew_bin_snp_df.Rdata')
+load('/home/werner/projects/cross_species_XCI/final_plots/R/data_for_plots/mouse_skew_bin_snp_df.Rdata')
+load('/home/werner/projects/cross_species_XCI/final_plots/R/data_for_plots/pig_skew_bin_snp_df.Rdata')
+load('/home/werner/projects/cross_species_XCI/final_plots/R/data_for_plots/rat_skew_bin_snp_df.Rdata')
+#Horse
 ggplot(horse_skew_bin_snp_df, aes(x = ref_ratios, y = bin_label)) + geom_density_ridges(rel_min_height = 0.01, scale = 0.95, fill = species_colors[5] ) + xlim(0,1) +
   scale_y_discrete(limits=rev) + ylab('Binned sample XCI ratio') + xlab('Unfolded SNP reference expression ratios') + ggtitle('Equus Caballus')
 ```
@@ -827,6 +1097,66 @@ ggplot(horse_skew_bin_snp_df, aes(x = ref_ratios, y = bin_label)) + geom_density
     ## Picking joint bandwidth of 0.0497
 
 ![](figure_plots_with_data_code_files/figure-gfm/binned_skew_distrs-1.png)<!-- -->
+
+``` r
+#Dog
+ggplot(dog_skew_bin_snp_df, aes(x = ref_ratios, y = bin_label)) + geom_density_ridges(rel_min_height = 0.01, scale = 0.95, fill = species_colors[10] ) + xlim(0,1) +
+  scale_y_discrete(limits=rev) + ylab('Binned sample XCI ratio') + xlab('Unfolded SNP reference expression ratios') + ggtitle('Canis lupus familiaris')
+```
+
+    ## Picking joint bandwidth of 0.061
+
+![](figure_plots_with_data_code_files/figure-gfm/binned_skew_distrs-2.png)<!-- -->
+
+``` r
+#Goat
+ggplot(goat_skew_bin_snp_df, aes(x = ref_ratios, y = bin_label)) + geom_density_ridges(rel_min_height = 0.01, scale = 0.95, fill = species_colors[4] ) + xlim(0,1) +
+  scale_y_discrete(limits=rev) + ylab('Binned sample XCI ratio') + xlab('Unfolded SNP reference expression ratios') + ggtitle('Capra hircus')
+```
+
+    ## Picking joint bandwidth of 0.0504
+
+![](figure_plots_with_data_code_files/figure-gfm/binned_skew_distrs-3.png)<!-- -->
+
+``` r
+#Macaca
+ggplot(macaca_skew_bin_snp_df, aes(x = ref_ratios, y = bin_label)) + geom_density_ridges(rel_min_height = 0.01, scale = 0.95, fill = species_colors[1] ) + xlim(0,1) +
+  scale_y_discrete(limits=rev) + ylab('Binned sample XCI ratio') + xlab('Unfolded SNP reference expression ratios') + ggtitle('Macaca mulatta')
+```
+
+    ## Picking joint bandwidth of 0.0734
+
+![](figure_plots_with_data_code_files/figure-gfm/binned_skew_distrs-4.png)<!-- -->
+
+``` r
+#Mouse
+ggplot(mouse_skew_bin_snp_df, aes(x = ref_ratios, y = bin_label)) + geom_density_ridges(rel_min_height = 0.01, scale = 0.95, fill = species_colors[7] ) + xlim(0,1) +
+  scale_y_discrete(limits=rev) + ylab('Binned sample XCI ratio') + xlab('Unfolded SNP reference expression ratios') + ggtitle('Mus musculus')
+```
+
+    ## Picking joint bandwidth of 0.038
+
+![](figure_plots_with_data_code_files/figure-gfm/binned_skew_distrs-5.png)<!-- -->
+
+``` r
+#Pig
+ggplot(pig_skew_bin_snp_df, aes(x = ref_ratios, y = bin_label)) + geom_density_ridges(rel_min_height = 0.01, scale = 0.95, fill = species_colors[3] ) + xlim(0,1) +
+  scale_y_discrete(limits=rev) + ylab('Binned sample XCI ratio') + xlab('Unfolded SNP reference expression ratios') + ggtitle('Sus scrofa')
+```
+
+    ## Picking joint bandwidth of 0.0712
+
+![](figure_plots_with_data_code_files/figure-gfm/binned_skew_distrs-6.png)<!-- -->
+
+``` r
+#Rat
+ggplot(rat_skew_bin_snp_df, aes(x = ref_ratios, y = bin_label)) + geom_density_ridges(rel_min_height = 0.01, scale = 0.95, fill = species_colors[2] ) + xlim(0,1) +
+  scale_y_discrete(limits=rev) + ylab('Binned sample XCI ratio') + xlab('Unfolded SNP reference expression ratios') + ggtitle('rattus norvegicus')
+```
+
+    ## Picking joint bandwidth of 0.0561
+
+![](figure_plots_with_data_code_files/figure-gfm/binned_skew_distrs-7.png)<!-- -->
 
 ## Supp. Figure 5A
 
