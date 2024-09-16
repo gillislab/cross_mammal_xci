@@ -1,0 +1,1289 @@
+
+
+
+samples are here
+
+/grid/gillis/data_norepl/hover/work/cmxci.paired/Mus_musculus
+/grid/gillis/data_norepl/hover/work/cmxci.single/Mus_musculus
+
+
+
+```{r}
+library(ggplot2)
+library(ggExtra)
+library(stringr)
+library(parallel)
+library(dplyr)
+library(ggridges)
+library(MetBrewer)
+
+```
+
+```{r}
+
+processed_files = list.files('/grid/gillis/data_norepl/hover/work/cmxci.paired/Mus_musculus')
+wasp_vcf_files_paired = processed_files[grepl('.wasp.2.snps_filtered.vcf',processed_files  )]
+#Ignore the .vcf.idx files
+wasp_vcf_files_paired = wasp_vcf_files_paired[!grepl('.idx',wasp_vcf_files_paired )]
+wasp_wig_files_paired = processed_files[grepl('.wasp.2.split.filtered.wig',processed_files  )]
+
+length(wasp_vcf_files_paired)
+length(wasp_wig_files_paired)
+
+#There's one mismatched file in the vcfs
+vcf_temp = sapply(strsplit(wasp_vcf_files_paired, split = '.', fixed = T), '[[', 1)
+wig_temp = sapply(strsplit(wasp_wig_files_paired, split = '.', fixed = T), '[[', 1)
+
+missing_index = which(vcf_temp %in% wig_temp)
+wasp_vcf_files_paired = wasp_vcf_files_paired[missing_index]
+
+length(wasp_vcf_files_paired)
+length(wasp_wig_files_paired)
+
+
+head(wasp_vcf_files_paired)
+
+
+processed_files = list.files('/grid/gillis/data_norepl/hover/work/cmxci.single/Mus_musculus')
+wasp_vcf_files_single = processed_files[grepl('.wasp.2.snps_filtered.vcf',processed_files  )]
+#Ignore the .vcf.idx files
+wasp_vcf_files_single = wasp_vcf_files_single[!grepl('.idx',wasp_vcf_files_single )]
+wasp_wig_files_single = processed_files[grepl('.wasp.2.split.filtered.wig',processed_files  )]
+
+length(wasp_vcf_files_single)
+length(wasp_wig_files_single)
+
+
+wig_samples_2 = sapply(strsplit(wasp_wig_files_paired, split = '.', fixed = T), '[[', 1)
+wig_samples_2 = c(wig_samples_2, sapply(strsplit(wasp_wig_files_single, split = '.', fixed = T), '[[', 1) ) #Add the single samples 
+vcf_samples_2 = sapply(strsplit(wasp_vcf_files_paired, split = '.', fixed = T), '[[', 1)
+vcf_samples_2 = c(vcf_samples_2, sapply(strsplit(wasp_vcf_files_single, split = '.', fixed = T), '[[', 1) )
+table(wig_samples_2 == vcf_samples_2)
+
+
+wasp_vcf_files_paired = paste('/grid/gillis/data_norepl/hover/work/cmxci.paired/Mus_musculus/',wasp_vcf_files_paired, sep = '')
+wasp_vcf_files_single = paste('/grid/gillis/data_norepl/hover/work/cmxci.single/Mus_musculus/',wasp_vcf_files_single, sep = '')
+
+wasp_wig_files_paired = paste('/grid/gillis/data_norepl/hover/work/cmxci.paired/Mus_musculus/',wasp_wig_files_paired, sep = '')
+wasp_wig_files_single = paste('/grid/gillis/data_norepl/hover/work/cmxci.single/Mus_musculus/',wasp_wig_files_single, sep = '')
+
+wasp_vcf_files_chr2 = wasp_vcf_files_paired
+wasp_wig_files_chr2 = wasp_wig_files_paired
+
+wasp_vcf_files_chr2 = c(wasp_vcf_files_paired, wasp_vcf_files_single)
+wasp_wig_files_chr2 = c(wasp_wig_files_paired, wasp_wig_files_single)
+
+
+length(wasp_vcf_files_chr2)
+
+```
+
+
+```{r}
+
+processed_files = list.files('/grid/gillis/data_norepl/hover/work/cmxci.paired/Mus_musculus')
+wasp_vcf_files_paired = processed_files[grepl('.wasp.3.snps_filtered.vcf',processed_files  )]
+#Ignore the .vcf.idx files
+wasp_vcf_files_paired = wasp_vcf_files_paired[!grepl('.idx',wasp_vcf_files_paired )]
+wasp_wig_files_paired = processed_files[grepl('.wasp.3.split.filtered.wig',processed_files  )]
+
+length(wasp_vcf_files_paired)
+length(wasp_wig_files_paired)
+
+head(wasp_vcf_files_paired)
+
+processed_files = list.files('/grid/gillis/data_norepl/hover/work/cmxci.single/Mus_musculus')
+wasp_vcf_files_single = processed_files[grepl('.wasp.3.snps_filtered.vcf',processed_files  )]
+#Ignore the .vcf.idx files
+wasp_vcf_files_single = wasp_vcf_files_single[!grepl('.idx',wasp_vcf_files_single )]
+wasp_wig_files_single = processed_files[grepl('.wasp.3.split.filtered.wig',processed_files  )]
+
+length(wasp_vcf_files_single)
+length(wasp_wig_files_single)
+
+
+wig_samples_3 = sapply(strsplit(wasp_wig_files_paired, split = '.', fixed = T), '[[', 1)
+wig_samples_3 = c(wig_samples_3, sapply(strsplit(wasp_wig_files_single, split = '.', fixed = T), '[[', 1) ) #Add the single samples 
+vcf_samples_3 = sapply(strsplit(wasp_vcf_files_paired, split = '.', fixed = T), '[[', 1)
+vcf_samples_3 = c(vcf_samples_3, sapply(strsplit(wasp_vcf_files_single, split = '.', fixed = T), '[[', 1) )
+table(wig_samples_3 == vcf_samples_3)
+
+
+wasp_vcf_files_paired = paste('/grid/gillis/data_norepl/hover/work/cmxci.paired/Mus_musculus/',wasp_vcf_files_paired, sep = '')
+wasp_vcf_files_single = paste('/grid/gillis/data_norepl/hover/work/cmxci.single/Mus_musculus/',wasp_vcf_files_single, sep = '')
+
+wasp_wig_files_paired = paste('/grid/gillis/data_norepl/hover/work/cmxci.paired/Mus_musculus/',wasp_wig_files_paired, sep = '')
+wasp_wig_files_single = paste('/grid/gillis/data_norepl/hover/work/cmxci.single/Mus_musculus/',wasp_wig_files_single, sep = '')
+
+
+wasp_vcf_files_chr3 = wasp_vcf_files_paired
+wasp_wig_files_chr3 = wasp_wig_files_paired
+
+wasp_vcf_files_chr3 = c(wasp_vcf_files_paired, wasp_vcf_files_single)
+wasp_wig_files_chr3 = c(wasp_wig_files_paired, wasp_wig_files_single)
+
+length(wasp_vcf_files_chr3)
+```
+
+
+Function for merging the wig and vcf info, filtering for heterozygous SNPs with 2 alleles and a minimum of 10 reads per allele
+
+```{r}
+source('get_exp_vcf.R')
+
+```
+
+
+
+
+```{r}
+Sys.time()
+wasp_filt_vcf_chr2 = mclapply(1:length(wasp_vcf_files_chr2), function(i) get_exp_vcf(vcf_file_path = wasp_vcf_files_chr2[i], 
+                                                                           wig_file_path = wasp_wig_files_chr2[i]), mc.cores = 10)
+Sys.time()
+
+head(wasp_filt_vcf_chr2)
+length(wasp_filt_vcf_chr2)
+
+
+Sys.time()
+wasp_filt_vcf_chr3 = mclapply(1:length(wasp_vcf_files_chr3), function(i) get_exp_vcf(vcf_file_path = wasp_vcf_files_chr3[i], 
+                                                                           wig_file_path = wasp_wig_files_chr3[i]), mc.cores = 10)
+Sys.time()
+
+head(wasp_filt_vcf_chr3)
+length(wasp_filt_vcf_chr3)
+
+
+```
+
+
+
+Number of filtered SNPs kept
+```{r}
+
+num_snps = vector(mode = 'numeric', length = length(wasp_filt_vcf_chr2))
+
+for(i in 1:length(wasp_filt_vcf_chr2)){
+  data = wasp_filt_vcf_chr2[[i]]
+  
+  if(is.null(dim(data))){
+    num_snps[i] = 0
+  }else{num_snps[i] = dim(data)[1]}
+}
+
+hist(num_snps)
+
+
+num_snps = vector(mode = 'numeric', length = length(wasp_filt_vcf_chr3))
+
+for(i in 1:length(wasp_filt_vcf_chr3)){
+  data = wasp_filt_vcf_chr3[[i]]
+  
+  if(is.null(dim(data))){
+    num_snps[i] = 0
+  }else{num_snps[i] = dim(data)[1]}
+}
+
+hist(num_snps)
+
+
+```
+
+
+Getting the genome annotations
+
+
+```{r}
+
+mouse_gtf = rtracklayer::import('/home/werner/projects/cross_species_XCI/genomes/Mus_musculus/GCF_000001635.27_GRCm39_genomic.gtf')
+mouse_gtf = as.data.frame(mouse_gtf)
+
+#Genome specific 2 chromosome name
+mouse_2_chrom_name = readLines('/home/werner/projects/cross_species_XCI/genomes/Mus_musculus/chr2label.txt', n = 1)
+
+mouse_2_gtf = mouse_gtf[mouse_gtf$seqnames == mouse_2_chrom_name, ]
+
+mouse_2_genenames = unique(mouse_2_gtf$gene)
+length(mouse_2_genenames)
+
+#Genome specific 3 chromosome name
+mouse_3_chrom_name = readLines('/home/werner/projects/cross_species_XCI/genomes/Mus_musculus/chr3label.txt', n = 1)
+
+mouse_3_gtf = mouse_gtf[mouse_gtf$seqnames == mouse_3_chrom_name, ]
+
+mouse_3_genenames = unique(mouse_3_gtf$gene)
+length(mouse_3_genenames)
+```
+
+
+
+Adding gene annotations to each sample
+
+
+```{r}
+mouse_2_meta = mouse_2_gtf[mouse_2_gtf$gbkey == 'Gene',]
+mouse_2_meta = mouse_2_meta[!is.na(mouse_2_meta$gbkey), ] #A lot of NA entries in the mouse GTF file
+mouse_2_meta = mouse_2_meta[!duplicated(mouse_2_meta$gene), ]
+gene_starts_2 = mouse_2_meta$start
+gene_ends_2 = mouse_2_meta$end
+
+
+annot_mouse_vcfs_chr2 = wasp_filt_vcf_chr2
+
+for(j in 1:length(annot_mouse_vcfs_chr2)){
+  test = annot_mouse_vcfs_chr2[[j]]
+  if(is.null(dim(test))){next}
+  
+  
+  gene_annots = vector(mode = 'character', length = length(test$Pos))
+  gene_biotype = vector(mode = 'character', length = length(test$Pos))
+  for( i in 1:dim(test)[1]){
+  
+    test_gene_start = test$Pos[i]
+    test_gene_start = test$Pos[i]
+    gene_index = findInterval(test_gene_start, gene_starts_2)
+    if(gene_index == 0){next}
+    
+    if(test_gene_start <= gene_ends_2[gene_index]){
+      
+      gene_annots[i] = mouse_2_meta$gene[gene_index]
+      gene_biotype[i] = mouse_2_meta$gene_biotype[gene_index]
+    }
+  }
+  
+  test$gene = gene_annots
+  test$gene_biotype = gene_biotype
+  annot_mouse_vcfs_chr2[[j]] = test
+}
+
+head(annot_mouse_vcfs_chr2)
+
+```
+
+
+
+```{r}
+
+save(annot_mouse_vcfs_chr2, file = '/home/werner/projects/cross_species_XCI/data/species_data_analysis/mus_musculus/chr2/all_snp_vcf_4_22_24.Rdata')
+```
+
+
+
+```{r}
+mouse_3_meta = mouse_3_gtf[mouse_3_gtf$gbkey == 'Gene',]
+mouse_3_meta = mouse_3_meta[!is.na(mouse_3_meta$gbkey), ] #A lot of NA entries in the mouse GTF file
+mouse_3_meta = mouse_3_meta[!duplicated(mouse_3_meta$gene), ]
+gene_starts_3 = mouse_3_meta$start
+gene_ends_3 = mouse_3_meta$end
+
+
+annot_mouse_vcfs_chr3 = wasp_filt_vcf_chr3
+
+for(j in 1:length(annot_mouse_vcfs_chr3)){
+  test = annot_mouse_vcfs_chr3[[j]]
+  if(is.null(dim(test))){next}
+  
+  
+  gene_annots = vector(mode = 'character', length = length(test$Pos))
+  gene_biotype = vector(mode = 'character', length = length(test$Pos))
+  for( i in 1:dim(test)[1]){
+  
+    test_gene_start = test$Pos[i]
+    test_gene_start = test$Pos[i]
+    gene_index = findInterval(test_gene_start, gene_starts_3)
+    if(gene_index == 0){next}
+    
+    if(test_gene_start <= gene_ends_3[gene_index]){
+      
+      gene_annots[i] = mouse_3_meta$gene[gene_index]
+      gene_biotype[i] = mouse_3_meta$gene_biotype[gene_index]
+    }
+  }
+  
+  test$gene = gene_annots
+  test$gene_biotype = gene_biotype
+  annot_mouse_vcfs_chr3[[j]] = test
+}
+
+head(annot_mouse_vcfs_chr3)
+
+```
+
+
+```{r}
+save(annot_mouse_vcfs_chr3, file = '/home/werner/projects/cross_species_XCI/data/species_data_analysis/mus_musculus/chr3/all_snp_vcf_4_22_24.Rdata')
+```
+
+
+
+
+
+
+
+
+Looking at global distribution of reference ratios versus read counts for all SNPs
+```{r}
+all_total_counts = c()
+all_ref_ratios = c()
+
+for(i in 1:length(annot_mouse_vcfs_chr2)){
+
+  data = annot_mouse_vcfs_chr2[[i]]
+  if(is.null(dim(data))){next}
+  total_counts = data$ref_counts + data$alt_counts
+  ref_ratios = data$ref_counts / total_counts
+  
+  all_total_counts = c(all_total_counts, total_counts)
+  all_ref_ratios = c(all_ref_ratios, ref_ratios)
+
+}
+
+length(all_total_counts)
+
+
+plot(all_ref_ratios, log10(all_total_counts), cex = .5)
+
+
+all_total_counts = c()
+all_ref_ratios = c()
+
+for(i in 1:length(annot_mouse_vcfs_chr3)){
+
+  data = annot_mouse_vcfs_chr3[[i]]
+  if(is.null(dim(data))){next}
+  total_counts = data$ref_counts + data$alt_counts
+  ref_ratios = data$ref_counts / total_counts
+  
+  all_total_counts = c(all_total_counts, total_counts)
+  all_ref_ratios = c(all_ref_ratios, ref_ratios)
+
+}
+
+length(all_total_counts)
+
+
+plot(all_ref_ratios, log10(all_total_counts), cex = .5)
+
+
+```
+
+
+Looking at gene specific expression 
+
+
+```{r}
+
+captured_genes = c()
+for( i in 1:length(annot_mouse_vcfs_chr2)){
+  suppressWarnings(if(is.null(dim(annot_mouse_vcfs_chr2[[i]]))){next})
+  captured_genes = c(captured_genes, annot_mouse_vcfs_chr2[[i]]$gene)
+}
+
+captured_genes = unique(captured_genes)
+captured_genes = captured_genes[captured_genes != ""]
+
+length(captured_genes)
+```
+
+
+```{r}
+for(i in 1:100){
+  
+  current_gene = captured_genes[i]
+  
+  gene_ref_exp = c()
+  for(j in 1:length(annot_mouse_vcfs_chr2)){
+    suppressWarnings(if(is.null(dim(annot_mouse_vcfs_chr2[[j]]))){next})
+    gene_index = annot_mouse_vcfs_chr2[[j]]$gene == current_gene
+    ref_counts = annot_mouse_vcfs_chr2[[j]]$ref_counts[gene_index]
+    alt_counts = annot_mouse_vcfs_chr2[[j]]$alt_counts[gene_index]
+    total_counts = ref_counts + alt_counts
+    gene_ref_exp = c(gene_ref_exp, ref_counts / total_counts )
+
+  }
+  
+  
+  hist(gene_ref_exp, main = current_gene, xlim = c(0,1), breaks = seq(0,1, .025))  
+  
+}
+
+```
+
+
+chr3
+
+
+```{r}
+
+captured_genes = c()
+for( i in 1:length(annot_mouse_vcfs_chr3)){
+  suppressWarnings(if(is.null(dim(annot_mouse_vcfs_chr3[[i]]))){next})
+  captured_genes = c(captured_genes, annot_mouse_vcfs_chr3[[i]]$gene)
+}
+
+captured_genes = unique(captured_genes)
+captured_genes = captured_genes[captured_genes != ""]
+
+length(captured_genes)
+```
+
+
+```{r}
+for(i in 1:100){
+  
+  current_gene = captured_genes[i]
+  
+  gene_ref_exp = c()
+  for(j in 1:length(annot_mouse_vcfs_chr3)){
+    suppressWarnings(if(is.null(dim(annot_mouse_vcfs_chr3[[j]]))){next})
+    gene_index = annot_mouse_vcfs_chr3[[j]]$gene == current_gene
+    ref_counts = annot_mouse_vcfs_chr3[[j]]$ref_counts[gene_index]
+    alt_counts = annot_mouse_vcfs_chr3[[j]]$alt_counts[gene_index]
+    total_counts = ref_counts + alt_counts
+    gene_ref_exp = c(gene_ref_exp, ref_counts / total_counts )
+
+  }
+  
+  
+  hist(gene_ref_exp, main = current_gene, xlim = c(0,1), breaks = seq(0,1, .025))  
+  
+}
+
+```
+
+
+
+chr2
+
+```{r}
+
+captured_SNPs = c()
+for( i in 1:length(annot_mouse_vcfs_chr2)){
+  suppressWarnings(if(is.null(dim(annot_mouse_vcfs_chr2[[i]]))){next})
+  captured_SNPs = c(captured_SNPs, annot_mouse_vcfs_chr2[[i]]$Pos)
+}
+
+captured_SNPs = unique(captured_SNPs)
+captured_SNPs = captured_SNPs[captured_SNPs != ""]
+
+length(captured_SNPs)
+```
+
+
+```{r}
+
+snp_stat_df_chr2 = data.frame(snp_pos = integer(length(captured_SNPs)), num_samples_present = integer(length(captured_SNPs)), 
+                         mean_ref_ratio = integer(length(captured_SNPs)), mean_total_counts = integer(length(captured_SNPs)), sd_total_counts = integer(length(captured_SNPs)))
+
+
+
+for(i in 1:length(captured_SNPs)){
+
+  if(i %% 1000 == 0){print(i)}
+  current_SNP = captured_SNPs[i]
+  
+  snp_ref_exp = c()
+  snp_total_reads = c()
+  for(j in 1:length(annot_mouse_vcfs_chr2)){
+    suppressWarnings(if(is.null(dim(annot_mouse_vcfs_chr2[[j]]))){next})
+    gene_index = annot_mouse_vcfs_chr2[[j]]$Pos == current_SNP
+    ref_counts = annot_mouse_vcfs_chr2[[j]]$ref_counts[gene_index]
+    alt_counts = annot_mouse_vcfs_chr2[[j]]$alt_counts[gene_index]
+    total_counts = ref_counts + alt_counts
+    snp_ref_exp = c(snp_ref_exp, ref_counts / total_counts )
+    snp_total_reads = c(snp_total_reads, total_counts)
+    
+    
+  }
+  
+  snp_stat_df_chr2$snp_pos[i] = current_SNP
+  snp_stat_df_chr2$num_samples_present[i] = length(snp_ref_exp)
+  snp_stat_df_chr2$mean_ref_ratio[i] = mean(snp_ref_exp)
+  snp_stat_df_chr2$mean_total_counts[i] = mean(snp_total_reads)
+  snp_stat_df_chr2$sd_total_counts[i] = sd(snp_total_reads)
+}
+
+```
+
+
+
+```{r}
+hist(snp_stat_df_chr2$mean_ref_ratio, breaks = seq(0,1,.01))
+hist(snp_stat_df_chr2$num_samples_present)
+par(pty = 's')
+plot(snp_stat_df_chr2$mean_ref_ratio,snp_stat_df_chr2$num_samples_present, cex = .25, xlab = 'Mean reference ratio', 
+     ylab = '# of samples SNP is detected', main = 'Mus musculus Het SNPs')
+abline(v = .5, col = 'red')
+abline(v = .4, col = 'blue')
+abline(v = .6, col = 'blue')
+```
+
+```{r}
+
+
+snp_stat_df_chr2$filter = !(snp_stat_df_chr2$mean_ref_ratio < .4 | snp_stat_df_chr2$mean_ref_ratio > .6)
+table(snp_stat_df_chr2$filter)
+
+
+```
+
+
+Save the SNP dataframe
+
+```{r}
+
+save(snp_stat_df_chr2, file = '/home/werner/projects/cross_species_XCI/data/species_data_analysis/mus_musculus/chr2/detected_het_snps_df_4_22_24.Rdata')
+```
+
+```{r}
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/mus_musculus/chr2/detected_het_snps_df_4_22_24.Rdata')
+
+```
+
+
+
+chr3
+
+```{r}
+
+captured_SNPs = c()
+for( i in 1:length(annot_mouse_vcfs_chr3)){
+  suppressWarnings(if(is.null(dim(annot_mouse_vcfs_chr3[[i]]))){next})
+  captured_SNPs = c(captured_SNPs, annot_mouse_vcfs_chr3[[i]]$Pos)
+}
+
+captured_SNPs = unique(captured_SNPs)
+captured_SNPs = captured_SNPs[captured_SNPs != ""]
+
+length(captured_SNPs)
+```
+
+
+```{r}
+
+snp_stat_df_chr3 = data.frame(snp_pos = integer(length(captured_SNPs)), num_samples_present = integer(length(captured_SNPs)), 
+                         mean_ref_ratio = integer(length(captured_SNPs)), mean_total_counts = integer(length(captured_SNPs)), sd_total_counts = integer(length(captured_SNPs)))
+
+
+
+for(i in 1:length(captured_SNPs)){
+
+  if(i %% 1000 == 0){print(i)}
+  current_SNP = captured_SNPs[i]
+  
+  snp_ref_exp = c()
+  snp_total_reads = c()
+  for(j in 1:length(annot_mouse_vcfs_chr3)){
+    suppressWarnings(if(is.null(dim(annot_mouse_vcfs_chr3[[j]]))){next})
+    gene_index = annot_mouse_vcfs_chr3[[j]]$Pos == current_SNP
+    ref_counts = annot_mouse_vcfs_chr3[[j]]$ref_counts[gene_index]
+    alt_counts = annot_mouse_vcfs_chr3[[j]]$alt_counts[gene_index]
+    total_counts = ref_counts + alt_counts
+    snp_ref_exp = c(snp_ref_exp, ref_counts / total_counts )
+    snp_total_reads = c(snp_total_reads, total_counts)
+    
+    
+  }
+  
+  snp_stat_df_chr3$snp_pos[i] = current_SNP
+  snp_stat_df_chr3$num_samples_present[i] = length(snp_ref_exp)
+  snp_stat_df_chr3$mean_ref_ratio[i] = mean(snp_ref_exp)
+  snp_stat_df_chr3$mean_total_counts[i] = mean(snp_total_reads)
+  snp_stat_df_chr3$sd_total_counts[i] = sd(snp_total_reads)
+}
+
+```
+
+
+
+```{r}
+hist(snp_stat_df_chr3$mean_ref_ratio, breaks = seq(0,1,.01))
+hist(snp_stat_df_chr3$num_samples_present)
+par(pty = 's')
+plot(snp_stat_df_chr3$mean_ref_ratio,snp_stat_df_chr3$num_samples_present, cex = .25, xlab = 'Mean reference ratio', 
+     ylab = '# of samples SNP is detected', main = 'Mus musculus Het SNPs')
+abline(v = .5, col = 'red')
+abline(v = .4, col = 'blue')
+abline(v = .6, col = 'blue')
+```
+
+```{r}
+
+
+snp_stat_df_chr3$filter = !(snp_stat_df_chr3$mean_ref_ratio < .4 | snp_stat_df_chr3$mean_ref_ratio > .6)
+table(snp_stat_df_chr3$filter)
+
+
+```
+
+
+Save the SNP dataframe
+
+```{r}
+
+save(snp_stat_df_chr3, file = '/home/werner/projects/cross_species_XCI/data/species_data_analysis/mus_musculus/chr3/detected_het_snps_df_4_22_24.Rdata')
+```
+
+```{r}
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/mus_musculus/chr3/detected_het_snps_df_4_22_24.Rdata')
+
+```
+
+
+
+
+
+
+
+
+Filtering the vcfs for only annotated genes and the max powered SNP per gene
+chr2
+
+```{r}
+filt_mouse_vcfs_chr2 = annot_mouse_vcfs_chr2
+
+for(i in 1:length(filt_mouse_vcfs_chr2)){
+  test = filt_mouse_vcfs_chr2[[i]]
+  suppressWarnings(if(is.null(dim(test))){next})
+  #Get rid of SNPs in nonannotated genes
+  test = test[test$gene != "", ]
+  suppressWarnings(if(dim(test)[1] == 0){filt_mouse_vcfs_chr2[[i]] = NA; next})
+
+  #Get the unique number of genes
+  sample_genes = unique(test$gene)
+  test_2 = data.frame(matrix(NA, 
+                             nrow = length(sample_genes), 
+                             ncol = dim(test)[2]))
+  colnames(test_2) = colnames(test)
+  
+  
+  for(j in 1:length(sample_genes)){
+    
+    current_gene_data = test[test$gene == sample_genes[j], ]
+    if(dim(current_gene_data)[1] == 1){
+      test_2[j, ] = current_gene_data
+    }else{
+      
+      current_tot_exp = current_gene_data$ref_counts + current_gene_data$alt_counts
+      test_2[j, ] = current_gene_data[which.max(current_tot_exp), ]
+    }
+  }
+
+  filt_mouse_vcfs_chr2[[i]] = test_2
+}
+
+```
+
+
+
+save the filtered vcf list
+
+```{r}
+
+save(filt_mouse_vcfs_chr2, file = '/home/werner/projects/cross_species_XCI/data/species_data_analysis/mus_musculus/chr2/max_snp_vcf_4_22_24.Rdata')
+
+```
+
+```{r}
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/mus_musculus/chr2/max_snp_vcf_4_22_24.Rdata')
+
+```
+
+
+chr 3
+```{r}
+filt_mouse_vcfs_chr3 = annot_mouse_vcfs_chr3
+
+for(i in 1:length(filt_mouse_vcfs_chr3)){
+  test = filt_mouse_vcfs_chr3[[i]]
+  suppressWarnings(if(is.null(dim(test))){next})
+  #Get rid of SNPs in nonannotated genes
+  test = test[test$gene != "", ]
+  suppressWarnings(if(dim(test)[1] == 0){filt_mouse_vcfs_chr3[[i]] = NA; next})
+
+  #Get the unique number of genes
+  sample_genes = unique(test$gene)
+  test_2 = data.frame(matrix(NA, 
+                             nrow = length(sample_genes), 
+                             ncol = dim(test)[2]))
+  colnames(test_2) = colnames(test)
+  
+  
+  for(j in 1:length(sample_genes)){
+    
+    current_gene_data = test[test$gene == sample_genes[j], ]
+    if(dim(current_gene_data)[1] == 1){
+      test_2[j, ] = current_gene_data
+    }else{
+      
+      current_tot_exp = current_gene_data$ref_counts + current_gene_data$alt_counts
+      test_2[j, ] = current_gene_data[which.max(current_tot_exp), ]
+    }
+  }
+
+  filt_mouse_vcfs_chr3[[i]] = test_2
+}
+
+```
+
+
+
+save the filtered vcf list
+
+```{r}
+
+save(filt_mouse_vcfs_chr3, file = '/home/werner/projects/cross_species_XCI/data/species_data_analysis/mus_musculus/chr3/max_snp_vcf_4_22_24.Rdata')
+
+```
+
+```{r}
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/mus_musculus/chr3/max_snp_vcf_4_22_24.Rdata')
+
+```
+
+
+
+
+
+
+
+```{r}
+num_filt_genes = vector(mode = 'numeric', length = length(filt_mouse_vcfs_chr2))
+for(i in 1:length(filt_mouse_vcfs_chr2)){
+  
+  suppressWarnings(if(is.null(dim(filt_mouse_vcfs_chr2[[i]]))){
+    num_filt_genes[i] = 0
+    next
+    
+  })
+  
+  num_filt_genes[i] = sum(filt_mouse_vcfs_chr2[[i]]$Pos %in% snp_stat_df_chr2$snp_pos[snp_stat_df_chr2$filter])
+
+}
+
+hist(num_filt_genes)
+sum(num_filt_genes >= 10)
+
+
+num_filt_genes = vector(mode = 'numeric', length = length(filt_mouse_vcfs_chr3))
+for(i in 1:length(filt_mouse_vcfs_chr3)){
+  
+  suppressWarnings(if(is.null(dim(filt_mouse_vcfs_chr3[[i]]))){
+    num_filt_genes[i] = 0
+    next
+    
+  })
+  
+  num_filt_genes[i] = sum(filt_mouse_vcfs_chr3[[i]]$Pos %in% snp_stat_df_chr3$snp_pos[snp_stat_df_chr3$filter])
+
+}
+
+hist(num_filt_genes)
+sum(num_filt_genes >= 10)
+
+```
+
+
+
+
+look at the SNP distributions, with and without including the potentially reference biased SNPs
+
+
+```{r}
+
+
+index_num_samps = which(num_filt_genes >= 30)
+length(index_num_samps)
+
+
+for(i in 1:length(index_num_samps)){
+
+  data = filt_mouse_vcfs_chr2[[index_num_samps[i]]]
+  
+  snp_filter = data$Pos %in% snp_stat_df_chr2$snp_pos[snp_stat_df_chr2$filter]
+  
+  total_exp = data$ref_counts + data$alt_counts
+  ref_ratios_filt = data$ref_counts[snp_filter] / total_exp[snp_filter]
+  ref_ratios = data$ref_counts / total_exp
+
+  
+  hist(ref_ratios, xlim = c(0,1), breaks = seq(0,1, .025))
+  abline(v = .5, col = 'red')
+  hist(ref_ratios_filt, xlim = c(0,1), breaks = seq(0,1, .025), main = index_num_samps[i])
+  abline(v = .5, col = 'red')
+
+}
+```
+
+
+
+chr3
+
+
+```{r}
+
+
+index_num_samps = which(num_filt_genes >= 30)
+length(index_num_samps)
+
+
+for(i in 1:length(index_num_samps)){
+
+  data = filt_mouse_vcfs_chr3[[index_num_samps[i]]]
+  
+  snp_filter = data$Pos %in% snp_stat_df_chr3$snp_pos[snp_stat_df_chr3$filter]
+  
+  total_exp = data$ref_counts + data$alt_counts
+  ref_ratios_filt = data$ref_counts[snp_filter] / total_exp[snp_filter]
+  ref_ratios = data$ref_counts / total_exp
+
+  
+  hist(ref_ratios, xlim = c(0,1), breaks = seq(0,1, .025))
+  abline(v = .5, col = 'red')
+  hist(ref_ratios_filt, xlim = c(0,1), breaks = seq(0,1, .025), main = index_num_samps[i])
+  abline(v = .5, col = 'red')
+
+}
+```
+
+
+
+
+
+```{r}
+
+
+# Functions to fold and unfold ratios 
+folded <- function(x) { apply( cbind(x,1-x), 1, max)} 
+unfold <- function(x) { c(x,1-x) } 
+
+
+mle_folded <- function(x){ 
+  mus = seq(0.5,1, by = 0.001)
+  sigmas = seq(0,0.5, by = 0.01)
+  
+  mles = sapply(mus, function(mu)
+    sapply(sigmas, function(sigma)
+      -sum( log(dnorm( x,   mean = mu, sd = sigma )
+                + dnorm( x,   mean = 1-mu, sd = sigma ) )  )))
+  mles[!is.finite(mles)] = NA
+  coefs = which(mles==min(mles, na.rm=T), arr.ind=T)
+  return (list( mus[coefs[2]] , sigmas[coefs[1]]))
+} 
+
+```
+
+
+```{r}
+
+est_skew_func = function(list.skew.max, Ns, ratios.max, snp_stat_df, filter_snps = T){
+  
+  #If there's only 1 or 0 SNPs, don't estimate a skew
+  if(Ns <= 0){return(NA)}
+  
+  #Filter for the good snps
+  if(filter_snps){
+    snp_index = list.skew.max$Pos %in% snp_stat_df$snp_pos[snp_stat_df$filter]
+    #Fold the reference skews
+    folded_ref_skews = folded(ratios.max[snp_index])
+  }else{
+    folded_ref_skews = folded(ratios.max)
+  }
+  #return the mean and sigma estimates
+  return(mle_folded(folded_ref_skews))
+}
+
+
+Ns = vector(mode='numeric', length = length(filt_mouse_vcfs_chr2))
+
+for(i in 1:length(filt_mouse_vcfs_chr2)){
+  
+  suppressWarnings(if(is.null(dim(filt_mouse_vcfs_chr2[[i]]))){Ns[i] = 0}
+  else{Ns[i] = dim(filt_mouse_vcfs_chr2[[i]])[1]})
+  
+}
+
+
+ratios.max = list()
+for(i in 1: length(filt_mouse_vcfs_chr2)){
+  
+  if(Ns[i] == 0){next}
+  
+  total_exp = filt_mouse_vcfs_chr2[[i]]$ref_counts + filt_mouse_vcfs_chr2[[i]]$alt_counts
+  ref_ratios = filt_mouse_vcfs_chr2[[i]]$ref_counts / total_exp
+  ratios.max[[i]] = ref_ratios
+
+}
+
+
+
+```
+
+```{r}
+
+Sys.time()
+folded_norm_fits = mclapply(1:length(filt_mouse_vcfs_chr2), function(i) est_skew_func(filt_mouse_vcfs_chr2[[i]], Ns[i], ratios.max[[i]], snp_stat_df_chr2), mc.cores = 20)
+Sys.time()
+
+Sys.time()
+folded_norm_fits_bad_snps = mclapply(1:length(filt_mouse_vcfs_chr2), function(i) est_skew_func(filt_mouse_vcfs_chr2[[i]], Ns[i], ratios.max[[i]], snp_stat_df_chr2, filter_snps = F), mc.cores = 20)
+Sys.time()
+
+#Grab the skew and variance estimates
+est_skew_chr2 = vector(mode = 'numeric', length = length(folded_norm_fits))
+est_var_chr2 = vector(mode = 'numeric', length = length(folded_norm_fits))
+for(i in 1:length(folded_norm_fits)){
+  
+  if(is.na(folded_norm_fits[i])){
+    est_skew_chr2[i] = NA
+    est_var_chr2[i] = NA
+    next
+  }
+  
+  est_skew_chr2[i] = folded_norm_fits[[i]][[1]]
+  est_var_chr2[i] = folded_norm_fits[[i]][[2]]
+}
+
+#Grab the skew and variance estimates
+est_skew_bad_snps_chr2 = vector(mode = 'numeric', length = length(folded_norm_fits_bad_snps))
+est_var_bad_snps_chr2 = vector(mode = 'numeric', length = length(folded_norm_fits_bad_snps))
+for(i in 1:length(folded_norm_fits_bad_snps)){
+  
+  if(is.na(folded_norm_fits_bad_snps[i])){
+    est_skew_bad_snps_chr2[i] = NA
+    est_var_bad_snps_chr2[i] = NA
+    next
+  }
+  
+  est_skew_bad_snps_chr2[i] = folded_norm_fits_bad_snps[[i]][[1]]
+  est_var_bad_snps_chr2[i] = folded_norm_fits_bad_snps[[i]][[2]]
+}
+
+hist(est_skew_chr2, main = 'mouse skew estimates filtering out bad SNPs', breaks=seq(.5, 1, .005))
+hist(est_skew_bad_snps_chr2, main = 'mouse skew estimates filtering out bad SNPs', breaks=seq(.5, 1, .005))
+hist(est_var_chr2, main = 'Variance estimates', breaks = 32)
+plot(est_skew_chr2, est_var_chr2)
+```
+
+
+```{r}
+par(pty = 's')
+plot(est_skew_chr2, est_skew_bad_snps_chr2, cex = .5)
+abline(a = 0, b = 1, col = 'red')
+```
+
+
+Make a dataframe from with the estimated skew stats
+
+```{r}
+
+num_good_snps_chr2 = vector(length = length(filt_mouse_vcfs_chr2), mode = 'numeric')
+total_snps_chr2 = vector(length = length(filt_mouse_vcfs_chr2), mode = 'numeric')
+
+for(i in 1:length(filt_mouse_vcfs_chr2)){
+  
+  data = filt_mouse_vcfs_chr2[[i]]
+  suppressWarnings(if(is.null(dim(data))){num_good_snps[i] = 0; total_snps[i] = 0; next})
+  
+  snp_filter = data$Pos %in% snp_stat_df_chr2$snp_pos[snp_stat_df_chr2$filter]
+  
+  total_snps_chr2[i] = length(data$Pos)
+  num_good_snps_chr2[i] = length(data$Pos[snp_filter])
+}
+
+plot(total_snps_chr2, num_good_snps_chr2)
+
+```
+
+
+```{r}
+plot(est_skew_chr2, num_good_snps_chr2)
+abline(h = 10, col = 'red')
+
+
+hist(unfold(est_skew_chr2[num_good_snps_chr2 >= 10]), breaks = seq(0,1,.01), xlab = 'Estimated sample skew', main = 'mouse chromosome 2')
+```
+
+chr3
+
+
+```{r}
+Ns = vector(mode='numeric', length = length(filt_mouse_vcfs_chr3))
+
+for(i in 1:length(filt_mouse_vcfs_chr3)){
+  
+  suppressWarnings(if(is.null(dim(filt_mouse_vcfs_chr3[[i]]))){Ns[i] = 0}
+  else{Ns[i] = dim(filt_mouse_vcfs_chr3[[i]])[1]})
+  
+}
+
+
+ratios.max = list()
+for(i in 1: length(filt_mouse_vcfs_chr3)){
+  
+  if(Ns[i] == 0){next}
+  
+  total_exp = filt_mouse_vcfs_chr3[[i]]$ref_counts + filt_mouse_vcfs_chr3[[i]]$alt_counts
+  ref_ratios = filt_mouse_vcfs_chr3[[i]]$ref_counts / total_exp
+  ratios.max[[i]] = ref_ratios
+
+}
+
+
+```
+
+
+```{r}
+
+Sys.time()
+folded_norm_fits = mclapply(1:length(filt_mouse_vcfs_chr3), function(i) est_skew_func(filt_mouse_vcfs_chr3[[i]], Ns[i], ratios.max[[i]], snp_stat_df_chr3), mc.cores = 20)
+Sys.time()
+
+Sys.time()
+folded_norm_fits_bad_snps = mclapply(1:length(filt_mouse_vcfs_chr3), function(i) est_skew_func(filt_mouse_vcfs_chr3[[i]], Ns[i], ratios.max[[i]], snp_stat_df_chr3, filter_snps = F), mc.cores = 20)
+Sys.time()
+
+#Grab the skew and variance estimates
+est_skew_chr3 = vector(mode = 'numeric', length = length(folded_norm_fits))
+est_var_chr3 = vector(mode = 'numeric', length = length(folded_norm_fits))
+for(i in 1:length(folded_norm_fits)){
+  
+  if(is.na(folded_norm_fits[i])){
+    est_skew_chr3[i] = NA
+    est_var_chr3[i] = NA
+    next
+  }
+  
+  est_skew_chr3[i] = folded_norm_fits[[i]][[1]]
+  est_var_chr3[i] = folded_norm_fits[[i]][[2]]
+}
+
+#Grab the skew and variance estimates
+est_skew_bad_snps_chr3 = vector(mode = 'numeric', length = length(folded_norm_fits_bad_snps))
+est_var_bad_snps_chr3 = vector(mode = 'numeric', length = length(folded_norm_fits_bad_snps))
+for(i in 1:length(folded_norm_fits_bad_snps)){
+  
+  if(is.na(folded_norm_fits_bad_snps[i])){
+    est_skew_bad_snps_chr3[i] = NA
+    est_var_bad_snps_chr3[i] = NA
+    next
+  }
+  
+  est_skew_bad_snps_chr3[i] = folded_norm_fits_bad_snps[[i]][[1]]
+  est_var_bad_snps_chr3[i] = folded_norm_fits_bad_snps[[i]][[2]]
+}
+
+hist(est_skew_chr3, main = 'mouse skew estimates filtering out bad SNPs', breaks=seq(.5, 1, .005))
+hist(est_skew_bad_snps_chr3, main = 'mouse skew estimates filtering out bad SNPs', breaks=seq(.5, 1, .005))
+hist(est_var_chr3, main = 'Variance estimates', breaks = 32)
+plot(est_skew_chr3, est_var_chr3)
+```
+
+```{r}
+par(pty = 's')
+plot(est_skew_chr3, est_skew_bad_snps_chr3, cex = .5)
+abline(a = 0, b = 1, col = 'red')
+```
+
+Make a dataframe from with the estimated skew stats
+
+```{r}
+
+num_good_snps_chr3 = vector(length = length(filt_mouse_vcfs_chr3), mode = 'numeric')
+total_snps_chr3 = vector(length = length(filt_mouse_vcfs_chr3), mode = 'numeric')
+
+for(i in 1:length(filt_mouse_vcfs_chr3)){
+  
+  data = filt_mouse_vcfs_chr3[[i]]
+  suppressWarnings(if(is.null(dim(data))){num_good_snps_chr3[i] = 0; total_snps_chr3[i] = 0; next})
+  
+  snp_filter = data$Pos %in% snp_stat_df_chr3$snp_pos[snp_stat_df_chr3$filter]
+  
+  total_snps_chr3[i] = length(data$Pos)
+  num_good_snps_chr3[i] = length(data$Pos[snp_filter])
+}
+
+plot(total_snps_chr3, num_good_snps_chr3)
+
+```
+
+
+
+```{r}
+plot(est_skew_chr3, num_good_snps_chr3)
+abline(h = 10, col = 'red')
+
+
+hist(unfold(est_skew_chr3[num_good_snps_chr3 >= 10]), breaks = seq(0,1,.01), xlab = 'Estimated sample skew', main = 'mouse chromosome 3')
+```
+
+
+######################################
+Looking at the chromosome 2 samples that are supposedly skewed
+What's going on
+
+######################################
+
+
+```{r}
+
+chr2_skewed_index = which(est_skew_chr2 >= .6 & num_good_snps_chr2 >= 10)
+
+all_chr2_skewed_snps = c()
+for(i in 1:length(chr2_skewed_index)){
+  
+  data = filt_mouse_vcfs_chr2[[chr2_skewed_index[i]]]
+  #data = data[data$Pos %in% snp_stat_df$snp_pos[snp_stat_df$filter], ]
+  ref_ratios = data$ref_counts / (data$ref_counts + data$alt_counts)
+  hist(ref_ratios, breaks = seq(0,1,.025), main = sprintf('Sample index: %i est skew: %0.3f',chr2_skewed_index[i], est_skew_chr2[chr2_skewed_index[i]]))
+  all_chr2_skewed_snps = c(all_chr2_skewed_snps, ref_ratios)
+  
+}
+
+hist(all_chr2_skewed_snps, breaks = seq(0,1,.025), main = 'All compiled SNPs')
+
+
+chr2_Nonskewed_index = which(est_skew_chr2 < .6 & num_good_snps_chr2 >= 10)
+
+all_chr2_Nonskewed_snps = c()
+for(i in 1:length(chr2_Nonskewed_index)){
+  
+  data = filt_mouse_vcfs_chr2[[chr2_Nonskewed_index[i]]]
+  #data = data[data$Pos %in% snp_stat_df$snp_pos[snp_stat_df$filter], ]
+  ref_ratios = data$ref_counts / (data$ref_counts + data$alt_counts)
+  all_chr2_Nonskewed_snps = c(all_chr2_Nonskewed_snps, ref_ratios)
+  
+}
+
+hist(all_chr2_Nonskewed_snps, breaks = seq(0,1,.025), main = 'All compiled SNPs')
+
+```
+
+
+
+```{r}
+mouse_chr2_skew_and_stats_df = data.frame(sample_id = wig_samples_2, 
+                                   est_skew = est_skew_chr2, est_var = est_var_chr2,  #Skew estimates filtering out bad genes
+                                   est_skew_total_snps = est_skew_bad_snps_chr2, est_var_total_snps = est_var_bad_snps_chr2,   #Skew estimates with all genes 
+                                   num_good_snps = num_good_snps_chr2, total_snps = total_snps_chr2)
+
+mouse_chr2_skew_and_stats_df
+```
+
+
+```{r}
+
+save(mouse_chr2_skew_and_stats_df, file = '/home/werner/projects/cross_species_XCI/data/species_data_analysis/mus_musculus/chr2/mouse_chr2_skew_and_stats_df_4_22_24.Rdata')
+```
+
+```{r}
+
+load( '/home/werner/projects/cross_species_XCI/data/species_data_analysis/mus_musculus/chr2/mouse_chr2_skew_and_stats_df_4_22_24.Rdata')
+
+```
+
+
+
+
+
+##################################
+
+Looking at chromosome 3 now
+
+check if the same samples that were skewed on chromosome 2 anre skewed on chromosome 3
+
+#################################
+
+
+```{r}
+
+chr3_skewed_index = which(est_skew_chr3 >= .6 & num_good_snps_chr3 >= 10)
+
+all_chr3_skewed_snps = c()
+for(i in 1:length(chr3_skewed_index)){
+  
+  data = filt_mouse_vcfs_chr3[[chr3_skewed_index[i]]]
+  #data = data[data$Pos %in% snp_stat_df$snp_pos[snp_stat_df$filter], ]
+  ref_ratios = data$ref_counts / (data$ref_counts + data$alt_counts)
+  hist(ref_ratios, breaks = seq(0,1,.025), main = sprintf('Sample index: %i est skew: %0.3f',chr3_skewed_index[i], est_skew_chr3[chr3_skewed_index[i]]))
+  all_chr3_skewed_snps = c(all_chr3_skewed_snps, ref_ratios)
+  
+}
+
+hist(all_chr3_skewed_snps, breaks = seq(0,1,.025), main = 'All compiled SNPs')
+
+
+chr3_Nonskewed_index = which(est_skew_chr3 < .6 & num_good_snps_chr3 >= 10)
+
+all_chr3_Nonskewed_snps = c()
+for(i in 1:length(chr3_Nonskewed_index)){
+  
+  data = filt_mouse_vcfs_chr3[[chr3_Nonskewed_index[i]]]
+  #data = data[data$Pos %in% snp_stat_df$snp_pos[snp_stat_df$filter], ]
+  ref_ratios = data$ref_counts / (data$ref_counts + data$alt_counts)
+  all_chr3_Nonskewed_snps = c(all_chr3_Nonskewed_snps, ref_ratios)
+  
+}
+
+hist(all_chr3_Nonskewed_snps, breaks = seq(0,1,.025), main = 'All compiled SNPs')
+
+```
+
+
+```{r}
+mouse_chr3_skew_and_stats_df = data.frame(sample_id = wig_samples_3, 
+                                   est_skew = est_skew_chr3, est_var = est_var_chr3,  #Skew estimates filtering out bad genes
+                                   est_skew_total_snps = est_skew_bad_snps_chr3, est_var_total_snps = est_var_bad_snps_chr3,   #Skew estimates with all genes 
+                                   num_good_snps = num_good_snps_chr3, total_snps = total_snps_chr3)
+
+mouse_chr3_skew_and_stats_df
+```
+
+
+```{r}
+
+save(mouse_chr3_skew_and_stats_df, file = '/home/werner/projects/cross_species_XCI/data/species_data_analysis/mus_musculus/chr3/mouse_chr3_skew_and_stats_df_4_22_24.Rdata')
+```
+
+```{r}
+
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/mus_musculus/chr3/mouse_chr3_skew_and_stats_df_4_22_24.Rdata')
+
+```
+
+
+
+
+################################
+Compare across the chromosomes and see if the same samples are throwing the skewed estimates
+################################
+
+
+
+```{r}
+
+chr2_weird_samps = mouse_chr2_skew_and_stats_df$sample_id[mouse_chr2_skew_and_stats_df$est_skew >= .6 & mouse_chr2_skew_and_stats_df$num_good_snps >= 10]
+
+chr3_weird_samps = mouse_chr3_skew_and_stats_df$sample_id[mouse_chr3_skew_and_stats_df$est_skew >= .6 & mouse_chr3_skew_and_stats_df$num_good_snps >= 10]
+
+
+index = match(mouse_chr3_skew_and_stats_df$sample_id, mouse_chr2_skew_and_stats_df$sample_id )
+#Reorder to match chromosome 2
+mouse_chr2_skew_and_stats_df = mouse_chr2_skew_and_stats_df[index, ]
+```
+
+
+```{r}
+par(pty = 's')
+plot(mouse_chr2_skew_and_stats_df$est_skew, mouse_chr3_skew_and_stats_df$est_skew)
+abline(a = 0, b = 1, col ='red' )
+
+
+num_snp_index = mouse_chr2_skew_and_stats_df$num_good_snps >= 10 & mouse_chr3_skew_and_stats_df$num_good_snps >= 10
+plot(mouse_chr2_skew_and_stats_df$est_skew[num_snp_index], mouse_chr3_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chr2 estimated skew', 
+     ylab = 'chr3 estimated skew', main = 'mouse autosome skew estimates')
+abline(a = 0, b = 1, col ='red' )
+```
+
+
