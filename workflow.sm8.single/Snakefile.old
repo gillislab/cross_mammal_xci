@@ -11,6 +11,8 @@
 #  time snakemake -c16 --keep-going  --config species=Bos_taurus num_workers=2 worker_idx=1 > log.7.txt 2>&1
 #
 # 
+
+# 
 # Problems. whitspace in generated paths?
 # https://stackoverflow.com/questions/77380044/why-is-snakemake-introducing-whitespaces-in-my-path-to-submodules
 
@@ -135,7 +137,8 @@ rule all:
 rule dump_fastq:
     priority: 1
     input:
-        sra = datadir + "/{sample}.sra"
+        sra = "{datadir}/{sample}.sra"
+        #sra = datadir + "/{sample}.sra"
     output:
         end1= wdir + "/{sample}.fastq",    
         #end2= temp(wdir + "/{sample}_2.fastq")    

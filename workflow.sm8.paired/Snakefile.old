@@ -10,9 +10,8 @@
 # Interactive invocation:
 #  time snakemake -c16 --keep-going  --config species=Bos_taurus num_workers=2 worker_idx=1 > log.7.txt 2>&1
 #
-# 
-# Problems. whitspace in generated paths?
-# https://stackoverflow.com/questions/77380044/why-is-snakemake-introducing-whitespaces-in-my-path-to-submodules
+#  
+#
 
 import os
 import sys
@@ -33,17 +32,15 @@ worker_idx = config["worker_idx"]
 sample = config["sample"]
 
 genomedir = os.path.expanduser(f'~/data/cross_mammal_xci/genomes/{species}')
-datadir = os.path.expanduser(f'~/data/cross_mammal_xci/sra/{species}.single')
+datadir = os.path.expanduser(f'~/data/cross_mammal_xci/sra/{species}.paired')
 homedir = os.path.expanduser("~/")
-wdir = f"{homedir}work/cmxci.single/{species}"
+wdir = f"{homedir}work/cmxci.paired/{species}"
 
 setup_logging(logging.DEBUG)
 logging.debug(f'config/CLI sample = {sample}')
 logging.debug(f"HOME={homedir} WORKDIR={wdir} CHR={chr} GENOMEDIR={genomedir}")
 logging.debug(f"NUM_WORKERS={num_workers} WORKER_IDX={worker_idx}")
 
-# Collect samples and optionally filter across hosts.
-# check for an explicit input sample
 if len(sample) >  0:
     logging.debug(f'explicit sample given: {sample}')
     SAMPLE = sample
@@ -52,42 +49,55 @@ else:
     logging.debug(f'Initial sample number = {len(SAMPLE)}. Filtering...')
     SAMPLE = modulo_filter(SAMPLE, num_workers, worker_idx)
 
-
 logging.debug(f"SAMPLE={SAMPLE}")
 
-
-# Needed to avoid matching anything past the '.', e.g. XYZ.wasp.<sufficx> 
+# Needed to avoid matching anything past the '.', e.g. XYZ.wasp.<suffix> 
 wildcard_constraints:
     sample="\w+"
 
+# localrules: dump_fastq
+
 rule all:
     input:
-        expand(wdir + "/{sample}.wasp." + chr + ".snps.vcf", sample=SAMPLE),
-        expand(wdir + "/{sample}.wasp." + chr + ".snps_filtered.vcf", sample=SAMPLE),
-        expand(wdir + "/{sample}.wasp." + chr + ".split.filtered.wig", sample=SAMPLE )
-		#expand(wdir + "/{sample}.Aligned.out.bam", sample=SAMPLE ),
-		#expand(wdir + "/{sample}.ReadsPerGene.out.tab", sample=SAMPLE ),    
-        #expand(wdir + "/{sample}." + str(chr) + ".split.filtered.wig", sample=SAMPLE ),
-        #expand(wdir + "/{sample}.wasp." + chr + ".snps.vcf", sample=SAMPLE), 
-        #expand(wdir + "/{sample}.wasp." + chr + ".filtered.vcf", sample=SAMPLE), 
-        #expand(wdir + "/{sample}.wasp." + chr + ".snps_filtered.vcf", sample=SAMPLE),              
+        expand(wdir + "/{sample}.wasp." +  chr + ".snps.vcf", sample=SAMPLE),
+        expand(wdir + "/{sample}.wasp." +  chr + ".snps_filtered.vcf", sample=SAMPLE),
+        expand(wdir + "/{sample}.wasp." +  chr + ".split.filtered.wig", sample=SAMPLE )
+        
+        #expand(wdir + "/{sample}.Aligned.out.bam", sample=SAMPLE ),
+        #expand(wdir + "/{sample}.ReadsPerGene.out.tab", sample=SAMPLE ),
+        #expand(wdir + "/{sample}." +  chr + ".split.filtered.wig", sample=SAMPLE ),
+        #expand(wdir + "/{sample}.wasp." +  chr + ".snps.vcf", sample=SAMPLE), 
+        #expand(wdir + "/{sample}.wasp." +  chr + ".filtered.vcf", sample=SAMPLE), 
+        #expand(wdir + "/{sample}.wasp." +  chr + ".snps_filtered.vcf", sample=SAMPLE),                  
         #expand(wdir + "/{sample}.wasp." +  chr + ".SJ.out.tab", sample=SAMPLE),
         #expand(wdir + "/{sample}.wasp." +  chr + ".Log.out", sample=SAMPLE),  
         #expand(wdir + "/{sample}.wasp." +  chr + ".Log.final.out", sample=SAMPLE),
         #expand(wdir + "/{sample}.wasp." +  chr + ".Aligned.sortedByCoord.out.bam", sample=SAMPLE),
         #expand(wdir + "/{sample}.wasp." +  chr + ".Aligned.sortedByCoord.out.bam.bai", sample=SAMPLE),
-        #expand(wdir + "/{sample}.wasp." + chr + ".filtered.vcf", sample=SAMPLE),
+        #expand(wdir + "/{sample}.wasp." +  chr + ".filtered.vcf", sample=SAMPLE),
         
         #
         # FINAL SET FOR ENTIRE PIPELINE
         #
- 
+        
+        
+        # FROM GENOME SETUP
+        #gdict = genomedir + "/genome.dict",
+        #gfai = genomedir + "/genome.fa.fai",
+        #gpar = genomedir + "/genomeParameters.txt",
+        
+        # from genome processing
+        #xreg = genomedir + "/" + chr + "label.txt",
+        #yreg = genomedir + "/chrYlabel.txt",
+        #regfa = genomedir + "/" + chr + ".fa",
+         
         # testing. 
         #end1 = expand(wdir +  "/{sample}_1.fastq", sample=SAMPLE ),
         #end2 = expand(wdir +  "/{sample}_2.fastq", sample=SAMPLE ),   
        
         # from STAR
         #abam = expand(wdir + "/{sample}.Aligned.out.bam", sample=SAMPLE ),
+        
         # from SAMTOOLS1
         #sbam = expand(wdir + "/{sample}.Aligned.sortedByCoord.out.bam", sample=SAMPLE ),
         #sbam = expand(wdir + "/{sample}.Aligned.sortedByCoord.out.bam", sample=SAMPLE ),  
@@ -137,10 +147,11 @@ rule dump_fastq:
     input:
         sra = datadir + "/{sample}.sra"
     output:
-        end1= wdir + "/{sample}.fastq",    
-        #end2= temp(wdir + "/{sample}_2.fastq")    
+        end1= wdir + "/{sample}_1.fastq",    
+        end2= wdir + "/{sample}_2.fastq"    
     resources:
-        mem_mb=2048
+        mem_mb=8192
+        
     threads: 6
 
     run:
@@ -153,7 +164,8 @@ rule dump_fastq:
 rule star_nowasp:
     priority: 2
     input:
-        end1= wdir + "/{sample}.fastq",   
+        end1= wdir + "/{sample}_1.fastq",   
+        end2= wdir + "/{sample}_2.fastq",
         gdict = genomedir + "/genome.dict",
         gfai = genomedir + "/genome.fa.fai",
         gpar = genomedir + "/genomeParameters.txt",
@@ -161,25 +173,28 @@ rule star_nowasp:
     output:     
         abam=  wdir + "/{sample}.Aligned.out.bam",
         rpg=   wdir + "/{sample}.ReadsPerGene.out.tab",
-        sjtab= wdir + "/{sample}.SJ.out.tab",
-        log=   wdir + "/{sample}.Log.out",        
-        plog=  wdir + "/{sample}.Log.progress.out",
-        flog=  wdir + "/{sample}.Log.final.out",
+        sjtab= temp(wdir + "/{sample}.SJ.out.tab"),
+        log=   temp(wdir + "/{sample}.Log.out"),        
+        plog=  temp(wdir + "/{sample}.Log.progress.out"),
+        flog=  temp(wdir + "/{sample}.Log.final.out"),
 
     params:        
         tmpdir = wdir + "/{sample}_starout",
         wdir = wdir + "/",
         gdir= genomedir,
-        outprefix = wdir + "/{sample}."     
+        outprefix = wdir + "/{sample}."  
+        
     resources:
         mem_mb=3072
+
     threads: 16
     
     run:
         star_nowasp( end1=input.end1, 
                      outprefix=params.outprefix,
                      nthreads=f"{threads}", 
-                     genomedir=params.gdir)
+                     genomedir=params.gdir,
+                     end2=input.end2, )
 
 rule samtools1:
     priority: 3 
@@ -200,11 +215,13 @@ rule samtools1:
         samtools_index(infile=output.sbam, 
                        nthreads=f"{threads}")
 
+
+
 rule samtools2:
     #
     # This seems like it might be the first chromosome-specific step?
     #
-    priority: 4
+    priority: 4 
     input:
         bam= wdir + "/{sample}.Aligned.sortedByCoord.out.bam",
         sbai = wdir + "/{sample}.Aligned.sortedByCoord.out.bam.bai",
@@ -301,35 +318,38 @@ rule igvtools6:
 rule star_wasp:
     priority: 7 
     input:
-        end1= wdir + "/{sample}.fastq",   
+        end1= wdir + "/{sample}_1.fastq",   
+        end2= wdir + "/{sample}_2.fastq",
         sfvcf = wdir + "/{sample}." + chr + ".snps_filtered.vcf",
         gdict = genomedir + "/genome.dict",
         gfai = genomedir + "/genome.fa.fai",
         gpar = genomedir + "/genomeParameters.txt",
         
     output:     
-        wabam=  temp(wdir + "/{sample}.wasp." +  chr + ".Aligned.out.bam"),
-        wrpg=   wdir + "/{sample}.wasp." +  chr + ".ReadsPerGene.out.tab",
-        wsjtab= wdir + "/{sample}.wasp." +  chr + ".SJ.out.tab",
-        wlog=   wdir + "/{sample}.wasp." +  chr + ".Log.out",        
-        wplog=  temp(wdir + "/{sample}.wasp." +  chr + ".Log.progress.out"),
-        wflog=  wdir + "/{sample}.wasp." +  chr + ".Log.final.out",
+        wabam=  temp(wdir + "/{sample}.wasp." + chr + ".Aligned.out.bam"),
+        wrpg=   wdir + "/{sample}.wasp." + chr + ".ReadsPerGene.out.tab",
+        wsjtab= wdir + "/{sample}.wasp." + chr + ".SJ.out.tab",
+        wlog=   wdir + "/{sample}.wasp." + chr + ".Log.out",        
+        wplog=  temp(wdir + "/{sample}.wasp." + chr + ".Log.progress.out"),
+        wflog=  wdir + "/{sample}.wasp." + chr + ".Log.final.out",
 
     params:        
         tmpdir = wdir + "/{sample}_starout",
         wdir = wdir + "/",
         gdir = genomedir ,
-        outprefix = wdir + "/{sample}.wasp." +  chr + "."
+        outprefix = wdir + "/{sample}.wasp." + chr + "."
     resources:
         mem_mb=3072
     threads: 16
     
     run:
         star_wasp( end1=input.end1, 
-                     vcf=input.sfvcf, 
-                     outprefix=params.outprefix,
-                     nthreads=f"{threads}", 
-                     genomedir=params.gdir)
+                   vcf=input.sfvcf, 
+                   outprefix=params.outprefix,
+                   nthreads=f"{threads}", 
+                   genomedir=params.gdir,
+                   end2=input.end2,
+                   )
 
 
 rule samtools3: 
@@ -355,12 +375,12 @@ rule samtools3:
 rule samtools4:
     priority: 9 
     input:
-        wbam= wdir + "/{sample}.wasp." +  chr + ".Aligned.sortedByCoord.out.bam",
+        wbam=   wdir + "/{sample}.wasp." +  chr + ".Aligned.sortedByCoord.out.bam",
         wsbai = wdir + "/{sample}.wasp." +  chr + ".Aligned.sortedByCoord.out.bam.bai",
-        xreg = genomedir + "/" + chr + "label.txt",    
+        xreg =  genomedir + "/" + chr + "label.txt",    
     output:
-        wxbam= temp(wdir + "/{sample}.wasp."+ chr +".bam"),    
-        wxfiltbam= temp(wdir + "/{sample}.wasp."+ chr +".filt.bam")    
+        wxbam=      temp(wdir + "/{sample}.wasp."+ chr +".bam"),    
+        wxfiltbam=  temp(wdir + "/{sample}.wasp."+ chr +".filt.bam")    
     params:
         qual = 10,
         tag = 'vW:1'

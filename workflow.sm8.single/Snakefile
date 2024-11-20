@@ -1,6 +1,6 @@
 #
-# Genomes in /data/johlee/cross_mammal_xci/genomes
-# Data in /data/johlee/cross_mammal_xci/temp/sra
+# Genomes in /data/cmxci/genomes/<species>
+# Data in /data/cmxci/sra/<species>.single
 # #  snakemake --jobs 20 --cluster "qsub -N cmxci1 -pe threads {threads} -wd ~/work/cmxci1 -l m_mem_free={resources.mem_mb}M 
 #
 # Cluster w/ batches 
@@ -20,7 +20,6 @@ import logging
 
 gitpath=os.path.expanduser("~/git/xskew")
 sys.path.append(gitpath)
-
 from xskew.tools import *
 
 configfile: "workflow/config.yaml"
@@ -32,8 +31,8 @@ num_workers = config["num_workers"]
 worker_idx = config["worker_idx"]
 sample = config["sample"]
 
-genomedir = os.path.expanduser(f'~/data/cross_mammal_xci/genomes/{species}')
-datadir = os.path.expanduser(f'~/data/cross_mammal_xci/sra/{species}.single')
+genomedir = os.path.expanduser(f'~/data/cmxci/genomes/{species}')
+datadir = os.path.expanduser(f'~/data/cmxci/sra/{species}.single')
 homedir = os.path.expanduser("~/")
 wdir = f"{homedir}work/cmxci.single/{species}"
 
@@ -52,13 +51,11 @@ else:
     logging.debug(f'Initial sample number = {len(SAMPLE)}. Filtering...')
     SAMPLE = modulo_filter(SAMPLE, num_workers, worker_idx)
 
-
 logging.debug(f"SAMPLE={SAMPLE}")
-
 
 # Needed to avoid matching anything past the '.', e.g. XYZ.wasp.<sufficx> 
 wildcard_constraints:
-    sample="\w+"
+    sample="\\w+"
 
 rule all:
     input:
@@ -135,9 +132,10 @@ rule all:
 rule dump_fastq:
     priority: 1
     input:
+        #sra = "{datadir}/{sample}.sra"
         sra = datadir + "/{sample}.sra"
     output:
-        end1= wdir + "/{sample}.fastq",    
+        end1= wdir + "/{sample}_1.fastq",    
         #end2= temp(wdir + "/{sample}_2.fastq")    
     resources:
         mem_mb=2048
@@ -153,7 +151,7 @@ rule dump_fastq:
 rule star_nowasp:
     priority: 2
     input:
-        end1= wdir + "/{sample}.fastq",   
+        end1= wdir + "/{sample}_1.fastq",   
         gdict = genomedir + "/genome.dict",
         gfai = genomedir + "/genome.fa.fai",
         gpar = genomedir + "/genomeParameters.txt",
@@ -301,7 +299,7 @@ rule igvtools6:
 rule star_wasp:
     priority: 7 
     input:
-        end1= wdir + "/{sample}.fastq",   
+        end1= wdir + "/{sample}_1.fastq",   
         sfvcf = wdir + "/{sample}." + chr + ".snps_filtered.vcf",
         gdict = genomedir + "/genome.dict",
         gfai = genomedir + "/genome.fa.fai",
