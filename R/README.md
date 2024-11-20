@@ -1,23 +1,11 @@
-Description of R notebooks
+This directory contains all the code and data for the publication Werner, Hover, and Gillis. Population variability in X-chromosome inactivation across 10 mammalian species. 2024.
 
+The all_code directory contains all the R notebooks used for this paper with a readme.md describing all the notebooks. All source data for the figure plots were generated within these notebooks.
 
-get_exp_vcf.R - R script for combining the .vcf and .wig output from the snakemake pipeline to produce tables of variants with their allele-specific read counts
+All source data is present within the data_for_plots directory, this contains all the data necessary for recreating all figure panels for this publication.
+The all_keep_species_meta.csv file contains the SRA Run IDs for all the non-human mammalian samples we processed (Figure 1 C)
 
-cross_mammal_data.Rmd - R notebook compiling sample metadata from SRA
-
-exploring_SPECIES_samples.Rmd - R notebook per species for compiling the X-chromosome .vcfs, filtering and annotating SNPs, filtering X-escape, and sample-level XCI ratio modeling. Plots for Supplemental Figures 1-3 
-
-exploring_SPECIES_samples_chrA_and_B.Rmd - R noteboot per species for compiling the autosome .vcfs, filtering and annotating SNPs, and sample-level autosome ratio modeling. Analysis for Supplemental Figure 4.
-
-aggregate_gtex_data.Rmd - R notebook that aggregates the tissue vcfs per donor for the human GTEx data
-
-autosome_analysis.Rmd - R notebook comparing autosomal and X-chromosome imbalances and adding a filter for samples with global allelic imbalances. Plots for Supplemental Figure 4.
-
-crossSpecies_cell_num_modeling.Rmd - R notebook that contains analysis for the X-linked heterozygosity and population XCI ratio modeling results. Plots for Figures 2-3 and Supplemental Figures 5-6.
-
-xci_predict_variant_analysis.Rmd - R notebook that contains analysis for quantifying the association between individual X-linked variants and extreme XCI ratios across species. Plots for Figure 4 and Supplemental Figure 7.
-
-fig_1_schematic_plots.Rmd - R notebook for miscellaneous plots used in the Figure 1 schematic
+The figure_plots_with_data_code.md markdown file contains all the code to recreate all figure panels using the provided source data. 
 
 
 

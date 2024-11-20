@@ -1,0 +1,1487 @@
+
+
+Cell number modeling from the population XCI skews across non-human mammalian species
+```{r}
+library(ggplot2)
+library(dplyr)
+library(ggridges)
+library(MetBrewer)
+library(parallel)
+library(ComplexHeatmap)
+library(viridis)
+library(circlize)
+library(ggrepel)
+```
+
+get colors for the species
+
+```{r}
+
+species_colors = met.brewer("Tiepolo", n=10,type="continuous")
+
+#Going by the ranking of estimated cell counts
+species_palette = c('Macaca' = species_colors[1], 'Rat' = species_colors[2], 'Pig' = species_colors[3],
+                    'Goat' = species_colors[4], 'Horse' = species_colors[5], 'Sheep' = species_colors[6],
+                    'Human' = species_colors[8], 'Mouse' = species_colors[7], 'Cow' = species_colors[9], 'Dog' = species_colors[10])
+
+species_palette
+
+```
+
+
+
+skew and stat dataframes with escape bins filtered and the autosome filter
+```{r}
+
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/equus_caballus/horse_skew_and_stats_autoFilt_df_7_12_23.Rdata')
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/bos_taurus/cow_skew_and_stats_autoFilt_df_7_12_23.Rdata')
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/sus_scrofa/pig_skew_and_stats_autoFilt_df_7_12_23.Rdata')
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/ovis_aries/sheep_skew_and_stats_autoFilt_df_7_12_23.Rdata')
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/capra_hircus/goat_skew_and_stats_autoFilt_df_7_12_23.Rdata')
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/macaca_mulatta/macaca_skew_and_stats_autoFilt_df_7_12_23.Rdata')
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/rattus_norvegicus/rat_skew_and_stats_autoFilt_df_7_12_23.Rdata')
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/canis_lupus_familiaris/dog_skew_and_stats_autoFilt_df_7_12_23.Rdata')
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/mus_musculus/mouse_skew_and_stats_autoFilt_df_4_22_24.Rdata')
+```
+
+
+human data
+
+```{r}
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/homo_sapiens/human_skew_and_stats_autoFilt_df_7_12_23.Rdata')
+dim(human_skew_and_stats_df)
+```
+
+
+#Save the samples that have enough X data to get autosomal data for the same samples
+```{r}
+
+writeLines(horse_skew_and_stats_df$sample_id[horse_skew_and_stats_df$num_good_snps_no_escape >= 10],
+           '/home/werner/projects/cross_species_XCI/code/female_metadata/verified_X_samples/equus_caballus_verified_X_SRR.txt')
+
+writeLines(cow_skew_and_stats_df$sample_id[cow_skew_and_stats_df$num_good_snps_no_escape >= 10],
+           '/home/werner/projects/cross_species_XCI/code/female_metadata/verified_X_samples/bos_taurus_verified_X_SRR.txt')
+
+writeLines(pig_skew_and_stats_df$sample_id[pig_skew_and_stats_df$num_good_snps_no_escape >= 10],
+           '/home/werner/projects/cross_species_XCI/code/female_metadata/verified_X_samples/sus_scrofa_verified_X_SRR.txt')
+
+writeLines(sheep_skew_and_stats_df$sample_id[sheep_skew_and_stats_df$num_good_snps_no_escape >= 10],
+           '/home/werner/projects/cross_species_XCI/code/female_metadata/verified_X_samples/ovis_aries_verified_X_SRR.txt')
+
+writeLines(goat_skew_and_stats_df$sample_id[goat_skew_and_stats_df$num_good_snps_no_escape >= 10],
+           '/home/werner/projects/cross_species_XCI/code/female_metadata/verified_X_samples/capra_hircus_verified_X_SRR.txt')
+
+writeLines(macaca_skew_and_stats_df$sample_id[macaca_skew_and_stats_df$num_good_snps_no_escape >= 10],
+           '/home/werner/projects/cross_species_XCI/code/female_metadata/verified_X_samples/macaca_mulatta_verified_X_SRR.txt')
+
+writeLines(rat_skew_and_stats_df$sample_id[rat_skew_and_stats_df$num_good_snps_no_escape >= 10],
+           '/home/werner/projects/cross_species_XCI/code/female_metadata/verified_X_samples/rattus_norvegicus_verified_X_SRR.txt')
+
+writeLines(dog_skew_and_stats_df$sample_id[dog_skew_and_stats_df$num_good_snps_no_escape >= 10],
+           '/home/werner/projects/cross_species_XCI/code/female_metadata/verified_X_samples/canis_lupus_familiaris_verified_X_SRR.txt')
+
+writeLines(mouse_skew_and_stats_df$sample_id[mouse_skew_and_stats_df$num_good_snps_no_escape >= 10],
+           '/home/werner/projects/cross_species_XCI/code/female_metadata/verified_X_samples/mus_musculus_verified_X_SRR.txt')
+```
+
+
+get a stacked barplot of all the annotated samples per species we identified with the final sample count of samples with at least 10 well-powered SNPs
+```{r}
+
+all_cow_samps = length(readLines('/home/werner/projects/cross_species_XCI/code/female_metadata/bos_taurus_female_SRR.txt'))
+all_sheep_samps = length(readLines('/home/werner/projects/cross_species_XCI/code/female_metadata/ovis_aries_female_SRR.txt'))
+all_goat_samps = length(readLines('/home/werner/projects/cross_species_XCI/code/female_metadata/Capra_hircus_female_SRR.txt'))
+all_horse_samps = length(readLines('/home/werner/projects/cross_species_XCI/code/female_metadata/Equus_caballus_female_SRR.txt'))
+all_dog_samps = length(readLines('/home/werner/projects/cross_species_XCI/code/female_metadata/Canis_lupus_familiaris_female_SRR.txt'))
+all_pig_samps = length(readLines('/home/werner/projects/cross_species_XCI/code/female_metadata/sus_scrofa_female_SRR.txt'))
+all_rat_samps = length(readLines('/home/werner/projects/cross_species_XCI/code/female_metadata/rattus_norvegicus_female_SRR.txt'))
+all_mouse_samps = length(readLines('/home/werner/projects/cross_species_XCI/code/female_metadata/mus_musculus_female_SRR.txt'))
+all_macaca_samps = length(readLines('/home/werner/projects/cross_species_XCI/code/female_metadata/macaca_mulatta_female_SRR.txt'))
+all_human_samps = max(human_skew_and_stats_df$sample_index)
+
+
+kept_macaca_samps = nrow(macaca_skew_and_stats_df[macaca_skew_and_stats_df$num_good_snps_no_escape >= 10, ])
+kept_rat_samps = nrow(rat_skew_and_stats_df[rat_skew_and_stats_df$num_good_snps_no_escape >= 10, ])
+kept_mouse_samps = nrow(mouse_skew_and_stats_df[mouse_skew_and_stats_df$num_good_snps_no_escape >= 10, ])
+kept_pig_samps = nrow(pig_skew_and_stats_df[pig_skew_and_stats_df$num_good_snps_no_escape >= 10, ])
+kept_goat_samps = nrow(goat_skew_and_stats_df[goat_skew_and_stats_df$num_good_snps_no_escape >= 10, ])
+kept_horse_samps = nrow(horse_skew_and_stats_df[horse_skew_and_stats_df$num_good_snps_no_escape >= 10, ])
+kept_sheep_samps = nrow(sheep_skew_and_stats_df[sheep_skew_and_stats_df$num_good_snps_no_escape >= 10, ])
+kept_cow_samps = nrow(cow_skew_and_stats_df[cow_skew_and_stats_df$num_good_snps_no_escape >= 10, ])
+kept_dog_samps = nrow(dog_skew_and_stats_df[dog_skew_and_stats_df$num_good_snps_no_escape >= 10, ])
+kept_human_samps = nrow(human_skew_and_stats_df[human_skew_and_stats_df$num_snps >= 10, ])
+
+
+num_samps = c(all_cow_samps, all_sheep_samps, all_goat_samps, all_horse_samps, all_dog_samps, all_pig_samps, 
+              all_rat_samps,all_mouse_samps, all_macaca_samps, all_human_samps,
+              kept_cow_samps, kept_sheep_samps, kept_goat_samps, kept_horse_samps, kept_dog_samps, kept_pig_samps, 
+              kept_rat_samps, kept_mouse_samps, kept_macaca_samps, kept_human_samps)
+
+species_label = c('Cow','Sheep','Goat','Horse','Dog','Pig','Rat', 'Mouse','Macaca','Human','Cow','Sheep','Goat','Horse','Dog','Pig','Rat','Mouse','Macaca','Human')
+filter_label = c(rep('Annotated female', length = 10), rep('>= 10 well-powered SNPs', length = 10))
+
+species_sample_df = data.frame(sample_number = num_samps, species = species_label, filter = filter_label)
+
+
+level_df = filter(species_sample_df, filter == 'Annotated female') %>% group_by(species ) %>% arrange(sample_number)
+species_sample_df$species = factor(species_sample_df$species, levels = level_df$species)
+species_sample_df$filter = factor(species_sample_df$filter, levels = c('Annotated female','>= 10 well-powered SNPs'))
+
+
+total_samples = sum(species_sample_df$sample_number[species_sample_df$filter == 'Annotated female'])
+total_kept_samples = sum(species_sample_df$sample_number[species_sample_df$filter == '>= 10 well-powered SNPs'])
+
+ggplot(species_sample_df, aes(x = species, y = sample_number, alpha = filter_label, fill = species)) + geom_bar(position="dodge", stat="identity") + coord_flip() +
+  ylab('# of bulk RNA-seq samples') +
+  scale_fill_manual(values = species_palette, guide = guide_legend(reverse = TRUE)) + scale_alpha_manual(values = c('Annotated female' = 1, '>= 10 well-powered SNPs' = .5)) +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
+      panel.background = element_rect(fill = 'white'), panel.border = element_rect(color = "black", fill=NA),  
+      axis.text.y = element_text(size=12), axis.text.x = element_text(size=12),
+      axis.title.y = element_text(size=12), axis.title.x = element_text(size=12)) 
+#ggsave(filename ='sample_num_barplot_v2.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/schematic_plots/', 
+#       device = 'pdf', useDingbats = F, width = 7, height = 4)
+
+
+save(species_sample_df, file = '/home/werner/projects/cross_species_XCI/final_plots/R/data_for_plots/species_sample_df.Rdata')
+
+
+```
+
+```{r}
+
+total_samples
+total_kept_samples
+
+```
+
+
+Get the distributions of final SNP numbers per sample for all the species
+excluding the autosomal imbalanced samples
+
+
+```{r}
+
+
+cow_snp_nums = filter(cow_skew_and_stats_df, num_good_snps_no_escape >= 10)$num_good_snps_no_escape
+
+pig_snp_nums = filter(pig_skew_and_stats_df,num_good_snps_no_escape >= 10)$num_good_snps_no_escape
+
+macaca_snp_nums = filter(macaca_skew_and_stats_df,  num_good_snps_no_escape >= 10)$num_good_snps_no_escape
+
+rat_snp_nums = filter(rat_skew_and_stats_df, num_good_snps_no_escape >= 10)$num_good_snps_no_escape
+
+mouse_snp_nums = filter(mouse_skew_and_stats_df,  num_good_snps_no_escape >= 10)$num_good_snps_no_escape
+
+dog_snp_nums = filter(dog_skew_and_stats_df, num_good_snps_no_escape >= 10)$num_good_snps_no_escape
+
+goat_snp_nums = filter(goat_skew_and_stats_df, num_good_snps_no_escape >= 10)$num_good_snps_no_escape
+
+sheep_snp_nums = filter(sheep_skew_and_stats_df, num_good_snps_no_escape >= 10)$num_good_snps_no_escape
+
+horse_snp_nums = filter(horse_skew_and_stats_df,  num_good_snps_no_escape >= 10)$num_good_snps_no_escape
+
+human_snp_nums = filter(human_skew_and_stats_df,  num_snps >= 10)$num_snps
+
+
+all_snps = c(cow_snp_nums, pig_snp_nums, macaca_snp_nums, rat_snp_nums, mouse_snp_nums, dog_snp_nums, goat_snp_nums, sheep_snp_nums, horse_snp_nums, human_snp_nums)
+species_label = c(rep('Cow', length = length(cow_snp_nums)), rep('Pig', length = length(pig_snp_nums)), rep('Macaca', length = length(macaca_snp_nums)),
+                  rep('Rat', length = length(rat_snp_nums)), rep('Mouse', length = length(mouse_snp_nums)), rep('Dog', length = length(dog_snp_nums)), 
+                  rep('Goat', length = length(goat_snp_nums)),
+                  rep('Sheep', length = length(sheep_snp_nums)), rep('Horse', length = length(horse_snp_nums)), rep('Human', length = length(human_snp_nums)))
+
+num_snps_df = data.frame(snp_counts = all_snps, species = species_label)
+mean_dist_order =  num_snps_df %>% group_by(species) %>% summarize(mean = mean(snp_counts)) %>% arrange(desc(mean))
+num_snps_df$species = factor(num_snps_df$species, levels = c(mean_dist_order$species))
+
+ggplot(num_snps_df, aes(x = species, y = snp_counts, fill = species)) + geom_violin(scale = 'width') + scale_fill_manual(values = species_palette) +
+  ylab('Number of well-powered SNPs per sample')
+#ggsave(filename = 'number_of_snps_persample_violin_v2.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/ref_snp_filtering/', device = 'pdf', useDingbats = F, 
+#       height = 4, width = 6)
+
+
+save(num_snps_df, file = '/home/werner/projects/cross_species_XCI/final_plots/R/data_for_plots/num_snps_df.Rdata')
+
+
+
+```
+
+
+get the mean and sd for each species
+```{r}
+
+summary_num_snps_df = num_snps_df %>% group_by(species) %>% summarize(num_samps = length(snp_counts), mean_snps = mean(snp_counts), sd_snps = sd(snp_counts))
+
+summary_num_snps_df
+
+```
+
+
+number of samples
+
+```{r}
+
+dim(macaca_skew_and_stats_df[macaca_skew_and_stats_df$num_good_snps_no_escape >= 10 & macaca_skew_and_stats_df$autosome_imbalance == F, ])
+dim(rat_skew_and_stats_df[rat_skew_and_stats_df$num_good_snps_no_escape >= 10 & rat_skew_and_stats_df$autosome_imbalance == F, ])
+dim(mouse_skew_and_stats_df[mouse_skew_and_stats_df$num_good_snps_no_escape >= 10 & mouse_skew_and_stats_df$autosome_imbalance == F, ])
+dim(pig_skew_and_stats_df[pig_skew_and_stats_df$num_good_snps_no_escape >= 10 & pig_skew_and_stats_df$autosome_imbalance == F, ])
+dim(goat_skew_and_stats_df[goat_skew_and_stats_df$num_good_snps_no_escape >= 10 & goat_skew_and_stats_df$autosome_imbalance == F, ])
+dim(horse_skew_and_stats_df[horse_skew_and_stats_df$num_good_snps_no_escape >= 10 & horse_skew_and_stats_df$autosome_imbalance == F, ])
+dim(sheep_skew_and_stats_df[sheep_skew_and_stats_df$num_good_snps_no_escape >= 10 & sheep_skew_and_stats_df$autosome_imbalance == F, ])
+dim(cow_skew_and_stats_df[cow_skew_and_stats_df$num_good_snps_no_escape >= 10 & cow_skew_and_stats_df$autosome_imbalance == F, ])
+dim(dog_skew_and_stats_df[dog_skew_and_stats_df$num_good_snps_no_escape >= 10 & dog_skew_and_stats_df$autosome_imbalance == F, ])
+
+print('Total samples...')
+
+dim(macaca_skew_and_stats_df)
+dim(rat_skew_and_stats_df)
+dim(mouse_skew_and_stats_df)
+dim(pig_skew_and_stats_df)
+dim(goat_skew_and_stats_df)
+dim(horse_skew_and_stats_df)
+dim(sheep_skew_and_stats_df)
+dim(cow_skew_and_stats_df)
+dim(dog_skew_and_stats_df)
+
+
+```
+
+
+```{r}
+# Functions to fold and unfold ratios 
+folded <- function(x) { apply( cbind(x,1-x), 1, max)} 
+unfold <- function(x) { c(x,1-x) } 
+
+```
+
+
+
+Preliminary population distributions
+
+
+```{r}
+sample_index = cow_skew_and_stats_df$num_good_snps_no_escape >=10 & cow_skew_and_stats_df$autosome_imbalance == F
+hist(unfold(cow_skew_and_stats_df$est_skew_no_escape[sample_index]), breaks = seq(0,1,.005), 
+     main = sprintf('Cow population XCI ratios, # samples: %i', sum(sample_index)), xlab = 'Estimated sample XCI ratio')
+
+sample_index = horse_skew_and_stats_df$num_good_snps_no_escape >=10 & horse_skew_and_stats_df$autosome_imbalance == F
+hist(unfold(horse_skew_and_stats_df$est_skew_no_escape[sample_index]), breaks = seq(0,1,.005), 
+     main = sprintf('Horse population XCI ratios, # samples: %i', sum(sample_index)), xlab = 'Estimated sample XCI ratio')
+
+sample_index = pig_skew_and_stats_df$num_good_snps_no_escape >=10 & pig_skew_and_stats_df$autosome_imbalance == F
+hist(unfold(pig_skew_and_stats_df$est_skew_no_escape[sample_index]), breaks = seq(0,1,.005), 
+     main = sprintf('Pig population XCI ratios, # samples: %i', sum(sample_index)), xlab = 'Estimated sample XCI ratio')
+
+sample_index = goat_skew_and_stats_df$num_good_snps_no_escape >=10 & goat_skew_and_stats_df$autosome_imbalance == F
+hist(unfold(goat_skew_and_stats_df$est_skew_no_escape[sample_index]), breaks = seq(0,1,.005), 
+     main = sprintf('Goat population XCI ratios, # samples: %i', sum(sample_index)), xlab = 'Estimated sample XCI ratio')
+
+sample_index = sheep_skew_and_stats_df$num_good_snps_no_escape >=10 & sheep_skew_and_stats_df$autosome_imbalance == F
+hist(unfold(sheep_skew_and_stats_df$est_skew_no_escape[sample_index]), breaks = seq(0,1,.005), 
+     main =sprintf('Sheep population XCI ratios, # samples: %i', sum(sample_index)), xlab = 'Estimated sample XCI ratio')
+
+sample_index = dog_skew_and_stats_df$num_good_snps_no_escape >=10 & dog_skew_and_stats_df$autosome_imbalance == F
+hist(unfold(dog_skew_and_stats_df$est_skew_no_escape[sample_index]), breaks = seq(0,1,.005), 
+     main = sprintf('Dog population XCI ratios, # samples: %i', sum(sample_index)), xlab = 'Estimated sample XCI ratio')
+
+sample_index = macaca_skew_and_stats_df$num_good_snps_no_escape >=10 & macaca_skew_and_stats_df$autosome_imbalance == F
+hist(unfold(macaca_skew_and_stats_df$est_skew_no_escape[sample_index]), breaks = seq(0,1,.005), 
+     main = sprintf('Macaca population XCI ratios, # samples: %i', sum(sample_index)), xlab = 'Estimated sample XCI ratio')
+
+sample_index = rat_skew_and_stats_df$num_good_snps_no_escape >=10 & rat_skew_and_stats_df$autosome_imbalance == F
+hist(unfold(rat_skew_and_stats_df$est_skew_no_escape[sample_index]), breaks = seq(0,1,.005), 
+     main = sprintf('Rat population XCI ratios, # samples: %i', sum(sample_index)), xlab = 'Estimated sample XCI ratio')
+
+sample_index = mouse_skew_and_stats_df$num_good_snps_no_escape >=10 & mouse_skew_and_stats_df$autosome_imbalance == F
+hist(unfold(mouse_skew_and_stats_df$est_skew_no_escape[sample_index]), breaks = seq(0,1,.005), 
+     main = sprintf('Mouse population XCI ratios, # samples: %i', sum(sample_index)), xlab = 'Estimated sample XCI ratio')
+```
+
+
+
+Reference bias plot
+################################
+
+Load up each species snp_stat_df and get the proportion of SNPs we filter out due to reference bias compared to the total number of het SNPs we detect
+Single plot to show the variation in reference bias across the species and that we are accounting for it
+People might ask what WASP is doing then, if there's still substantial reference bias. Good question.
+#################################
+
+```{r}
+x = load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/canis_lupus_familiaris/detected_het_snps_df_3_15_23.Rdata')
+dog_snp_stat_df = get(x)
+
+x = load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/equus_caballus/detected_het_snps_df_3_15_23.Rdata')
+horse_snp_stat_df = get(x)
+
+x = load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/bos_taurus/detected_het_snps_df_3_15_23.Rdata')
+cow_snp_stat_df = get(x)
+
+x = load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/ovis_aries/detected_het_snps_df_3_15_23.Rdata')
+sheep_snp_stat_df = get(x)
+
+x = load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/capra_hircus/detected_het_snps_df_3_15_23.Rdata')
+goat_snp_stat_df = get(x)
+
+x = load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/rattus_norvegicus/detected_het_snps_df_3_15_23.Rdata')
+rat_snp_stat_df = get(x)
+
+x = load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/mus_musculus/detected_het_snps_df_4_22_24.Rdata')
+mouse_snp_stat_df = get(x)
+
+x = load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/macaca_mulatta/detected_het_snps_df_3_15_23.Rdata')
+macaca_snp_stat_df = get(x)
+
+x = load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/sus_scrofa/detected_het_snps_df_3_15_23.Rdata')
+pig_snp_stat_df = get(x)
+
+x = load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/homo_sapiens/detected_het_snps_df_8_3_23.Rdata')
+human_snp_stat_df = get(x)
+
+```
+
+
+
+
+#########################################
+Measures of inbreeding
+For each Het snp detected, get the fraction of samples it is detected in versus all samples
+Use the full snp vcf, not the max snp per gene
+Check out these distributions, would expect more inbreeding to equal less genomic diversity to equal high SNP fractions
+#################################
+
+
+
+```{r}
+#Dog variants
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/canis_lupus_familiaris/all_snp_vcf_3_15_23.Rdata')
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/canis_lupus_familiaris/max_snp_vcf_binFilt_4_27_23.Rdata')
+all_pos = c()
+all_variants = c()
+
+for(i in 1:length(annot_dog_vcfs)){
+  
+  data = annot_dog_vcfs[[i]]
+  if(is.null(dim(data))){next}
+  variants = paste0(data$ref, data$alt)
+  all_pos = c(all_pos, data$Pos)
+  all_variants =c(all_variants, variants)
+  
+}
+
+all_dog_variants = data.frame(position = all_pos, variants = all_variants)
+dog_inbred_vec = table(paste0(all_dog_variants$position, all_dog_variants$variants))
+dog_inbred_df = data.frame(variant = names(dog_inbred_vec), num_samps_detected = as.numeric(dog_inbred_vec), fraction_total_samps = as.numeric(dog_inbred_vec) / length(annot_dog_vcfs))
+
+
+#goat variants
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/capra_hircus/all_snp_vcf_3_15_23.Rdata')
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/capra_hircus/max_snp_vcf_binFilt_4_27_23.Rdata')
+all_pos = c()
+all_variants = c()
+
+for(i in 1:length(annot_goat_vcfs)){
+  
+  data = annot_goat_vcfs[[i]]
+  if(is.null(dim(data))){next}
+  variants = paste0(data$ref, data$alt)
+  all_pos = c(all_pos, data$Pos)
+  all_variants =c(all_variants, variants)
+  
+}
+
+all_goat_variants = data.frame(position = all_pos, variants = all_variants)
+goat_inbred_vec = table(paste0(all_goat_variants$position, all_goat_variants$variants))
+goat_inbred_df = data.frame(variant = names(goat_inbred_vec), num_samps_detected = as.numeric(goat_inbred_vec), fraction_total_samps = as.numeric(goat_inbred_vec) / length(annot_goat_vcfs))
+
+
+#sheep variants
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/ovis_aries/all_snp_vcf_3_15_23.Rdata')
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/ovis_aries/max_snp_vcf_binFilt_4_27_23.Rdata')
+
+all_pos = c()
+all_variants = c()
+
+for(i in 1:length(annot_sheep_vcfs)){
+  
+  data = annot_sheep_vcfs[[i]]
+  if(is.null(dim(data))){next}
+  variants = paste0(data$ref, data$alt)
+  all_pos = c(all_pos, data$Pos)
+  all_variants =c(all_variants, variants)
+  
+}
+
+all_sheep_variants = data.frame(position = all_pos, variants = all_variants)
+sheep_inbred_vec = table(paste0(all_sheep_variants$position, all_sheep_variants$variants))
+sheep_inbred_df = data.frame(variant = names(sheep_inbred_vec), num_samps_detected = as.numeric(sheep_inbred_vec), fraction_total_samps = as.numeric(sheep_inbred_vec) / length(annot_sheep_vcfs))
+
+#horse variants
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/equus_caballus/all_snp_vcf_3_15_23.Rdata')
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/equus_caballus/max_snp_vcf_binFilt_4_27_23.Rdata')
+all_pos = c()
+all_variants = c()
+
+for(i in 1:length(annot_horse_vcfs)){
+  
+  data = annot_horse_vcfs[[i]]
+  if(is.null(dim(data))){next}
+  variants = paste0(data$ref, data$alt)
+  all_pos = c(all_pos, data$Pos)
+  all_variants =c(all_variants, variants)
+  
+}
+
+all_horse_variants = data.frame(position = all_pos, variants = all_variants)
+horse_inbred_vec = table(paste0(all_horse_variants$position, all_horse_variants$variants))
+horse_inbred_df = data.frame(variant = names(horse_inbred_vec), num_samps_detected = as.numeric(horse_inbred_vec), fraction_total_samps = as.numeric(horse_inbred_vec) / length(annot_horse_vcfs))
+
+
+#rat variants
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/rattus_norvegicus/all_snp_vcf_3_15_23.Rdata')
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/rattus_norvegicus/max_snp_vcf_binFilt_4_27_23.Rdata')
+all_pos = c()
+all_variants = c()
+
+for(i in 1:length(annot_rat_vcfs)){
+  
+  data = annot_rat_vcfs[[i]]
+  if(is.null(dim(data))){next}
+  variants = paste0(data$ref, data$alt)
+  all_pos = c(all_pos, data$Pos)
+  all_variants =c(all_variants, variants)
+  
+}
+
+all_rat_variants = data.frame(position = all_pos, variants = all_variants)
+rat_inbred_vec = table(paste0(all_rat_variants$position, all_rat_variants$variants))
+rat_inbred_df = data.frame(variant = names(rat_inbred_vec), num_samps_detected = as.numeric(rat_inbred_vec), fraction_total_samps = as.numeric(rat_inbred_vec) / length(annot_rat_vcfs))
+
+
+#mouse variants
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/mus_musculus/all_snp_vcf_4_22_24.Rdata')
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/mus_musculus/max_snp_vcf_binFilt_4_22_24.Rdata')
+all_pos = c()
+all_variants = c()
+
+for(i in 1:length(annot_mouse_vcfs)){
+  
+  data = annot_mouse_vcfs[[i]]
+  if(is.null(dim(data))){next}
+  variants = paste0(data$ref, data$alt)
+  all_pos = c(all_pos, data$Pos)
+  all_variants =c(all_variants, variants)
+  
+}
+
+all_mouse_variants = data.frame(position = all_pos, variants = all_variants)
+mouse_inbred_vec = table(paste0(all_mouse_variants$position, all_mouse_variants$variants))
+mouse_inbred_df = data.frame(variant = names(mouse_inbred_vec), num_samps_detected = as.numeric(mouse_inbred_vec), fraction_total_samps = as.numeric(mouse_inbred_vec) / length(annot_mouse_vcfs))
+
+
+#macaca variants
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/macaca_mulatta/all_snp_vcf_3_15_23.Rdata')
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/macaca_mulatta/max_snp_vcf_binFilt_4_27_23.Rdata')
+all_pos = c()
+all_variants = c()
+
+for(i in 1:length(annot_macaca_vcfs)){
+  
+  data = annot_macaca_vcfs[[i]]
+  if(is.null(dim(data))){next}
+  variants = paste0(data$ref, data$alt)
+  all_pos = c(all_pos, data$Pos)
+  all_variants =c(all_variants, variants)
+  
+}
+
+all_macaca_variants = data.frame(position = all_pos, variants = all_variants)
+macaca_inbred_vec = table(paste0(all_macaca_variants$position, all_macaca_variants$variants))
+macaca_inbred_df = data.frame(variant = names(macaca_inbred_vec), num_samps_detected = as.numeric(macaca_inbred_vec), fraction_total_samps = as.numeric(macaca_inbred_vec) / length(annot_macaca_vcfs))
+
+#pig variants
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/sus_scrofa/all_snp_vcf_3_15_23.Rdata')
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/sus_scrofa/max_snp_vcf_binFilt_4_27_23.Rdata')
+all_pos = c()
+all_variants = c()
+
+for(i in 1:length(annot_pig_vcfs)){
+  
+  data = annot_pig_vcfs[[i]]
+  if(is.null(dim(data))){next}
+  variants = paste0(data$ref, data$alt)
+  all_pos = c(all_pos, data$Pos)
+  all_variants =c(all_variants, variants)
+  
+}
+
+all_pig_variants = data.frame(position = all_pos, variants = all_variants)
+pig_inbred_vec = table(paste0(all_pig_variants$position, all_pig_variants$variants))
+pig_inbred_df = data.frame(variant = names(pig_inbred_vec), num_samps_detected = as.numeric(pig_inbred_vec), fraction_total_samps = as.numeric(pig_inbred_vec) / length(annot_pig_vcfs))
+
+
+#cow variants
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/bos_taurus/all_snp_vcf_3_15_23.Rdata')
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/bos_taurus/max_snp_vcf_binFilt_4_27_23.Rdata')
+all_pos = c()
+all_variants = c()
+
+for(i in 1:length(annot_cow_vcfs)){
+  
+  data = annot_cow_vcfs[[i]]
+  if(is.null(dim(data))){next}
+  variants = paste0(data$ref, data$alt)
+  all_pos = c(all_pos, data$Pos)
+  all_variants =c(all_variants, variants)
+  
+}
+
+all_cow_variants = data.frame(position = all_pos, variants = all_variants)
+cow_inbred_vec = table(paste0(all_cow_variants$position, all_cow_variants$variants))
+cow_inbred_df = data.frame(variant = names(cow_inbred_vec), num_samps_detected = as.numeric(cow_inbred_vec), fraction_total_samps = as.numeric(cow_inbred_vec) / length(annot_cow_vcfs))
+
+
+```
+
+for humans, get the list of all variants detected across tissues for a donor, then get the variants that re-occur across individuals
+
+```{r}
+
+max(human_skew_and_stats_df$sample_index)
+
+#First get the sample indices for all the tissue samples per donor
+all_human_donors = unique(human_skew_and_stats_df$donor)
+donor_sample_indices = list()
+for(i in 1:length(all_human_donors)){
+  donor_index_list = human_skew_and_stats_df$sample_index[human_skew_and_stats_df$donor == all_human_donors[i]]
+  donor_sample_indices[[i]] = donor_index_list
+}
+names(donor_sample_indices) = all_human_donors
+
+
+
+#All the detected snps from the GTEx data
+#in the list.vcf object
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/homo_sapiens/all_v8_GATK_mod.Rdata')
+
+
+all_pos = c()
+all_variants = c()
+
+for(j in 1:length(donor_sample_indices)){
+
+  current_donor_index = donor_sample_indices[[j]]
+  
+  donor_pos = c()
+  donor_variants = c()
+  for(i in 1:length(current_donor_index)){
+  
+    data = list.vcf[[current_donor_index[i]]]
+    positions = data[ ,1]
+    variants = paste0(data$V3, data$V4)
+    donor_pos = c(donor_pos, positions)
+    donor_variants =c(donor_variants, variants)
+    
+  }
+  
+  #Get the set of snps for that donor, ignoring the duplicates because it's the same tissues across an individual
+  all_variants = c(all_variants, donor_variants[!duplicated(paste0(donor_pos, donor_variants))])
+  all_pos = c(all_pos, donor_pos[!duplicated(paste0(donor_pos, donor_variants))])
+}
+
+
+all_human_variants = data.frame(position = all_pos, variants = all_variants)
+human_inbred_vec = table(paste0(all_human_variants$position, all_human_variants$variants))
+human_inbred_df = data.frame(variant = names(human_inbred_vec), num_samps_detected = as.numeric(human_inbred_vec), fraction_total_samps = as.numeric(human_inbred_vec) / length(donor_sample_indices))
+human_inbred_df
+
+human_inbred_df %>% arrange(desc(num_samps_detected))
+
+
+```
+
+```{r}
+species_frac_snps_detected_once = c(
+  sum(dog_inbred_df$num_samps_detected == 1) / nrow(dog_inbred_df),
+  sum(horse_inbred_df$num_samps_detected == 1) / nrow(horse_inbred_df),
+  sum(pig_inbred_df$num_samps_detected == 1) / nrow(pig_inbred_df),
+  sum(cow_inbred_df$num_samps_detected == 1) / nrow(cow_inbred_df),
+  sum(goat_inbred_df$num_samps_detected == 1) / nrow(goat_inbred_df),
+  sum(sheep_inbred_df$num_samps_detected == 1) / nrow(sheep_inbred_df),
+  sum(rat_inbred_df$num_samps_detected == 1) / nrow(rat_inbred_df),
+  sum(mouse_inbred_df$num_samps_detected == 1) / nrow(mouse_inbred_df),
+  sum(macaca_inbred_df$num_samps_detected == 1) / nrow(macaca_inbred_df),
+  sum(human_inbred_df$num_samps_detected == 1) / nrow(human_inbred_df)
+)
+
+species_total_num_snps = c(nrow(dog_inbred_df), nrow(horse_inbred_df), nrow(pig_inbred_df), nrow(cow_inbred_df), nrow(goat_inbred_df), nrow(sheep_inbred_df),
+                           nrow(rat_inbred_df), nrow(mouse_inbred_df), nrow(macaca_inbred_df), nrow(human_inbred_df))
+
+species_label = c('Dog','Horse','Pig','Cow','Goat','Sheep','Rat','Mouse','Macaca','Human')
+
+snps_detected_once_df = data.frame(ratio_detected_once = species_frac_snps_detected_once, total_snps = species_total_num_snps, label = species_label )
+ggplot(snps_detected_once_df, aes(x = total_snps, label = label, y = ratio_detected_once, color = label)) + geom_point(size = 3) + geom_text(vjust = -1) +
+  scale_color_manual(values = species_palette) + xlab('Total # of SNPs detected') + ylab('Fraction of SNPs detected once') + ylim(.25, .7)
+```
+
+
+mean of unique snps across all species
+
+```{r}
+
+nrow(macaca_inbred_df)
+nrow(rat_inbred_df)
+nrow(mouse_inbred_df)
+nrow(pig_inbred_df)
+nrow(goat_inbred_df)
+nrow(horse_inbred_df)
+nrow(sheep_inbred_df)
+nrow(cow_inbred_df)
+nrow(human_inbred_df)
+nrow(dog_inbred_df)
+
+
+```
+
+
+######################################################################
+Measures of heterozygousity
+For each sample, fraction is # of het sites over # of all het sites detected in species
+Higher fraction, that sample is more heterozygous. See how this tracks with estimated XCi skew
+
+Also check out XIST annotations per species, see how many SNPs we call in the XIST region of each species and if that tracks with estimated XCI ratios
+
+#######################################################################
+
+
+```{r}
+
+
+compare_heterozygosity_and_xci = function(inbred_df, annot_vcf, species_name, skew_df, sample_size_filter = 10){
+  
+  #Go through and get the number of SNPs per sample
+  total_snps = nrow(inbred_df)
+  het_snps_perSamp = vector(mode = 'numeric', length = length(annot_vcf))
+  
+  for(i in 1:length(annot_vcf)){
+    if(is.null(dim(annot_vcf[[i]]))){het_snps_perSamp[i] = NA; next}
+    het_snps_perSamp[i] = nrow(annot_vcf[[i]])
+  }
+  
+  #get heterozygous fraction per sample
+  het_fraction = het_snps_perSamp/total_snps
+  sample_size_index = het_snps_perSamp >= sample_size_filter & skew_df$autosome_imbalance == F
+  
+  het_df = data.frame(het_fraction = het_fraction[sample_size_index], est_skew_no_escape = skew_df$est_skew_no_escape[sample_size_index],
+                          est_var_no_escape = skew_df$est_var_no_escape[sample_size_index])
+    
+  
+  corr = cor(het_df$het_fraction, het_df$est_skew_no_escape, method = 'spearman', use = 'complete.obs')
+  p1 = ggplot(het_df, aes(x = log10(het_fraction), y = est_skew_no_escape)) + geom_bin2d(bins = 25) + scale_fill_continuous(type = "viridis") +
+    ylim(.5, 1) + ylab('Estimated XCI ratio') + xlab('Heterozygousity') + ggtitle(sprintf('%s corr: %0.3f', species_name, corr))
+  print(p1)
+  file_name = sprintf('%s_het_exp_skew_scatter_v2.pdf', species_name)
+  #ggsave(plot = p1, filename = file_name, path = '/home/werner/projects/cross_species_XCI/code/graphs/heterozygousity/', device = 'pdf', 
+  #       useDingbats = F, height = 3, width = 4)
+  
+  corr = cor(het_df$het_fraction, het_df$est_var_no_escape, method = 'spearman', use = 'complete.obs')
+  p2 = ggplot(het_df, aes(x = log10(het_fraction), y = est_var_no_escape)) + geom_bin2d(bins = 25) + scale_fill_continuous(type = "viridis") +
+    ylab('Estimated XCI SD') + xlab('Heterozygousity') + ggtitle(sprintf('%s corr: %0.3f',species_name, corr))
+  print(p2)
+  file_name = sprintf('%s_het_exp_var_scatter_v2.pdf', species_name)
+  #ggsave(plot = p2, filename = file_name, path = '/home/werner/projects/cross_species_XCI/code/graphs/heterozygousity/', device = 'pdf', 
+  #       useDingbats = F, height = 3, width = 4)
+  
+  return(het_df)
+}
+
+
+cow_het_df = compare_heterozygosity_and_xci(cow_inbred_df, annot_cow_vcfs, 'cow', cow_skew_and_stats_df)
+rat_het_df = compare_heterozygosity_and_xci(rat_inbred_df, annot_rat_vcfs, 'rat', rat_skew_and_stats_df)
+mouse_het_df = compare_heterozygosity_and_xci(mouse_inbred_df, annot_mouse_vcfs, 'mouse', mouse_skew_and_stats_df)
+macaca_het_df = compare_heterozygosity_and_xci(macaca_inbred_df, annot_macaca_vcfs, 'macaca', macaca_skew_and_stats_df)
+dog_het_df= compare_heterozygosity_and_xci(dog_inbred_df, annot_dog_vcfs, 'dog', dog_skew_and_stats_df)
+pig_het_df= compare_heterozygosity_and_xci(pig_inbred_df, annot_pig_vcfs, 'pig', pig_skew_and_stats_df)
+sheep_het_df = compare_heterozygosity_and_xci(sheep_inbred_df, annot_sheep_vcfs, 'sheep', sheep_skew_and_stats_df)
+goat_het_df = compare_heterozygosity_and_xci(goat_inbred_df, annot_goat_vcfs, 'goat', goat_skew_and_stats_df)
+horse_het_df = compare_heterozygosity_and_xci(horse_inbred_df, annot_horse_vcfs, 'horse', horse_skew_and_stats_df)
+
+
+#human
+total_human_snps = nrow(human_inbred_df)
+het_snps_perSamp_human = vector(mode = 'numeric', length = length(list.vcf))
+
+for(i in 1:length(list.vcf)){
+  if(is.null(dim(list.vcf[[i]]))){het_snps_perSamp_human[i] = NA; next}
+  het_snps_perSamp_human[i] = nrow(list.vcf[[i]])
+}
+
+#get heterozygous fraction per sample
+human_het_fraction = het_snps_perSamp_human/total_human_snps
+sample_size_index = het_snps_perSamp_human >= 10 & human_skew_and_stats_df$autosome_imbalance == F
+
+human_het_df = data.frame(het_fraction = human_het_fraction[sample_size_index], est_skew_no_escape = human_skew_and_stats_df$skew[sample_size_index],
+                        est_var_no_escape = human_skew_and_stats_df$skew_sigma[sample_size_index])
+
+human_corr = cor(human_het_df$het_fraction, human_het_df$est_skew_no_escape, method = 'spearman', use = 'complete.obs')
+ggplot(human_het_df, aes(x = log10(het_fraction), y = est_skew_no_escape)) + geom_bin2d(bins = 25) + scale_fill_continuous(type = "viridis") +
+  ylim(.5, 1) + ylab('Estimated XCI ratio') + xlab('Heterozygousity') + ggtitle(sprintf('human corr: %0.3f', human_corr))
+#ggsave(filename = 'human_het_exp_skew_scatter_v2.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/heterozygousity/', device = 'pdf', 
+#       useDingbats = F, height = 3, width = 4)
+human_corr = cor(human_het_df$het_fraction, human_het_df$est_var_no_escape, method = 'spearman', use = 'complete.obs')
+ggplot(human_het_df, aes(x = log10(het_fraction), y = est_var_no_escape)) + geom_bin2d(bins = 25) + scale_fill_continuous(type = "viridis") +
+  ylab('Estimated XCI SD') + xlab('Heterozygousity') + ggtitle(sprintf('human corr: %0.3f', human_corr))
+#ggsave(filename = 'human_het_exp_var_scatter_v2.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/heterozygousity/', device = 'pdf', 
+#       useDingbats = F, height = 3, width = 4)
+
+
+
+
+```
+full distributions of sample heterozygousity per species
+
+
+```{r}
+
+species_het_fracs = c(cow_het_df$het_fraction, rat_het_df$het_fraction, mouse_het_df$het_fraction, macaca_het_df$het_fraction, 
+                      pig_het_df$het_fraction, sheep_het_df$het_fraction, goat_het_df$het_fraction, dog_het_df$het_fraction,
+                      horse_het_df$het_fraction, human_het_df$het_fraction)
+
+species_labels = c(rep('Cow', length = nrow(cow_het_df)), rep('Rat', length = nrow(rat_het_df)), rep('Mouse', length = nrow(mouse_het_df)), 
+                   rep('Macaca', length = nrow(macaca_het_df)), 
+                   rep('Pig', length = nrow(pig_het_df)), rep('Sheep', length = nrow(sheep_het_df)), rep('Goat', length = nrow(goat_het_df)), 
+                   rep('Dog', length = nrow(dog_het_df)), rep('Horse', length = nrow(horse_het_df)),  rep('Human', length = nrow(human_het_df)))
+
+all_species_het_frac_df = data.frame(het_fracs = species_het_fracs, label = species_labels)
+
+median_order_df = all_species_het_frac_df %>% group_by(label) %>% summarize(median = median(het_fracs, na.rm = T)) %>% arrange(desc(median))
+all_species_het_frac_df$label = factor( all_species_het_frac_df$label, levels = c(median_order_df$label))
+
+ggplot(all_species_het_frac_df, aes(x = label, y = log10(het_fracs), fill = label)) + geom_violin(scale = 'width') + geom_boxplot(outlier.shape = NA, width = .5, show.legend = F ) +
+  ylab('Sample heterozygousity') + xlab('Species') +
+  scale_fill_manual(values = species_palette, breaks = levels(all_species_het_frac_df$label))
+#ggsave(filename = 'species_het_frac_distr_v2.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/heterozygousity/', device = 'pdf', 
+#       useDingbats = F, height = 4, width = 6)
+
+```
+
+
+```{r}
+
+save(cow_het_df, rat_het_df, mouse_het_df, macaca_het_df, pig_het_df, sheep_het_df, goat_het_df, dog_het_df,horse_het_df, human_het_df, 
+     file = '/home/werner/projects/cross_species_XCI/final_plots/R/data_for_plots/all_species_het_dfs.Rdata')
+
+```
+
+
+
+distributions of correlations between heterozygousity and skew or skew variance
+Show individual points and color by species
+
+
+```{r}
+
+#Get the correlation between the two
+cor_permute = function(x,y, method_cor){
+  permute_y = sample(y,size=length(y), replace=FALSE)
+  corr = suppressWarnings(cor(x,permute_y, method=method_cor, use = 'complete.obs'))
+  return(corr)
+}
+
+cor_pval = function(x, y, method_cor, num_permutes){
+  
+  original_cor = cor(x, y, method = method_cor, use = 'complete.obs')
+  permute_corrs = unlist(mclapply(1:num_permutes, function(i) cor_permute(x, y, method_cor), mc.cores = 5))
+  pval = sum(abs(permute_corrs) >= abs(original_cor)) / num_permutes
+  return(pval)
+}
+
+
+n_per = 10000
+
+cow_skew_corr = cor(cow_het_df$het_fraction, cow_het_df$est_skew_no_escape, method = 'spearman', use = 'complete.obs')
+cow_skew_corr_pval = cor_pval(x = cow_het_df$het_fraction, y = cow_het_df$est_skew_no_escape, method_cor = 'spearman', num_permutes = n_per)
+cow_var_corr = cor(cow_het_df$het_fraction, cow_het_df$est_var_no_escape, method = 'spearman', use = 'complete.obs')
+cow_var_corr_pval = cor_pval(x = cow_het_df$het_fraction, y = cow_het_df$est_var_no_escape, method_cor = 'spearman', num_permutes = n_per)
+
+rat_skew_corr = cor(rat_het_df$het_fraction, rat_het_df$est_skew_no_escape, method = 'spearman', use = 'complete.obs')
+rat_skew_corr_pval = cor_pval(x = rat_het_df$het_fraction, y = rat_het_df$est_skew_no_escape, method_cor = 'spearman', num_permutes = n_per)
+rat_var_corr = cor(rat_het_df$het_fraction, rat_het_df$est_var_no_escape, method = 'spearman', use = 'complete.obs')
+rat_var_corr_pval = cor_pval(x = rat_het_df$het_fraction, y = rat_het_df$est_var_no_escape, method_cor = 'spearman', num_permutes = n_per)
+
+mouse_skew_corr = cor(mouse_het_df$het_fraction, mouse_het_df$est_skew_no_escape, method = 'spearman', use = 'complete.obs')
+mouse_skew_corr_pval = cor_pval(x = mouse_het_df$het_fraction, y = mouse_het_df$est_skew_no_escape, method_cor = 'spearman', num_permutes = n_per)
+mouse_var_corr = cor(mouse_het_df$het_fraction, mouse_het_df$est_var_no_escape, method = 'spearman', use = 'complete.obs')
+mouse_var_corr_pval = cor_pval(x = mouse_het_df$het_fraction, y = mouse_het_df$est_var_no_escape, method_cor = 'spearman', num_permutes = n_per)
+
+macaca_skew_corr = cor(macaca_het_df$het_fraction, macaca_het_df$est_skew_no_escape, method = 'spearman', use = 'complete.obs')
+macaca_skew_corr_pval = cor_pval(x = macaca_het_df$het_fraction, y = macaca_het_df$est_skew_no_escape, method_cor = 'spearman', num_permutes = n_per)
+macaca_var_corr = cor(macaca_het_df$het_fraction, macaca_het_df$est_var_no_escape, method = 'spearman', use = 'complete.obs')
+macaca_var_corr_pval = cor_pval(x = macaca_het_df$het_fraction, y = macaca_het_df$est_var_no_escape, method_cor = 'spearman', num_permutes = n_per)
+
+dog_skew_corr = cor(dog_het_df$het_fraction, dog_het_df$est_skew_no_escape, method = 'spearman', use = 'complete.obs')
+dog_skew_corr_pval = cor_pval(x = dog_het_df$het_fraction, y = dog_het_df$est_skew_no_escape, method_cor = 'spearman', num_permutes = n_per)
+dog_var_corr = cor(dog_het_df$het_fraction, dog_het_df$est_var_no_escape, method = 'spearman', use = 'complete.obs')
+dog_var_corr_pval = cor_pval(x = dog_het_df$het_fraction, y = dog_het_df$est_var_no_escape, method_cor = 'spearman', num_permutes = n_per)
+
+pig_skew_corr = cor(pig_het_df$het_fraction, pig_het_df$est_skew_no_escape, method = 'spearman', use = 'complete.obs')
+pig_skew_corr_pval = cor_pval(x = pig_het_df$het_fraction, y = pig_het_df$est_skew_no_escape, method_cor = 'spearman', num_permutes = n_per)
+pig_var_corr = cor(pig_het_df$het_fraction, pig_het_df$est_var_no_escape, method = 'spearman', use = 'complete.obs')
+pig_var_corr_pval = cor_pval(x = pig_het_df$het_fraction, y = pig_het_df$est_var_no_escape, method_cor = 'spearman', num_permutes = n_per)
+
+sheep_skew_corr = cor(sheep_het_df$het_fraction, sheep_het_df$est_skew_no_escape, method = 'spearman', use = 'complete.obs')
+sheep_skew_corr_pval = cor_pval(x = sheep_het_df$het_fraction, y = sheep_het_df$est_skew_no_escape, method_cor = 'spearman', num_permutes = n_per)
+sheep_var_corr = cor(sheep_het_df$het_fraction, sheep_het_df$est_var_no_escape, method = 'spearman', use = 'complete.obs')
+sheep_var_corr_pval = cor_pval(x = sheep_het_df$het_fraction, y = sheep_het_df$est_var_no_escape, method_cor = 'spearman', num_permutes = n_per)
+
+goat_skew_corr = cor(goat_het_df$het_fraction, goat_het_df$est_skew_no_escape, method = 'spearman', use = 'complete.obs')
+goat_skew_corr_pval = cor_pval(x = goat_het_df$het_fraction, y = goat_het_df$est_skew_no_escape, method_cor = 'spearman', num_permutes = n_per)
+goat_var_corr = cor(goat_het_df$het_fraction, goat_het_df$est_var_no_escape, method = 'spearman', use = 'complete.obs')
+goat_var_corr_pval = cor_pval(x = goat_het_df$het_fraction, y = goat_het_df$est_var_no_escape, method_cor = 'spearman', num_permutes = n_per)
+
+horse_skew_corr = cor(horse_het_df$het_fraction, horse_het_df$est_skew_no_escape, method = 'spearman', use = 'complete.obs')
+horse_skew_corr_pval = cor_pval(x = horse_het_df$het_fraction, y = horse_het_df$est_skew_no_escape, method_cor = 'spearman', num_permutes = n_per)
+horse_var_corr = cor(horse_het_df$het_fraction, horse_het_df$est_var_no_escape, method = 'spearman', use = 'complete.obs')
+horse_var_corr_pval = cor_pval(x = horse_het_df$het_fraction, y = horse_het_df$est_var_no_escape, method_cor = 'spearman', num_permutes = n_per)
+
+human_skew_corr = cor(human_het_df$het_fraction, human_het_df$est_skew_no_escape, method = 'spearman', use = 'complete.obs')
+human_skew_corr_pval = cor_pval(x = human_het_df$het_fraction, y = human_het_df$est_skew_no_escape, method_cor = 'spearman', num_permutes = n_per)
+human_var_corr = cor(human_het_df$het_fraction, human_het_df$est_var_no_escape, method = 'spearman', use = 'complete.obs')
+human_var_corr_pval = cor_pval(x = human_het_df$het_fraction, y = human_het_df$est_var_no_escape, method_cor = 'spearman', num_permutes = n_per)
+
+#All correlations
+corr_skew_vec = c(cow_skew_corr, rat_skew_corr, mouse_skew_corr, macaca_skew_corr, dog_skew_corr, pig_skew_corr, 
+                  sheep_skew_corr, goat_skew_corr, horse_skew_corr, human_skew_corr )
+corr_var_vec = c(cow_var_corr, rat_var_corr, mouse_var_corr, macaca_var_corr, dog_var_corr, pig_var_corr, 
+                 sheep_var_corr, goat_var_corr, horse_var_corr, human_var_corr )
+corrs_vec = c(corr_skew_vec, corr_var_vec)
+#all correlation pvalues
+corr_skew_pval_vec = c(cow_skew_corr_pval, rat_skew_corr_pval, mouse_skew_corr_pval, macaca_skew_corr_pval, dog_skew_corr_pval, pig_skew_corr_pval, 
+                       sheep_skew_corr_pval, goat_skew_corr_pval, horse_skew_corr_pval, human_skew_corr_pval )
+corr_var_pval_vec = c(cow_var_corr_pval, rat_var_corr_pval, mouse_var_corr_pval, macaca_var_corr_pval, dog_var_corr_pval, pig_var_corr_pval, 
+                      sheep_var_corr_pval, goat_var_corr_pval, horse_var_corr_pval, human_var_corr_pval )
+corrs_pval_vec = c(corr_skew_pval_vec, corr_var_pval_vec)
+corrs_adj_pval_vec = c(p.adjust(corr_skew_pval_vec, method = 'BH'), p.adjust(corr_var_pval_vec, method = 'BH'))
+#Labels
+corrs_label = c(rep('XCI ratio', length = length(corr_skew_vec)), rep('Allelic expression variance', length = length(corr_var_vec)))
+species_vec = c('Cow','Rat', 'Mouse','Macaca','Dog','Pig','Sheep','Goat','Horse','Human')
+species_vec = c(species_vec, species_vec)
+het_corr_df = data.frame(corrs = corrs_vec,corrs_pvals = corrs_pval_vec, corrs_adj_pvals = corrs_adj_pval_vec, corrs_label = corrs_label, species_label = species_vec)
+het_corr_df
+
+
+het_corr_df$corrs_label = factor(het_corr_df$corrs_label, levels = c('XCI ratio','Allelic expression variance'))
+ggplot(het_corr_df, aes(x = corrs_label, y = corrs)) + geom_violin(scale = 'width', fill = 'grey25', alpha = .5) + geom_point(aes(color = species_label), size = 5) +
+  scale_color_manual(values = species_palette, breaks = rev(levels(all_species_het_frac_df$label))) +
+  scale_fill_manual(values = species_palette, breaks = rev(levels(all_species_het_frac_df$label))) +
+  geom_label_repel(aes(label = species_label, fill = species_label), color = 'white',box.padding = 0.5) +
+  guides(fill = guide_legend(override.aes = aes(label = ""))) +
+  ylab('Correlation with sample heterozygousity (spearman)') + xlab('')
+#ggsave(filename = 'het_corr_violin_plot_v2.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/heterozygousity/', device = 'pdf', 
+#       useDingbats = F, height = 4, width = 6)
+```
+
+
+```{r}
+
+save(het_corr_df, file = '/home/werner/projects/cross_species_XCI/data/species_data_analysis/heterozygousity/het_corr_df_v2.Rdata')
+
+```
+
+
+```{r}
+
+load( file = '/home/werner/projects/cross_species_XCI/data/species_data_analysis/heterozygousity/het_corr_df_v2.Rdata')
+
+```
+
+
+
+########################################
+Cell size population estimates
+Use same approach as from the GTEx paper top fit normal distributions to the data and get cell number estimates
+Make plots with the tails colored in
+########################################
+
+example of model fitting
+Use the variance of the binomial, where var = pq / n, to define the variance of the theoretical normal distribution
+Find the N that minimizes the error between the tails of the normal cdf and the ecdf of the species population XCI skew distribution
+
+
+```{r}
+p = .5
+n = 2:50
+percentiles = seq(.01, .99, 0.01)
+
+norm_error_vector = vector(mode = 'numeric', length = length(n))
+
+#Get the empirical skews for that tissue
+sample_index = horse_skew_and_stats_df$num_good_snps_no_escape>=10 & horse_skew_and_stats_df$autosome_imbalance == F
+empir_skews = unfold(horse_skew_and_stats_df$est_skew_no_escape[sample_index])
+num_skews = length(empir_skews)
+#Get the quantiles for these skews
+empir_quants = quantile(empir_skews, probs = percentiles, type=1)
+#Only going to be fitting over the confident skews
+quant_filt = empir_quants <= .4 | empir_quants >= .6
+
+for(i in 1:length(n)){
+
+        #Get the normal and binomial percentiles for the n parameter
+        norm_sd = sqrt( (p*(1-p)) / n[i] )
+        norm_percentiles = qnorm(percentiles, mean=p, sd = norm_sd)
+        
+        if(n[i] %in% c(4,8,16,32)){
+        
+        plot(empir_quants, percentiles, xlim = c(0,1), xlab='XCI skews', ylab = 'Percentiles', 
+           main=sprintf('Empirical vs theoretical percentiles, Normal N = %g', n[i]))
+        points(norm_percentiles, percentiles, type = 'o', col='red')
+        legend(x = 'bottomright', legend=c('Empirical','Theoretical'), col = c('black','red'), pch=15)       
+        
+        }    
+        
+        norm_error_vector[i] = sum((empir_quants[quant_filt] - norm_percentiles[quant_filt])^2)
+
+}
+
+plot(n, norm_error_vector, ylab = 'Sum sq_error empirical - normal percentiles', xlab = 'N', 
+main = sprintf('Horse: Num samples= %g', num_skews/2), xlim = c(0,n[length(n)]))
+
+n[which.min(norm_error_vector)]
+
+```
+
+
+```{r}
+#Input the folded and filtered skews
+get_cell_num_error_ests = function(folded_skews, n_min, n_max){
+  p = .5
+  n = n_min:n_max
+  percentiles = seq(.01, .99, 0.01)
+  norm_error_vector = vector(mode = 'numeric', length = length(n))
+  
+  #Get the empirical skews for that tissue
+  empir_skews = unfold(folded_skews)
+  num_skews = length(empir_skews)
+  #Get the quantiles for these skews
+  empir_quants = quantile(empir_skews, probs = percentiles, type=1)
+  #Only going to be fitting over the confident skews
+  quant_filt = empir_quants <= .4 | empir_quants >= .6
+  
+  for(i in 1:length(n)){
+  
+          #Get the normal and binomial percentiles for the n parameter
+          norm_sd = sqrt( (p*(1-p)) / n[i] )
+          norm_percentiles = qnorm(percentiles, mean=p, sd = norm_sd)
+          norm_error_vector[i] = sum((empir_quants[quant_filt] - norm_percentiles[quant_filt])^2)
+  }
+  return(norm_error_vector)     
+}
+
+
+n_min = 2
+n_max = 200
+n_vec = n_min:n_max
+
+horse_folded_skews = filter(horse_skew_and_stats_df, num_good_snps_no_escape >= 10 & autosome_imbalance == F)$est_skew_no_escape
+horse_squared_error = get_cell_num_error_ests(horse_folded_skews, n_min, n_max)
+sprintf('Horse estimated cell num: %i', n_vec[which.min(horse_squared_error)])
+
+dog_folded_skews = filter(dog_skew_and_stats_df, num_good_snps_no_escape >= 10 & autosome_imbalance == F)$est_skew_no_escape
+dog_squared_error = get_cell_num_error_ests(dog_folded_skews, n_min, n_max)
+sprintf('dog estimated cell num: %i', n_vec[which.min(dog_squared_error)])
+
+cow_folded_skews = filter(cow_skew_and_stats_df, num_good_snps_no_escape >= 10 & autosome_imbalance == F)$est_skew_no_escape
+cow_squared_error = get_cell_num_error_ests(cow_folded_skews, n_min, n_max)
+sprintf('cow estimated cell num: %i', n_vec[which.min(cow_squared_error)])
+
+sheep_folded_skews = filter(sheep_skew_and_stats_df, num_good_snps_no_escape >= 10 & autosome_imbalance == F)$est_skew_no_escape
+sheep_squared_error = get_cell_num_error_ests(sheep_folded_skews, n_min, n_max)
+sprintf('sheep estimated cell num: %i', n_vec[which.min(sheep_squared_error)])
+
+goat_folded_skews = filter(goat_skew_and_stats_df, num_good_snps_no_escape >= 10 & autosome_imbalance == F)$est_skew_no_escape
+goat_squared_error = get_cell_num_error_ests(goat_folded_skews, n_min, n_max)
+sprintf('goat estimated cell num: %i', n_vec[which.min(goat_squared_error)])
+
+rat_folded_skews = filter(rat_skew_and_stats_df, num_good_snps_no_escape >= 10 & autosome_imbalance == F)$est_skew_no_escape
+rat_squared_error = get_cell_num_error_ests(rat_folded_skews, n_min, n_max)
+sprintf('rat estimated cell num: %i', n_vec[which.min(rat_squared_error)])
+
+mouse_folded_skews = filter(mouse_skew_and_stats_df, num_good_snps_no_escape >= 10 & autosome_imbalance == F)$est_skew_no_escape
+mouse_squared_error = get_cell_num_error_ests(mouse_folded_skews, n_min, n_max)
+sprintf('mouse estimated cell num: %i', n_vec[which.min(mouse_squared_error)])
+
+macaca_folded_skews = filter(macaca_skew_and_stats_df, num_good_snps_no_escape >= 10 & autosome_imbalance == F)$est_skew_no_escape
+macaca_squared_error = get_cell_num_error_ests(macaca_folded_skews, n_min, n_max)
+sprintf('macaca estimated cell num: %i', n_vec[which.min(macaca_squared_error)])
+
+pig_folded_skews = filter(pig_skew_and_stats_df, num_good_snps_no_escape >= 10 & autosome_imbalance == F)$est_skew_no_escape
+pig_squared_error = get_cell_num_error_ests(pig_folded_skews, n_min, n_max)
+sprintf('pig estimated cell num: %i', n_vec[which.min(pig_squared_error)])
+
+```
+
+
+
+```{r}
+
+species_squared_error_df = data.frame(n_vec = n_vec, horse_error = horse_squared_error, dog_error = dog_squared_error, cow_error = cow_squared_error, 
+                                      sheep_error = sheep_squared_error, goat_error = goat_squared_error, rat_error = rat_squared_error, 
+                                      mouse_error = mouse_squared_error, macaca_error = macaca_squared_error, pig_error = pig_squared_error)
+
+#pdf(file = '/home/werner/projects/cross_species_XCI/code/graphs/est_cell_num/error_plots/horse_x_cell_num_error.pdf', useDingbats = F, height = 4, width = 6)
+plot(species_squared_error_df$n_vec, species_squared_error_df$horse_error, main = 'Horse squared error', xlab = 'Cell number estimate', ylab = 'Sum squared error')
+abline(v = species_squared_error_df$n_vec[which.min(species_squared_error_df$horse_error)], col = 'red')
+#dev.off()
+
+#pdf(file = '/home/werner/projects/cross_species_XCI/code/graphs/est_cell_num/error_plots/dog_x_cell_num_error.pdf', useDingbats = F, height = 4, width = 6)
+plot(species_squared_error_df$n_vec, species_squared_error_df$dog_error, main = 'dog squared error', xlab = 'Cell number estimate', ylab = 'Sum squared error')
+abline(v = species_squared_error_df$n_vec[which.min(species_squared_error_df$dog_error)], col = 'red')
+#dev.off()
+
+#pdf(file = '/home/werner/projects/cross_species_XCI/code/graphs/est_cell_num/error_plots/cow_x_cell_num_error.pdf', useDingbats = F, height = 4, width = 6)
+plot(species_squared_error_df$n_vec, species_squared_error_df$cow_error, main = 'cow squared error', xlab = 'Cell number estimate', ylab = 'Sum squared error')
+abline(v = species_squared_error_df$n_vec[which.min(species_squared_error_df$cow_error)], col = 'red')
+#dev.off()
+
+#pdf(file = '/home/werner/projects/cross_species_XCI/code/graphs/est_cell_num/error_plots/sheep_x_cell_num_error.pdf', useDingbats = F, height = 4, width = 6)
+plot(species_squared_error_df$n_vec, species_squared_error_df$sheep_error, main = 'sheep squared error', xlab = 'Cell number estimate', ylab = 'Sum squared error')
+abline(v = species_squared_error_df$n_vec[which.min(species_squared_error_df$sheep_error)], col = 'red')
+#dev.off()
+
+#pdf(file = '/home/werner/projects/cross_species_XCI/code/graphs/est_cell_num/error_plots/goat_x_cell_num_error.pdf', useDingbats = F, height = 4, width = 6)
+plot(species_squared_error_df$n_vec, species_squared_error_df$goat_error, main = 'goat squared error', xlab = 'Cell number estimate', ylab = 'Sum squared error')
+abline(v = species_squared_error_df$n_vec[which.min(species_squared_error_df$goat_error)], col = 'red')
+#dev.off()
+
+#pdf(file = '/home/werner/projects/cross_species_XCI/code/graphs/est_cell_num/error_plots/rat_x_cell_num_error.pdf', useDingbats = F, height = 4, width = 6)
+plot(species_squared_error_df$n_vec, species_squared_error_df$rat_error, main = 'rat squared error', xlab = 'Cell number estimate', ylab = 'Sum squared error')
+abline(v = species_squared_error_df$n_vec[which.min(species_squared_error_df$rat_error)], col = 'red')
+#dev.off()
+
+#pdf(file = '/home/werner/projects/cross_species_XCI/code/graphs/est_cell_num/error_plots/mouse_x_cell_num_error.pdf', useDingbats = F, height = 4, width = 6)
+plot(species_squared_error_df$n_vec, species_squared_error_df$mouse_error, main = 'mouse squared error', xlab = 'Cell number estimate', ylab = 'Sum squared error')
+abline(v = species_squared_error_df$n_vec[which.min(species_squared_error_df$mouse_error)], col = 'red')
+#dev.off()
+
+#pdf(file = '/home/werner/projects/cross_species_XCI/code/graphs/est_cell_num/error_plots/macaca_x_cell_num_error.pdf', useDingbats = F, height = 4, width = 6)
+plot(species_squared_error_df$n_vec, species_squared_error_df$macaca_error, main = 'macaca squared error', xlab = 'Cell number estimate', ylab = 'Sum squared error')
+abline(v = species_squared_error_df$n_vec[which.min(species_squared_error_df$macaca_error)], col = 'red')
+#dev.off()
+
+#pdf(file = '/home/werner/projects/cross_species_XCI/code/graphs/est_cell_num/error_plots/pig_x_cell_num_error.pdf', useDingbats = F, height = 4, width = 6)
+plot(species_squared_error_df$n_vec, species_squared_error_df$pig_error, main = 'pig squared error', xlab = 'Cell number estimate', ylab = 'Sum squared error')
+abline(v = species_squared_error_df$n_vec[which.min(species_squared_error_df$pig_error)], col = 'red')
+#dev.off()
+
+
+```
+
+
+
+##############################
+Bootstrapping to get CI about the cell number estimate
+Eventually do for the autosomes as well
+
+##############################
+
+Bootstrap resample to get a distribution of cell number estimates
+```{r}
+
+get_bootstrap_ci = function(folded_skews, cellN_min, cellN_max, num_bootstraps, ci){
+
+  n_vec = cellN_min:cellN_max
+  
+  squared_error = get_cell_num_error_ests(folded_skews, cellN_min, cellN_max)
+  original_cell_num = n_vec[which.min(squared_error)]
+  
+  bootstrap_cellNum_ests = vector(mode = 'numeric', length = num_bootstraps)
+  for(i in 1:num_bootstraps){
+    bootstrap_folded_skews = sample(folded_skews, size = length(folded_skews), replace = T)
+    squared_error = get_cell_num_error_ests(bootstrap_folded_skews, n_min, n_max)
+    bootstrap_cellNum_ests[i] = n_vec[which.min(squared_error)]
+  }
+  #Order and return the upper and lower confidence intervals
+  bootstrap_cellNum_ests = bootstrap_cellNum_ests[order(bootstrap_cellNum_ests)]
+  lower_ci = bootstrap_cellNum_ests[((1-ci)*num_bootstraps)/2 + 1]
+  upper_ci = bootstrap_cellNum_ests[num_bootstraps - ((1-ci)*num_bootstraps)/2]
+
+  return(c('lower_ci' = lower_ci, 'cell_num_est' = original_cell_num, 'upper_ci' = upper_ci))
+}
+
+
+horse_ci = get_bootstrap_ci(horse_folded_skews, cellN_min = 2, cellN_max = 200, num_bootstraps = 2000, ci = .95)
+cow_ci = get_bootstrap_ci(cow_folded_skews, cellN_min = 2, cellN_max = 200, num_bootstraps = 2000, ci = .95)
+dog_ci = get_bootstrap_ci(dog_folded_skews, cellN_min = 2, cellN_max = 200, num_bootstraps = 2000, ci = .95)
+sheep_ci = get_bootstrap_ci(sheep_folded_skews, cellN_min = 2, cellN_max = 200, num_bootstraps = 2000, ci = .95)
+goat_ci = get_bootstrap_ci(goat_folded_skews, cellN_min = 2, cellN_max = 200, num_bootstraps = 2000, ci = .95)
+pig_ci = get_bootstrap_ci(pig_folded_skews, cellN_min = 2, cellN_max = 200, num_bootstraps = 2000, ci = .95)
+rat_ci = get_bootstrap_ci(rat_folded_skews, cellN_min = 2, cellN_max = 200, num_bootstraps = 2000, ci = .95)
+mouse_ci = get_bootstrap_ci(mouse_folded_skews, cellN_min = 2, cellN_max = 200, num_bootstraps = 2000, ci = .95)
+macaca_ci = get_bootstrap_ci(macaca_folded_skews, cellN_min = 2, cellN_max = 200, num_bootstraps = 2000, ci = .95)
+
+horse_ci
+cow_ci
+dog_ci
+sheep_ci
+goat_ci
+pig_ci
+rat_ci
+mouse_ci
+macaca_ci
+
+```
+
+##############################
+Plotting distributions of XCI ratios overlaid with potential normal fits. Use 8 and 32 cells as examples with the final fit also included
+
+##############################
+
+
+Make an 8 and 32 cell example to include in the figure. Will shade the distribution from blue to red and have cell graphics on top
+```{r}
+
+p  = 0.5
+num_bins = 100
+
+theoretical_norms = list()
+n = c(8, 32)
+for(i in 1:length(n)){ 
+  sigma_t = sqrt(p*(1-p)/n[i])
+  theoretical_norms[[i]] = sigma_t
+}
+
+skews = unfold(horse_skew_and_stats_df$est_skew_no_escape[horse_skew_and_stats_df$num_good_snps_no_escape>=10])
+df = data.frame(skews = skews)
+g = ggplot(df, aes(x = skews)) + geom_histogram(aes(y = ..density..), fill = 'white', color = 'white', binwidth = 1/num_bins) + xlim(0,1) +
+  stat_function(fun = dnorm, args = list(mean = .5, sd = theoretical_norms[[1]]), n = num_bins, size = 2, aes(linetype = 'solid')) +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
+          panel.background = element_rect(fill = 'white'), panel.border = element_rect(color = "black", fill=NA, size=1),  
+          axis.text.y = element_text(size=12), axis.text.x = element_text(size=12),
+          axis.title.y = element_text(size=12), axis.title.x = element_text(size=12)) 
+ggsave(plot = g, filename ='cell_8_example_fit.pdf' ,
+       path ='/home/werner/projects/cross_species_XCI/code/graphs/est_cell_num/', 
+       width = 6, height = 4, useDingbats = FALSE)
+
+g = ggplot(df, aes(x = skews)) + geom_histogram(aes(y = ..density..), fill = 'white', color = 'white', binwidth = 1/num_bins) + xlim(0,1) +
+  stat_function(fun = dnorm, args = list(mean = .5, sd = theoretical_norms[[2]]), n = num_bins, size = 2, aes(linetype = 'solid')) +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
+          panel.background = element_rect(fill = 'white'), panel.border = element_rect(color = "black", fill=NA, size=1),  
+          axis.text.y = element_text(size=12), axis.text.x = element_text(size=12),
+          axis.title.y = element_text(size=12), axis.title.x = element_text(size=12)) 
+
+ggsave(plot = g, filename = 'cell_32_example_fit.pdf' ,
+       path ='/home/werner/projects/cross_species_XCI/code/graphs/est_cell_num/', 
+       width = 6, height = 4, useDingbats = FALSE)
+
+```
+
+
+
+
+Prep the human data
+use the aggregated vcfs per donor 
+```{r}
+
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/homo_sapiens/agg_gtex_skew_and_stats_df.Rdata')
+
+n_min = 2
+n_max = 200
+n_vec = n_min:n_max
+agg_gtex_squared_error = get_cell_num_error_ests(agg_gtex_skew_and_stats_df$est_skew[agg_gtex_skew_and_stats_df$num_good_snps >= 10], n_min, n_max)
+sprintf('Aggregated GTEx estimated cell num: %i', n_vec[which.min(agg_gtex_squared_error)])
+human_est_n = n_vec[which.min(agg_gtex_squared_error)]
+#Plot the error per cell number estimate
+#pdf(file = '/home/werner/projects/cross_species_XCI/code/graphs/est_cell_num/error_plots/human_x_cell_num_error.pdf', useDingbats = F, height = 4, width = 6)
+plot(n_vec, agg_gtex_squared_error, main = 'human squared error', xlab = 'Cell number estimate', ylab = 'Sum squared error')
+abline(v = human_est_n, col = 'red')
+#dev.off()
+
+
+#And get the confidence intervals
+human_ci = get_bootstrap_ci(agg_gtex_skew_and_stats_df$est_skew[agg_gtex_skew_and_stats_df$num_good_snps >= 10], cellN_min = 2, cellN_max = 200, num_bootstraps = 2000, ci = .95)
+
+
+```
+
+Save with the human data
+
+```{r}
+
+species_squared_error_df$human_error = agg_gtex_squared_error
+save(species_squared_error_df, file = '/home/werner/projects/cross_species_XCI/final_plots/R/data_for_plots/species_squared_error_df')
+```
+
+
+
+
+```{r}
+
+all_skew_and_stats = list(horse_skew_and_stats_df, dog_skew_and_stats_df, cow_skew_and_stats_df, sheep_skew_and_stats_df, 
+                          goat_skew_and_stats_df, rat_skew_and_stats_df, mouse_skew_and_stats_df, macaca_skew_and_stats_df, pig_skew_and_stats_df, agg_gtex_skew_and_stats_df)
+ 
+names(all_skew_and_stats) = c('Horse','Dog','Cow','Sheep','Goat','Rat','Mouse','Macaca','Pig', 'Human')
+all_skew_and_stats
+
+save(horse_skew_and_stats_df, dog_skew_and_stats_df, cow_skew_and_stats_df, sheep_skew_and_stats_df, 
+                          goat_skew_and_stats_df, rat_skew_and_stats_df, mouse_skew_and_stats_df, macaca_skew_and_stats_df, pig_skew_and_stats_df, agg_gtex_skew_and_stats_df, 
+     file = '/home/werner/projects/cross_species_XCI/final_plots/R/data_for_plots/all_species_skew_and_stats_df.Rdata')
+```
+
+
+```{r}
+p = .5
+num_bins = 100
+binned_x_axis = seq(0,1,1/num_bins)
+
+
+for(j in 1:length(all_skew_and_stats)){
+
+  fitted_normal_n = species_squared_error_df$n_vec[which.min(species_squared_error_df[ ,j+1])] #first column is the n size vector, skip that
+  sigma = sqrt(p*(1-p)/fitted_normal_n)
+  dnorm_x = 0:1000/1000
+  
+  fitted_normal = dnorm(dnorm_x, mean=p, sd = sigma)
+  
+  theoretical_norms = list()
+  n = c(8, 32)
+  for(i in 1:length(n)){ 
+    sigma_t = sqrt(p*(1-p)/n[i])
+    theoretical_norms[[i]] = sigma_t
+  }
+  
+  species_name = names(all_skew_and_stats)[j]
+  species_skew_and_stat_df = all_skew_and_stats[[j]]
+  specie_color = species_palette[names(species_palette)== species_name]
+  
+  #Greying out the .4-.6 skews
+  fill_vec = rep(specie_color, length(binned_x_axis))
+  fill_vec[binned_x_axis >= 0.4 & binned_x_axis <= 0.6] = 'grey'
+  color_vec = rep(specie_color, length(binned_x_axis))
+  color_vec[binned_x_axis >= 0.4 & binned_x_axis <= 0.6] = 'grey'
+  
+  
+  if(species_name == 'Human'){
+    skews = unfold(agg_gtex_skew_and_stats_df$est_skew[agg_gtex_skew_and_stats_df$num_good_snps >= 10])
+    df = data.frame(skews = skews)
+  }else{
+    skews = unfold(filter(species_skew_and_stat_df, num_good_snps_no_escape >= 10 & autosome_imbalance == F)$est_skew_no_escape)
+    df = data.frame(skews = skews)
+  }
+  
+  g = ggplot(df, aes(x = skews)) + geom_histogram(aes(y = ..density..), fill = fill_vec, color = color_vec, binwidth = 1/num_bins) +
+    xlim(0,1)+ xlab(sprintf('%s XCI ratios', species_name)) + ggtitle(sprintf('%s population XCI ratio distribution', species_name)) +
+    stat_function(fun = dnorm, args = list(mean = .5, sd = theoretical_norms[[1]]), n = num_bins, size = .5, alpha = .5, aes(linetype = 'dashed')) +
+    stat_function(fun = dnorm, args = list(mean = .5, sd = theoretical_norms[[2]]), n = num_bins, size = .5, alpha = .5, aes(linetype = 'dotted')) + 
+    stat_function(fun = dnorm, args = list(mean = .5, sd = sigma), n = num_bins, size = .75, aes(linetype = 'solid')) +
+    scale_linetype_manual(name="Estimated cell number",values=c('dashed','dotted','solid'),
+                          labels = c('8 cells','32 cells',sprintf('Estimated %i cells', fitted_normal_n)),
+                          breaks=c('dashed','dotted','solid'), 
+                          guide = guide_legend(override.aes = list(size = c(.5, .5, 2)))) +
+    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
+          panel.background = element_rect(fill = 'white'), panel.border = element_rect(color = "black", fill=NA, size=1),  
+          axis.text.y = element_text(size=12), axis.text.x = element_text(size=12),
+          axis.title.y = element_text(size=12), axis.title.x = element_text(size=12), 
+          legend.position = c(.8,.75))  
+  print(g)
+
+  
+  if(species_name == 'Human'){
+    #ggsave(plot = g, filename = 'agg_donor_human_normal_fits_v2.pdf' ,
+    #path ='/home/werner/projects/cross_species_XCI/code/graphs/est_cell_num/', 
+    #width = 6, height = 4, useDingbats = FALSE)
+  }else{
+    #ggsave(plot = g, filename = sprintf('%s_normal_fits_binnedFilt_auto_balanced_v2.pdf', species_name) ,
+  #       path ='/home/werner/projects/cross_species_XCI/code/graphs/est_cell_num/', 
+  #       width = 6, height = 4, useDingbats = FALSE)
+  }
+  
+}
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+Get the mean error and SD of the best fits
+```{r}
+
+error_of_fits = c(apply(species_squared_error_df[ ,2:ncol(species_squared_error_df)],2,min), min(agg_gtex_squared_error) )
+mean(error_of_fits)
+sd(error_of_fits)
+
+```
+
+
+Add CI intervals about the cell num estimate
+
+```{r}
+
+all_ci = list(human_ci, horse_ci, cow_ci, pig_ci, goat_ci, sheep_ci, macaca_ci, rat_ci, mouse_ci, dog_ci)
+all_ci_df = data.frame(do.call(rbind, all_ci))
+all_ci_df$species = c('Human','Horse','Cow','Pig','Goat','Sheep','Macaca','Rat','Mouse','Dog')
+all_ci_df = all_ci_df %>% arrange(cell_num_est)
+all_ci_df$species = factor(all_ci_df$species, levels = c(all_ci_df$species))
+
+
+#Species ordered by evolutionary relationships
+all_ci_df$species = factor(all_ci_df$species, levels = c('Dog','Horse','Cow','Goat','Sheep','Pig','Rat','Mouse','Human','Macaca'))
+ggplot(all_ci_df, aes(y = species, x = log2(cell_num_est), color = species)) + geom_point(size = 3) + geom_errorbar(aes(xmin = log2(lower_ci), xmax = log2(upper_ci))) +
+  scale_color_manual(values = species_palette) + xlim(2, 7) + xlab('Cell divisions (log2 cell # estimate)') + ggtitle('Chromosome X') + ylab('') +
+  scale_y_discrete(limits=rev)
+#ggsave(filename = 'evo_log2_chrX_cellnumests_with_CI_v2.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/est_cell_num/', 
+#       device = 'pdf', useDingbats = F, height = 4, width = 5)
+
+
+save(all_ci_df, file = '/home/werner/projects/cross_species_XCI/final_plots/R/data_for_plots/all_ci_df.Rdata')
+
+```
+
+
+
+
+Compare the number of SNPs and samples per species to the cell number estimates
+
+```{r}
+
+index = match(summary_num_snps_df$species, all_ci_df$species)
+all_ci_df = all_ci_df[index, ]
+
+cell_num_stats_df = data.frame(species = all_ci_df$species, estimated_cell_num = all_ci_df$cell_num_est, 
+                               sample_number = summary_num_snps_df$num_samps, mean_snp = summary_num_snps_df$mean_snps )
+
+cell_num_stats_df
+
+
+ori_corr = cor(cell_num_stats_df$estimated_cell_num, cell_num_stats_df$sample_number, method = 'spearman')
+ggplot(cell_num_stats_df, aes(y = log10(sample_number), x = estimated_cell_num, color = species)) + geom_point(size = 3) +
+  scale_color_manual(values = species_palette) + ylab('log10( Total sample number )') + xlab('Cell # estimate') + ggtitle(sprintf('Correlation: %1.3f', ori_corr))
+#ggsave(filename = 'cell_num_ests_and_sample_num_scatter.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/est_cell_num/', 
+#       device = 'pdf', useDingbats = F, height = 4, width = 5)
+
+
+ori_corr = cor(cell_num_stats_df$estimated_cell_num, cell_num_stats_df$mean_snp, method = 'spearman')
+ggplot(cell_num_stats_df, aes(y =  mean_snp, x = estimated_cell_num, color = species)) + geom_point(size = 3) +
+  scale_color_manual(values = species_palette)  + ylab('Mean SNP # per sample') + xlab('Cell # estimate') + ggtitle(sprintf('Correlation: %1.3f', ori_corr))
+#ggsave(filename = 'cell_num_ests_and_mean_snp_scatter.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/est_cell_num/', 
+#       device = 'pdf', useDingbats = F, height = 4, width = 5)
+
+save(cell_num_stats_df, file = '/home/werner/projects/cross_species_XCI/final_plots/R/data_for_plots/cell_num_stats_df.Rdata')
+
+
+
+```
+
+################################################
+
+Now downsample all species to 130 to match the macaca sample size and get downsampled error bars about the cell num estimate
+
+
+##############################################
+
+
+
+```{r}
+
+get_downsamp_cellNum_est = function(folded_skews, cellN_min, cellN_max, num_samples, ci, num_downsamp){
+
+  n_vec = cellN_min:cellN_max
+  
+  downsamp_cellNum_ests = vector(mode = 'numeric', length = num_samples)
+  for(i in 1:num_samples){
+    downsamp_folded_skews = sample(folded_skews, size = num_downsamp, replace = T)
+    squared_error = get_cell_num_error_ests(downsamp_folded_skews, n_min, n_max)
+    downsamp_cellNum_ests[i] = n_vec[which.min(squared_error)]
+  }
+  #Order and return the upper and lower confidence intervals
+  downsamp_cellNum_ests = downsamp_cellNum_ests[order(downsamp_cellNum_ests)]
+  lower_ci = downsamp_cellNum_ests[((1-ci)*num_samples)/2 + 1]
+  upper_ci = downsamp_cellNum_ests[num_samples - ((1-ci)*num_samples)/2]
+
+  return(c('lower_ci' = lower_ci, 'cell_num_est' = mean(downsamp_cellNum_ests), 'upper_ci' = upper_ci))
+}
+
+
+horse_downsamp_ci = get_downsamp_cellNum_est(horse_folded_skews, cellN_min = 2, cellN_max = 200, num_samples = 2000, ci = .95, num_downsamp = 130)
+cow_downsamp_ci = get_downsamp_cellNum_est(cow_folded_skews, cellN_min = 2, cellN_max = 200, num_samples = 2000, ci = .95, num_downsamp = 130)
+dog_downsamp_ci = get_downsamp_cellNum_est(dog_folded_skews, cellN_min = 2, cellN_max = 200, num_samples = 2000, ci = .95, num_downsamp = 130)
+sheep_downsamp_ci = get_downsamp_cellNum_est(sheep_folded_skews, cellN_min = 2, cellN_max = 200, num_samples = 2000, ci = .95, num_downsamp = 130)
+goat_downsamp_ci = get_downsamp_cellNum_est(goat_folded_skews, cellN_min = 2, cellN_max = 200, num_samples = 2000, ci = .95, num_downsamp = 130)
+pig_downsamp_ci = get_downsamp_cellNum_est(pig_folded_skews, cellN_min = 2, cellN_max = 200, num_samples = 2000, ci = .95, num_downsamp = 130)
+rat_downsamp_ci = get_downsamp_cellNum_est(rat_folded_skews, cellN_min = 2, cellN_max = 200, num_samples = 2000, ci = .95, num_downsamp = 130)
+mouse_downsamp_ci = get_downsamp_cellNum_est(mouse_folded_skews, cellN_min = 2, cellN_max = 200, num_samples = 2000, ci = .95, num_downsamp = 130)
+
+human_folded_skews = agg_gtex_skew_and_stats_df$est_skew[agg_gtex_skew_and_stats_df$num_good_snps >= 10]
+human_downsamp_ci = get_downsamp_cellNum_est(human_folded_skews, cellN_min = 2, cellN_max = 200, num_samples = 2000, ci = .95, num_downsamp = 130)
+
+
+horse_downsamp_ci
+cow_downsamp_ci
+dog_downsamp_ci
+sheep_downsamp_ci
+goat_downsamp_ci
+pig_downsamp_ci
+rat_downsamp_ci
+mouse_downsamp_ci
+human_downsamp_ci
+
+
+
+
+all_downsamp_ci = list(human_downsamp_ci, horse_downsamp_ci, cow_downsamp_ci, pig_downsamp_ci, goat_downsamp_ci, 
+                       sheep_downsamp_ci, rat_downsamp_ci, mouse_downsamp_ci, dog_downsamp_ci)
+all_downsamp_ci_df = data.frame(do.call(rbind, all_downsamp_ci))
+all_downsamp_ci_df$species = c('Human downsampled','Horse downsampled','Cow downsampled','Pig downsampled','Goat downsampled',
+                               'Sheep downsampled','Rat downsampled','Mouse downsampled','Dog downsampled')
+all_downsamp_ci_df = all_downsamp_ci_df %>% arrange(cell_num_est)
+#all_downsamp_ci_df$species = factor(all_downsamp_ci_df$species, levels = c(all_downsamp_ci_df$species))
+all_downsamp_ci_df$label = rep('Downsampled estimate', length = nrow(all_downsamp_ci_df))
+all_downsamp_ci_df
+
+```
+
+```{r}
+
+
+all_ci_df$label = rep('Original estimate', length = nrow(all_ci_df))
+compare_ci_df = rbind(all_ci_df, all_downsamp_ci_df)
+compare_ci_df = compare_ci_df %>% filter(species != 'Macaca')
+
+compare_ci_df$species = factor(compare_ci_df$species, levels = c('Dog', 'Dog downsampled','Horse', 'Horse downsampled','Cow', 'Cow downsampled','Goat', 'Goat downsampled',
+                                                                 'Sheep', 'Sheep downsampled','Pig', 'Pig downsampled','Rat', 'Rat downsampled','Mouse', 'Mouse downsampled',
+                                                                 'Human', 'Human downsampled'))
+compare_ci_df$color_label = sapply( strsplit(as.character(compare_ci_df$species), split = ' ', fixed = T),'[[', 1)
+  
+ggplot(compare_ci_df, aes(y = species, x = log2(cell_num_est), color = color_label, alpha = label)) + geom_point(size = 3) + 
+  geom_errorbar(aes(xmin = log2(lower_ci), xmax = log2(upper_ci))) +
+  scale_alpha_manual(values = c('Downsampled estimate' = .5, 'Original estimate' = 1)) +
+  scale_color_manual(values = species_palette) + xlim(2, 7) + xlab('Cell divisions (log2 cell # estimate)') + ggtitle('Chromosome X') + ylab('') +
+  scale_y_discrete(limits=rev)
+#ggsave(filename = 'downsamp_cell_num_ests_to_macaca_log2X.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/est_cell_num/', 
+#       device = 'pdf', useDingbats = F, height = 4, width = 7)
+
+
+save(compare_ci_df, file = '/home/werner/projects/cross_species_XCI/final_plots/R/data_for_plots/compare_ci_df.Rdata')
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+

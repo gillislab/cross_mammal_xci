@@ -1,0 +1,590 @@
+
+
+Looking at the current data in lab for cross mammal RNA-seq samples
+
+```{r}
+library(dplyr)
+library(ggplot2)
+
+```
+
+
+
+```{r}
+
+genus_samples_df = read.table(file ='/home/werner/projects/cross_species_XCI/code/all_mammal_metadata.tsv', sep = '\t', header = T, fill = T, quote = "")
+
+dim(genus_samples_df)
+head(genus_samples_df)
+
+```
+
+looking for specific mouse studies that used the DO mice
+
+SRP296549
+Publication: https://www.ncbi.nlm.nih.gov/pmc/articles/PMC10404230/#CR60
+Mix of female and male, no metadata that I can find
+
+```{r}
+
+
+table(genus_samples_df$SRAStudy == 'SRP296549')
+
+
+study_1_df = genus_samples_df[genus_samples_df$SRAStudy == 'SRP296549', ]
+study_1_df
+
+```
+
+SRP267741
+Publication: https://www.nature.com/articles/s41467-021-23649-0#Sec12
+96 female and 96 male samples, no metadata that I can find
+There are multiple SRR-IDs per sample. The sample IDs are in the SampleName column, match up to the GEO IDs, there are 192 of them as expected
+
+```{r}
+
+
+table(genus_samples_df$SRAStudy == 'SRP267741')
+
+
+study_2_df = genus_samples_df[genus_samples_df$SRAStudy == 'SRP267741', ]
+study_2_df
+
+
+unique(study_2_df$SampleName)
+```
+
+
+SRP125176
+publication: https://academic.oup.com/genetics/article/209/1/335/5931013?login=false
+All 188 are annotated as female
+```{r}
+
+
+table(genus_samples_df$SRAStudy == 'SRP125176')
+
+
+study_3_df = genus_samples_df[genus_samples_df$SRAStudy == 'SRP125176', ]
+study_3_df
+
+
+table(study_3_df$Sex)
+```
+
+
+Currently skipping over the study with the multiple SRRs for the same sample, not sure what is going on there
+Just use SRP296549 and SRP125176
+
+```{r}
+
+length(c(study_1_df$Run, study_3_df$Run))
+writeLines(c(study_1_df$Run, study_3_df$Run), '/home/werner/projects/cross_species_XCI/code/female_metadata/mus_musculus_female_SRR.txt')
+
+
+
+```
+
+
+
+
+
+
+
+
+
+```{r}
+
+table(genus_samples_df$Sex)
+
+```
+
+
+
+
+```{r}
+
+sex_index = genus_samples_df$Sex %in% c('female', 'F', 'Female')
+plot_temp_df = genus_samples_df[sex_index, ] 
+species_count = plot_temp_df %>% group_by(ScientificName) %>% summarise(n())
+species_count = species_count[order(species_count[ ,2], decreasing = T), ]
+species_count = species_count[!species_count$ScientificName %in% c('Mus musculus'), ]
+
+
+species_10 = species_count$ScientificName[species_count[ ,2] >=10]
+species_100 = species_count$ScientificName[species_count[ ,2] >=100]
+species_1000 = species_count$ScientificName[species_count[ ,2] >=1000]
+
+plot_temp_10 =plot_temp_df[plot_temp_df$ScientificName %in% species_10, ] 
+plot_temp_10$ScientificName = factor(plot_temp_10$ScientificName, levels = species_10)
+
+plot_temp_100 =plot_temp_df[plot_temp_df$ScientificName %in% species_100, ] 
+plot_temp_100$ScientificName = factor(plot_temp_100$ScientificName, levels = species_100)
+
+plot_temp_1000 =plot_temp_df[plot_temp_df$ScientificName %in% species_1000, ] 
+plot_temp_1000$ScientificName = factor(plot_temp_1000$ScientificName, levels = species_1000)
+
+
+ggplot(plot_temp_10, aes(x = ScientificName)) + geom_bar(stat = 'count') +
+  ggtitle('Species with >= 10 female samples') +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_rect(fill = 'white', linetype = 1),
+        axis.text.x = element_text(angle = 90, hjust = 1, vjust = .5))
+ggsave(filename = 'annotated_female_10_species.pdf', device = 'pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/metadata_summary/', 
+       useDingbats = F, dpi = 300, height = 5, width = 8)
+
+
+ggplot(plot_temp_100, aes(x = ScientificName)) + geom_bar(stat = 'count') +
+  ggtitle('Species with >= 100 female samples') +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_rect(fill = 'white', linetype = 1),
+        axis.text.x = element_text(angle = 90, hjust = 1, vjust = .5))
+ggsave(filename = 'annotated_female_100_species.pdf', device = 'pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/metadata_summary/', 
+       useDingbats = F, dpi = 300, height = 5, width = 8)
+
+ggplot(plot_temp_1000, aes(x = ScientificName)) + geom_bar(stat = 'count') +
+  ggtitle('Species with >= 1000 female samples') +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_rect(fill = 'white', linetype = 1),
+        axis.text.x = element_text(angle = 90, hjust = 1, vjust = .5))
+ggsave(filename = 'annotated_female_1000_species.pdf', device = 'pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/metadata_summary/', 
+       useDingbats = F, dpi = 300, height = 5, width = 8)
+```
+```{r}
+plot_temp_100 %>% group_by(ScientificName) %>% summarize(n = n())
+
+```
+
+
+
+
+
+```{r}
+#Unannotated or mixed sex studies
+
+sex_index = !genus_samples_df$Sex %in% c('female', 'F', 'Female')
+plot_temp_df = genus_samples_df[sex_index, ] 
+species_count = plot_temp_df %>% group_by(ScientificName) %>% summarise(n())
+species_count = species_count[order(species_count[ ,2], decreasing = T), ]
+species_count = species_count[!species_count$ScientificName %in% c('Mus musculus'), ]
+
+species_10 = species_count$ScientificName[species_count[ ,2] >=10]
+species_100 = species_count$ScientificName[species_count[ ,2] >=100]
+species_1000 = species_count$ScientificName[species_count[ ,2] >=1000]
+
+plot_temp_10 =plot_temp_df[plot_temp_df$ScientificName %in% species_10, ] 
+plot_temp_10$ScientificName = factor(plot_temp_10$ScientificName, levels = species_10)
+
+plot_temp_100 =plot_temp_df[plot_temp_df$ScientificName %in% species_100, ] 
+plot_temp_100$ScientificName = factor(plot_temp_100$ScientificName, levels = species_100)
+
+plot_temp_1000 =plot_temp_df[plot_temp_df$ScientificName %in% species_1000, ] 
+plot_temp_1000$ScientificName = factor(plot_temp_1000$ScientificName, levels = species_1000)
+
+
+ggplot(plot_temp_10, aes(x = ScientificName)) + geom_bar(stat = 'count') +
+  ggtitle('Species with >= 10 unannotated samples') +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_rect(fill = 'white', linetype = 1),
+        axis.text.x = element_text(angle = 90, hjust = 1, vjust = .5))
+ggsave(filename = 'unannotated_10_species.pdf', device = 'pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/metadata_summary/', 
+       useDingbats = F, dpi = 300, height = 5, width = 10)
+
+
+ggplot(plot_temp_100, aes(x = ScientificName)) + geom_bar(stat = 'count') +
+  ggtitle('Species with >= 100 unannotated samples') +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_rect(fill = 'white', linetype = 1),
+        axis.text.x = element_text(angle = 90, hjust = 1, vjust = .5))
+ggsave(filename = 'unannotated_100_species.pdf', device = 'pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/metadata_summary/', 
+       useDingbats = F, dpi = 300, height = 5, width = 8)
+
+
+ggplot(plot_temp_1000, aes(x = ScientificName)) + geom_bar(stat = 'count') +
+  ggtitle('Species with >= 1000 unannotated samples') +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_rect(fill = 'white', linetype = 1),
+        axis.text.x = element_text(angle = 90, hjust = 1, vjust = .5))
+ggsave(filename = 'unannotated_1000_species.pdf', device = 'pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/metadata_summary/', 
+       useDingbats = F, dpi = 300, height = 5, width = 8)
+```
+
+
+
+
+
+
+
+
+```{r}
+
+table(genus_samples_df$ScientificName[sex_index])[table(genus_samples_df$ScientificName[sex_index]) >= 10]
+
+
+```
+
+```{r}
+
+species_10
+
+tab_obj = table(genus_samples_df$ScientificName[genus_samples_df$ScientificName %in% species_10])
+tab_obj
+```
+
+
+
+
+Save lists of female samples for some species to start with
+
+
+Check the metadata
+
+```{r}
+
+
+genus_samples_df = read.table(file ='/home/werner/projects/cross_species_XCI/code/all_mammal_metadata.tsv', sep = '\t', header = T, fill = T, quote = "")
+
+dim(genus_samples_df)
+head(genus_samples_df)
+
+```
+
+
+```{r}
+#Five with the most annotated female samples
+cow_meta = genus_samples_df[genus_samples_df$ScientificName == 'Bos taurus', ]
+pig_meta = genus_samples_df[genus_samples_df$ScientificName == 'Sus scrofa', ]
+macaca_meta = genus_samples_df[genus_samples_df$ScientificName == 'Macaca mulatta', ]
+goat_meta = genus_samples_df[genus_samples_df$ScientificName == 'Ovis aries', ]
+rat_meta = genus_samples_df[genus_samples_df$ScientificName == 'Rattus norvegicus', ]
+
+#species with fewer samples
+monodelphis_meta = genus_samples_df[genus_samples_df$ScientificName == 'Monodelphis domestica', ]
+capra_meta = genus_samples_df[genus_samples_df$ScientificName == 'Capra hircus', ]
+canis_meta = genus_samples_df[genus_samples_df$ScientificName == 'Canis lupus familiaris', ]
+equus_meta = genus_samples_df[genus_samples_df$ScientificName == 'Equus caballus', ]
+rabbit_meta = genus_samples_df[genus_samples_df$ScientificName == 'Oryctolagus cuniculus', ]
+
+dim(cow_meta)
+dim(pig_meta)
+dim(macaca_meta)
+dim(goat_meta)
+dim(rat_meta)
+dim(monodelphis_meta)
+dim(capra_meta)
+dim(canis_meta)
+dim(equus_meta)
+dim(rabbit_meta)
+```
+
+Check the metadata of the test samples so far
+
+```{r}
+
+cow_meta[cow_meta$Run %in% cow_samples, ]
+
+```
+
+
+```{r}
+table(cow_meta$Sex)
+
+table(pig_meta$Sex)
+
+table(macaca_meta$Sex)
+
+table(goat_meta$Sex)
+
+table(rat_meta$Sex)
+```
+
+
+Get the samples that have female annotations
+```{r}
+
+female_srr = cow_meta[cow_meta$Sex == 'female', "Run" ]
+length(female_srr)
+writeLines(female_srr, '/home/werner/projects/cross_species_XCI/code/female_metadata/bos_taurus_female_SRR.txt')
+
+female_srr = pig_meta[pig_meta$Sex == 'female', "Run" ]
+length(female_srr)
+writeLines(female_srr, '/home/werner/projects/cross_species_XCI/code/female_metadata/sus_scrofa_female_SRR.txt')
+
+female_srr = macaca_meta[macaca_meta$Sex == 'female', "Run" ]
+length(female_srr)
+writeLines(female_srr, '/home/werner/projects/cross_species_XCI/code/female_metadata/macaca_mulatta_female_SRR.txt')
+
+female_srr = goat_meta[goat_meta$Sex == 'female', "Run" ]
+length(female_srr)
+writeLines(female_srr, '/home/werner/projects/cross_species_XCI/code/female_metadata/ovis_aries_female_SRR.txt')
+
+female_srr = rat_meta[rat_meta$Sex == 'female', "Run" ]
+length(female_srr)
+writeLines(female_srr, '/home/werner/projects/cross_species_XCI/code/female_metadata/rattus_norvegicus_female_SRR.txt')
+
+```
+
+Get female samples for some of the other species
+```{r}
+plot_temp_100 %>% group_by(ScientificName) %>% summarize(n = n())
+
+```
+
+```{r}
+female_srr = monodelphis_meta[monodelphis_meta$Sex == 'female', "Run" ]
+length(female_srr)
+writeLines(female_srr, '/home/werner/projects/cross_species_XCI/code/female_metadata/Monodelphis_domestica_female_SRR.txt')
+
+female_srr = capra_meta[capra_meta$Sex == 'female', "Run" ]
+length(female_srr)
+writeLines(female_srr, '/home/werner/projects/cross_species_XCI/code/female_metadata/Capra_hircus_female_SRR.txt')
+
+female_srr = canis_meta[canis_meta$Sex == 'female', "Run" ]
+length(female_srr)
+writeLines(female_srr, '/home/werner/projects/cross_species_XCI/code/female_metadata/Canis_lupus_familiaris_female_SRR.txt')
+
+female_srr = equus_meta[equus_meta$Sex == 'female', "Run" ]
+length(female_srr)
+writeLines(female_srr, '/home/werner/projects/cross_species_XCI/code/female_metadata/Equus_caballus_female_SRR.txt')
+
+female_srr = rabbit_meta[rabbit_meta$Sex == 'female', "Run" ]
+length(female_srr)
+writeLines(female_srr, '/home/werner/projects/cross_species_XCI/code/female_metadata/Oryctolagus_cuniculus_female_SRR.txt')
+
+
+
+```
+
+
+Get some of the nonannotated samples for macaca, going to try and screen some of them for additional female samples
+```{r}
+macaca_meta[macaca_meta$Sex != 'female',  ]
+
+unannot_macaca_meta = filter(macaca_meta, Sex != 'female' & Tumor == 'no' & Consent == 'public' & LibraryStrategy == 'RNA-Seq' & LibrarySource == 'TRANSCRIPTOMIC' & 
+         LibraryLayout == 'PAIRED' & size_MB != 0) %>%
+  arrange(size_MB)
+
+unannot_macaca_meta
+
+table(unannot_macaca_meta[ 1:500, ]$SRAStudy)
+
+
+female_srr = unannot_macaca_meta[ 1:500, ]$Run
+length(female_srr)
+writeLines(female_srr, '/home/werner/projects/cross_species_XCI/code/female_metadata/unannot_macaca_mulatta_1_500_SRR.txt')
+
+
+table(unannot_macaca_meta[ 501:1000, ]$SRAStudy)
+
+female_srr = unannot_macaca_meta[ 501:1000, ]$Run
+length(female_srr)
+writeLines(female_srr, '/home/werner/projects/cross_species_XCI/code/female_metadata/unannot_macaca_mulatta_501_1000_SRR.txt')
+
+table(unannot_macaca_meta[ 1001:1500, ]$SRAStudy)
+
+female_srr = unannot_macaca_meta[ 1001:1500, ]$Run
+length(female_srr)
+writeLines(female_srr, '/home/werner/projects/cross_species_XCI/code/female_metadata/unannot_macaca_mulatta_1001_1500_SRR.txt')
+
+
+table(unannot_macaca_meta[ 1501:2500, ]$SRAStudy)
+
+female_srr = unannot_macaca_meta[ 1501:2500, ]$Run
+length(female_srr)
+writeLines(female_srr, '/home/werner/projects/cross_species_XCI/code/female_metadata/unannot_macaca_mulatta_1501_2500_SRR.txt')
+
+
+
+```
+
+
+Save a smaller metadata file of the samples we processed
+
+```{r}
+
+
+keep_species = c('Bos taurus','Sus scrofa','Macaca mulatta','Ovis aries','Rattus norvegicus','Capra hircus', 'Canis lupus familiaris', 'Equus caballus')
+keep_species_meta = genus_samples_df %>% filter(ScientificName %in% keep_species & Sex == 'female')
+
+mouse_keep_meta = rbind(genus_samples_df %>% filter(SRAStudy == 'SRP125176'), genus_samples_df %>% filter(SRAStudy == 'SRP296549'))
+
+all_keep_species_meta = rbind(keep_species_meta, mouse_keep_meta)
+all_keep_species_meta
+
+save(all_keep_species_meta, file = '/home/werner/projects/cross_species_XCI/final_plots/R/data_for_plots/all_keep_species_meta.Rdata')
+write.csv(all_keep_species_meta, file = '/home/werner/projects/cross_species_XCI/final_plots/R/data_for_plots/all_keep_species_meta.csv')
+
+```
+
+
+
+
+
+
+
+
+
+Check out the metadata available for the samples we're looking at
+
+```{r}
+
+cow_samples = read.table('/home/werner/projects/cross_species_XCI/code/female_metadata/bos_taurus_female_SRR.txt')
+cow_samples = cow_samples[ ,1]
+
+cow_metadata = genus_samples_df %>% filter(Run %in% cow_samples)
+
+
+
+ggplot(cow_metadata, aes(x = factor(Tumor))) + geom_bar(stat="count", width=0.7)
+ggplot(cow_metadata, aes(x = factor(Disease))) + geom_bar(stat="count", width=0.7)
+ggplot(cow_metadata, aes(x = factor(Histological_Type))) + geom_bar(stat="count", width=0.7)
+ggplot(cow_metadata, aes(x = factor(Body_Site))) + geom_bar(stat="count", width=0.7)
+
+table(cow_metadata$Body_Site)
+
+#105 separate studies for cow
+length(table(cow_metadata$SRAStudy))
+```
+
+```{r}
+
+rat_samples = read.table('/home/werner/projects/cross_species_XCI/code/female_metadata/rattus_norvegicus_female_SRR.txt')
+rat_samples = rat_samples[ ,1]
+
+rat_metadata = genus_samples_df %>% filter(Run %in% rat_samples)
+
+ggplot(rat_metadata, aes(x = factor(Tumor))) + geom_bar(stat="count", width=0.7)
+ggplot(rat_metadata, aes(x = factor(Disease))) + geom_bar(stat="count", width=0.7)
+ggplot(rat_metadata, aes(x = factor(Histological_Type))) + geom_bar(stat="count", width=0.7)
+ggplot(rat_metadata, aes(x = factor(Body_Site))) + geom_bar(stat="count", width=0.7)
+table(rat_metadata$Body_Site)
+
+#68 separate studies for rat
+length(table(rat_metadata$SRAStudy))
+```
+
+
+```{r}
+
+pig_samples = read.table('/home/werner/projects/cross_species_XCI/code/female_metadata/sus_scrofa_female_SRR.txt')
+pig_samples = pig_samples[ ,1]
+
+pig_metadata = genus_samples_df %>% filter(Run %in% pig_samples)
+
+ggplot(pig_metadata, aes(x = factor(Tumor))) + geom_bar(stat="count", width=0.7)
+ggplot(pig_metadata, aes(x = factor(Disease))) + geom_bar(stat="count", width=0.7)
+ggplot(pig_metadata, aes(x = factor(Histological_Type))) + geom_bar(stat="count", width=0.7)
+ggplot(pig_metadata, aes(x = factor(Body_Site))) + geom_bar(stat="count", width=0.7)
+table(pig_metadata$Body_Site)
+
+#142 separate studies for pig
+length(table(pig_metadata$SRAStudy))
+```
+
+
+```{r}
+
+sheep_samples = read.table('/home/werner/projects/cross_species_XCI/code/female_metadata/ovis_aries_female_SRR.txt')
+sheep_samples = sheep_samples[ ,1]
+
+sheep_metadata = genus_samples_df %>% filter(Run %in% sheep_samples)
+
+ggplot(sheep_metadata, aes(x = factor(Tumor))) + geom_bar(stat="count", width=0.7)
+ggplot(sheep_metadata, aes(x = factor(Disease))) + geom_bar(stat="count", width=0.7)
+ggplot(sheep_metadata, aes(x = factor(Histological_Type))) + geom_bar(stat="count", width=0.7)
+ggplot(sheep_metadata, aes(x = factor(Body_Site))) + geom_bar(stat="count", width=0.7)
+table(sheep_metadata$Body_Site)
+
+#76 separate studies for sheep
+length(table(sheep_metadata$SRAStudy))
+```
+
+
+
+
+
+```{r}
+
+goat_samples = read.table('/home/werner/projects/cross_species_XCI/code/female_metadata/Capra_hircus_female_SRR.txt')
+goat_samples = goat_samples[ ,1]
+
+goat_metadata = genus_samples_df %>% filter(Run %in% goat_samples)
+
+ggplot(goat_metadata, aes(x = factor(Tumor))) + geom_bar(stat="count", width=0.7)
+ggplot(goat_metadata, aes(x = factor(Disease))) + geom_bar(stat="count", width=0.7)
+ggplot(goat_metadata, aes(x = factor(Histological_Type))) + geom_bar(stat="count", width=0.7)
+ggplot(goat_metadata, aes(x = factor(Body_Site))) + geom_bar(stat="count", width=0.7)
+table(goat_metadata$Body_Site)
+
+#67 separate studies for goat
+length(table(goat_metadata$SRAStudy))
+```
+
+
+
+```{r}
+
+dog_samples = read.table('/home/werner/projects/cross_species_XCI/code/female_metadata/Canis_lupus_familiaris_female_SRR.txt')
+dog_samples = dog_samples[ ,1]
+
+dog_metadata = genus_samples_df %>% filter(Run %in% dog_samples)
+
+ggplot(dog_metadata, aes(x = factor(Tumor))) + geom_bar(stat="count", width=0.7)
+ggplot(dog_metadata, aes(x = factor(Disease))) + geom_bar(stat="count", width=0.7)
+ggplot(dog_metadata, aes(x = factor(Histological_Type))) + geom_bar(stat="count", width=0.7)
+ggplot(dog_metadata, aes(x = factor(Body_Site))) + geom_bar(stat="count", width=0.7)
+table(dog_metadata$Body_Site)
+
+#39 separate studies for dog
+length(table(dog_metadata$SRAStudy))
+```
+
+
+
+
+```{r}
+
+horse_samples = read.table('/home/werner/projects/cross_species_XCI/code/female_metadata/Equus_caballus_female_SRR.txt')
+horse_samples = horse_samples[ ,1]
+
+horse_metadata = genus_samples_df %>% filter(Run %in% horse_samples)
+
+ggplot(horse_metadata, aes(x = factor(Tumor))) + geom_bar(stat="count", width=0.7)
+ggplot(horse_metadata, aes(x = factor(Disease))) + geom_bar(stat="count", width=0.7)
+ggplot(horse_metadata, aes(x = factor(Histological_Type))) + geom_bar(stat="count", width=0.7)
+ggplot(horse_metadata, aes(x = factor(Body_Site))) + geom_bar(stat="count", width=0.7)
+table(horse_metadata$Body_Site)
+
+#34 separate studies for horse
+length(table(horse_metadata$SRAStudy))
+```
+
+
+
+
+```{r}
+
+macaca_samples = read.table('/home/werner/projects/cross_species_XCI/code/female_metadata/macaca_mulatta_female_SRR.txt')
+macaca_samples = macaca_samples[ ,1]
+
+macaca_metadata = genus_samples_df %>% filter(Run %in% macaca_samples)
+
+ggplot(macaca_metadata, aes(x = factor(Tumor))) + geom_bar(stat="count", width=0.7)
+ggplot(macaca_metadata, aes(x = factor(Disease))) + geom_bar(stat="count", width=0.7)
+ggplot(macaca_metadata, aes(x = factor(Histological_Type))) + geom_bar(stat="count", width=0.7)
+ggplot(macaca_metadata, aes(x = factor(Body_Site))) + geom_bar(stat="count", width=0.7)
+table(macaca_metadata$Body_Site)
+
+#46 separate studies for macaca
+length(table(macaca_metadata$SRAStudy))
+```
+
+
+
+```{r}
+length(unique(c(names(table(cow_metadata$SRAStudy)), names(table(rat_metadata$SRAStudy)), names(table(pig_metadata$SRAStudy)),
+                names(table(goat_metadata$SRAStudy)),names(table(sheep_metadata$SRAStudy)),names(table(dog_metadata$SRAStudy)),
+                names(table(horse_metadata$SRAStudy)),names(table(macaca_metadata$SRAStudy)))))
+
+
+
+```
+
+
+
+
+
+

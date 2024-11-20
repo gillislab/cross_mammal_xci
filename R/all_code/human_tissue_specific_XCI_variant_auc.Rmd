@@ -1,0 +1,888 @@
+
+XCI skew predicting variant analysis, but in humans doing the tisue specific analysis with the GTEx data
+
+
+
+
+```{r}
+library(ggplot2)
+library(dplyr)
+library(MetBrewer)
+library(ggrepel)
+library(parallel)
+library(stringr)
+```
+
+
+
+
+
+human data
+```{r}
+
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/homo_sapiens/human_skew_and_stats_autoFilt_df_7_12_23.Rdata')
+dim(human_skew_and_stats_df)
+human_skew_and_stats_df
+```
+
+GTEx metadata
+Getting the age of the donors
+Do a quick skew predict age auroc
+
+```{r}
+donor_phens = read.table("/home/werner/projects/gtex_xskew/data/GTEx_Analysis_v8_Annotations_SubjectPhenotypesDS.txt", sep="\t", header=TRUE)  
+donor_phens_names = sapply(strsplit(as.character(donor_phens$SUBJID), split='-', fixed=TRUE),'[[', 2)
+
+usable_donors = names(table(human_skew_and_stats_df$donor))
+table(usable_donors %in% donor_phens_names)
+
+
+human_skew_and_stats_df$age = rep(NA, dim(human_skew_and_stats_df)[1])
+for( i in 1:length(usable_donors)){
+  #Get the age of the donor
+  age = as.character(donor_phens$AGE[ grepl(usable_donors[i], as.character(donor_phens$SUBJID) ) ])
+  #Pop it in for all the tissues from that donor
+  human_skew_and_stats_df$age[human_skew_and_stats_df$donor == usable_donors[i]] = age
+
+}
+
+table(human_skew_and_stats_df$age)
+
+
+```
+
+
+```{r}
+compute_auc = function(scores, label){
+  label = as.logical(label)
+  w_test = wilcox.test(scores[label],scores[!label], alternative = 'two.sided', exact = F)
+  p_value = w_test$p.value
+  auc = as.numeric(w_test$statistic / (sum(label) * sum(!label)))
+  return(list('p_value' = p_value, 'auc' = auc))
+}
+
+
+test_tissues = as.character(human_skew_and_stats_df %>% filter(num_snps >= 10) %>% group_by(tissue) %>% 
+                              summarize(tissue_counts = n() ) %>% filter(tissue_counts >= 50) %>% pull(tissue))
+
+tissue_aucs = vector(mode = 'numeric', length = length(test_tissues))
+tissue_pvals = vector(mode = 'numeric', length = length(test_tissues))
+frac_positives = vector(mode = 'numeric', length = length(test_tissues))
+
+for(i in 1:length(test_tissues)){
+  
+  temp_tissue = test_tissues[i]
+  temp_tissue_skew_df = human_skew_and_stats_df %>% filter(tissue == temp_tissue & num_snps >= 10 )
+  temp_tissue_scores = temp_tissue_skew_df$skew
+  temp_tissue_labels = temp_tissue_skew_df$age %in% c('60-69','70-79')
+  
+  tissue_auc = compute_auc(temp_tissue_scores, temp_tissue_labels)
+
+  tissue_aucs[i] = tissue_auc$auc
+  tissue_pvals[i] = tissue_auc$p_value
+  frac_positives[i] = sum(temp_tissue_labels) / length(temp_tissue_labels)
+}
+
+age_auc_df = data.frame(tissue = test_tissues, fraction_positives = frac_positives, age_auc = tissue_aucs, p_value = tissue_pvals)
+age_auc_df$adj_pval = p.adjust(age_auc_df$p_value, method = 'BH')
+age_auc_df %>% arrange(desc(age_auc))
+
+
+ggplot(age_auc_df, aes(x = age_auc, y = -log10(adj_pval))) + geom_point() +
+  geom_hline(yintercept = -log10(.05), linetype = 'dashed', color = 'red') + 
+  ylab('-log10(FDR-adjusted p-value)') + xlab('Tissue XCI ratio predicting donor age (AUROC)') + xlim(.3, .7)
+ggsave(filename = 'skew_predict_age_auroc_pval_scatter.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/gtex_age_skew/', device = 'pdf',
+       useDingbats = F, height = 3, width = 5)
+
+
+ggplot(filter(human_skew_and_stats_df, tissue == 'Whole Blood'), aes(x = age, y = skew)) + geom_boxplot() + ggtitle('Whole blood') +
+  ylab('Tissue XCI ratio') + xlab('GTEx donor age')
+ggsave(filename = 'Wholeblood_age_skew_boxplots.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/gtex_age_skew/', device = 'pdf',
+       useDingbats = F, height = 3, width = 5)
+
+ggplot(filter(human_skew_and_stats_df, tissue == 'Esophagus - Mucosa'), aes(x = age, y = skew)) + geom_boxplot() + ggtitle('Esophagus - Mucosa') +
+  ylab('Tissue XCI ratio') + xlab('GTEx donor age')
+ggsave(filename = 'EsophagusMucosa_age_skew_boxplots.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/gtex_age_skew/', device = 'pdf',
+       useDingbats = F, height = 3, width = 5)
+
+ggplot(filter(human_skew_and_stats_df, tissue == 'Brain - Cerebellum'), aes(x = age, y = skew)) + geom_boxplot() + ggtitle('Brain - Cerebellum') +
+  ylab('Tissue XCI ratio') + xlab('GTEx donor age')
+ggsave(filename = 'BrainCerebellum_age_skew_boxplots.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/gtex_age_skew/', device = 'pdf',
+       useDingbats = F, height = 3, width = 5)
+
+ggplot(filter(human_skew_and_stats_df, tissue == 'Ovary'), aes(x = age, y = skew)) + geom_boxplot() + ggtitle('Ovary') +
+  ylab('Tissue XCI ratio') + xlab('GTEx donor age')
+ggsave(filename = 'Ovary_age_skew_boxplots.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/gtex_age_skew/', device = 'pdf',
+       useDingbats = F, height = 3, width = 5)
+
+
+ggplot(filter(human_skew_and_stats_df, tissue == 'Brain - Frontal Cortex (BA9)'), aes(x = age, y = skew)) + geom_boxplot() + ggtitle('Brain - Frontal Cortex (BA9)') +
+  ylab('Tissue XCI ratio') + xlab('GTEx donor age')
+ggplot(filter(human_skew_and_stats_df, tissue == 'Liver'), aes(x = age, y = skew)) + geom_boxplot() + ggtitle('Liver') +
+  ylab('Tissue XCI ratio') + xlab('GTEx donor age')
+
+```
+
+
+
+
+
+
+
+
+
+
+
+snp stat dataframes
+```{r}
+
+
+x = load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/homo_sapiens/detected_het_snps_df_8_3_23.Rdata')
+human_snp_stat_df = get(x)
+
+```
+
+
+
+vcfs with the annotated snp ratios
+
+```{r}
+
+#Human
+#All the detected snps from the GTEx data
+#in the list.vcf object
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/homo_sapiens/all_v8_GATK_mod.Rdata')
+
+```
+
+
+```{r}
+
+human_gtf = rtracklayer::import('/home/werner/projects/cross_species_XCI/genomes/Homo_sapiens/gencode.v25.annotation.gtf')
+human_gtf = as.data.frame(human_gtf)
+human_x_gtf = human_gtf[human_gtf$seqnames == 'chrX', ]
+
+human_x_genenames = unique(human_x_gtf$gene_name)
+human_chromX_end = max(human_x_gtf$end)
+
+human_x_meta = human_x_gtf[human_x_gtf$type== 'gene',]
+
+
+#human
+x_gene_starts = human_x_meta$start
+x_gene_ends = human_x_meta$end
+#Add gene_annotations
+positions =  as.numeric(stringr::str_extract(human_snp_stat_df$variant, "[0-9]+"))
+human_snp_stat_df$snp_pos = positions
+human_gene_annots = vector(mode = 'character', length = length(positions))
+for( i in 1:length(positions)){
+
+  test_gene_start = positions[i]
+  gene_index = findInterval(test_gene_start, x_gene_starts)
+  if(gene_index == 0){next}
+  
+  if(test_gene_start <= x_gene_ends[gene_index]){
+    human_gene_annots[i] = human_x_meta$gene_name[gene_index]
+  }
+}
+
+
+human_snp_stat_df$gene = human_gene_annots
+
+
+```
+
+
+
+
+```{r}
+
+
+compute_auc = function(scores, label){
+  w_test = wilcox.test(scores[label],scores[!label], alternative = 'two.sided', exact = F)
+  p_value = w_test$p.value
+  auc = as.numeric(w_test$statistic / (sum(label) * sum(!label)))
+  return(list('p_value' = p_value, 'auc' = auc))
+}
+
+
+bootstrap_auc = function(scores, label){
+  #Randomly sample with replacement, same number as the original sample
+  positive_sample = sample(scores[label], size = sum(label), replace = T)  
+  negative_sample = sample(scores[!label], size = sum(!label), replace = T)  
+  w_test = wilcox.test(positive_sample, negative_sample, alternative = 'two.sided', exact = F)
+  p_value = w_test$p.value
+  auc = as.numeric(w_test$statistic / (sum(label) * sum(!label)))
+  #auc = compute_auc(scores = c(positive_sample, negative_sample), label = c(rep(TRUE, length = length(positive_sample)), rep(FALSE, length = length(negative_sample))) )
+  return(list('p_value' = p_value, 'auc' = auc))
+}
+
+
+compute_auc_power = function(scores, label, num_sims = 2000, sig_level = .05){
+  bootstrap_results = mclapply(1:num_sims, function(i) bootstrap_auc(scores, label), mc.cores = 10)
+  bootstrap_pvals = sapply(bootstrap_results, '[[', 1)
+  bootstrap_aucs = sapply(bootstrap_results, '[[', 2)
+  
+  power_sig = sum(bootstrap_pvals <= sig_level) / num_sims
+  power_effect_55 = sum(bootstrap_aucs >= .55) / num_sims
+  power_effect_75 = sum(bootstrap_aucs >= .75) / num_sims
+  auc_var = var(bootstrap_aucs)
+  return(list('power_sig' = power_sig, 'power_effect_55' = power_effect_55, 'power_effect_75' = power_effect_75, 'bootstrap_auc_var' = auc_var))
+
+}
+
+# Functions to fold and unfold ratios 
+folded <- function(x) { apply( cbind(x,1-x), 1, max)} 
+unfold <- function(x) { c(x,1-x) } 
+
+```
+
+
+
+will need to do a tissue-specific analysis. If the same variant pops up multiple times across tissues for a donor, that can potentially confound XCI associations if that donor only has skewed tissues.
+
+For each tissue with >= 50 samples, get the skews (scores), get the vcfs and then the all the variants in those samples, run through the variants and get the aurocs
+
+```{r}
+
+filt_human = human_skew_and_stats_df$num_snps >= 10 & human_skew_and_stats_df$autosome_imbalance == F
+
+test_tissues = names(table(human_skew_and_stats_df$tissue[filt_human]))
+test_tissues = test_tissues[table(human_skew_and_stats_df$tissue[filt_human]) >= 50]
+length(test_tissues)
+
+#Empty dataframe to hold all the data
+human_results = data_frame(variants = c(), tissue = c(), reference_biased_index = c(),
+                     n_pos = c(), n_neg = c(), variant_prevalence = c(), 
+                     auc = c(), auc_pval = c(), auc_power_significance = c(), auc_power_effect_55 = c(),
+                     auc_power_effect_75 = c(), bootstrap_auc_var = c(), auc_null = c())
+
+
+for(tissue in test_tissues){
+  
+  current_tissue = tissue
+  skew_index = human_skew_and_stats_df$sample_index[filt_human & human_skew_and_stats_df$tissue == current_tissue]
+  human_scores = human_skew_and_stats_df$skew[filt_human & human_skew_and_stats_df$tissue == current_tissue]
+  #Grab the vcfs for just these samples
+  skew_filt_annot_human_vcfs = list.vcf[skew_index]
+  #Go through the vcf to get all the variants present
+  total_human_samps = length(skew_index) #Total number of samples
+  test_variants = c()
+  for(i in 1:length(skew_filt_annot_human_vcfs)){
+    data_variants = paste0(skew_filt_annot_human_vcfs[[i]][ ,1], paste0(skew_filt_annot_human_vcfs[[i]]$V3, skew_filt_annot_human_vcfs[[i]]$V4))
+    test_variants = c(test_variants, data_variants)
+  }
+  #Get the sample counts of each test variant
+  test_variants = table(test_variants)
+  #Number of positives and negatives for each variant and the prevalence of each variant
+  n_pos = as.numeric(test_variants[test_variants >= 10])
+  n_neg = total_human_samps - n_pos
+  variant_prevalence = n_pos / total_human_samps
+  test_variants = names(test_variants[test_variants >= 10])
+  length(test_variants)
+  
+  #Just using the samples with XCI ratios from 10 genes or more
+  auc_test_variants = vector(mode = 'numeric', length = length(test_variants))
+  auc_pval = vector(mode = 'numeric', length = length(test_variants))
+  auc_power_sig = vector(mode = 'numeric', length = length(test_variants))
+  auc_power_effect_55 = vector(mode = 'numeric', length = length(test_variants))
+  auc_power_effect_75 = vector(mode = 'numeric', length = length(test_variants))
+  bootstrap_auc_var = vector(mode = 'numeric', length = length(test_variants))
+  auc_null = vector(mode = 'numeric', length = length(test_variants))
+  tissue_label = rep(current_tissue, length = length(test_variants))
+  
+  for(j in 1:length(test_variants)){
+
+    #Go through all samples and get a boolean vector for which samples have that variant
+    variant_present = vector(mode = 'logical', length = length(skew_filt_annot_human_vcfs))
+    for(i in 1:length(skew_filt_annot_human_vcfs)){
+    
+      data_variants = paste0(skew_filt_annot_human_vcfs[[i]][ ,1], paste0(skew_filt_annot_human_vcfs[[i]]$V3, skew_filt_annot_human_vcfs[[i]]$V4))
+      variant_present[i] = test_variants[j] %in% data_variants
+    }
+
+    #If there are no negatives, just skip the variant
+    if(sum(variant_present) == length(human_scores)){next}
+    #Get the auroc and it's p_value
+    auc_results = compute_auc(human_scores, variant_present)
+    auc_test_variants[j] = auc_results$auc
+    auc_pval[j] = auc_results$p_value
+    #Compute the power calculation
+    power_results = compute_auc_power(human_scores, variant_present)
+    auc_power_sig[j] = power_results$power_sig
+    auc_power_effect_55[j] = power_results$power_effect_55
+    auc_power_effect_75[j] = power_results$power_effect_75
+    bootstrap_auc_var[j] = power_results$bootstrap_auc_var
+    #Get a permuted auroc
+    auc_null[j] = compute_auc(human_scores, sample(variant_present))$auc #AUC with the labels randomly shuffled for a null
+  }
+  
+  #Get the index for all the SNPs classified as reference biased
+  ref_index = test_variants %in% human_snp_stat_df$variant[human_snp_stat_df$filter == FALSE]
+  
+  human_results_current = data_frame(variants = test_variants, tissue = tissue_label, reference_biased_index = ref_index,
+                       n_pos = n_pos, n_neg = n_neg, variant_prevalence = variant_prevalence, 
+                       auc = auc_test_variants, auc_pval = auc_pval, auc_power_significance = auc_power_sig, auc_power_effect_55 = auc_power_effect_55,
+                       auc_power_effect_75 = auc_power_effect_75, bootstrap_auc_var = bootstrap_auc_var, auc_null = auc_null)
+  #Add to the full dataframe
+  human_results = rbind(human_results, human_results_current)
+  print(sprintf('Done with %s...', current_tissue))
+}
+
+
+
+ggplot(filter(human_results, reference_biased_index == F), aes(x = auc, y = variant_prevalence)) + geom_point()
+
+human_results %>% filter(auc >= .75 & reference_biased_index == F)
+
+tissue_specific_human_results = human_results
+
+```
+
+```{r}
+
+save(tissue_specific_human_results, 
+     file = '/home/werner/projects/cross_species_XCI/data/species_data_analysis/snp_skew_auc/tissSpecific_human_variant_XCI_4_10_24.Rdata')
+
+```
+
+
+```{r}
+
+load(file = '/home/werner/projects/cross_species_XCI/data/species_data_analysis/snp_skew_auc/tissSpecific_human_variant_XCI_4_10_24.Rdata')
+
+```
+
+```{r}
+tissue_specific_human_results
+
+```
+
+
+
+Go through human samples since I didnt gather the snp info prior like I did with the other species
+
+```{r}
+human_snp_pos = as.numeric(str_extract(tissue_specific_human_results$variants, "[0-9]+")) # extract positions from human variants
+
+human_x_meta = human_x_gtf[human_x_gtf$type == 'gene'& !is.na(human_x_gtf$type),]
+x_gene_starts = human_x_meta$start
+x_gene_ends = human_x_meta$end
+#Add gene_annotations
+human_gene_annots = vector(mode = 'character', length = length(human_snp_pos))
+for( i in 1:length(human_snp_pos)){
+
+  test_gene_start = human_snp_pos[i]
+  gene_index = findInterval(test_gene_start, x_gene_starts)
+  if(gene_index == 0){next}
+  
+  if(test_gene_start <= x_gene_ends[gene_index]){
+    human_gene_annots[i] = human_x_meta$gene_name[gene_index]
+  }
+}
+
+tissue_specific_human_results$gene = human_gene_annots
+
+#Go through and get the average counts per variant, but only in the tissue specific samples
+tissue_specific_human_results$variant_exp = rep(NA, length = nrow(tissue_specific_human_results))
+
+for(j in 1:length(test_tissues)){
+  
+  current_tissue = test_tissues[j]
+  current_variants = filter(tissue_specific_human_results, tissue == current_tissue)$variants
+  tiss_index =  filter(human_skew_and_stats_df, tissue == current_tissue)$sample_index
+  current_snp_counts_mat = matrix(nrow = length(current_variants), ncol = length(tiss_index))
+  rownames(current_snp_counts_mat) = current_variants
+  
+  for(i in 1:length(tiss_index)){
+  
+    data = list.vcf[[tiss_index[i]]]
+    data_variants = paste0(data[ ,1], paste0(data$V3, data$V4)) #Get the sample's variants
+    data_variants_counts = data[ ,2] + data[ ,3] #Get the total counts
+    index = match(data_variants, rownames(current_snp_counts_mat)) #Put counts in the full matrix
+    na_index = !is.na(index) #Ignoring the SNPs not in the human variants list, not detected in at least 10 samples
+    current_snp_counts_mat[index[na_index], i] = data_variants_counts[na_index]
+  }
+  
+  tiss_var_exp = rowMeans(current_snp_counts_mat, na.rm = T)
+  tissue_specific_human_results$variant_exp[tissue_specific_human_results$tissue == current_tissue] = tiss_var_exp
+
+}
+
+
+all_adj_pvals = p.adjust(tissue_specific_human_results$auc_pval, method = 'BH')
+auc_significance = all_adj_pvals <= .05
+
+tissue_specific_human_results$auc_adj_pval = all_adj_pvals
+tissue_specific_human_results$auc_significance = auc_significance
+
+```
+
+
+```{r}
+
+
+filt_index = tissue_specific_human_results$reference_biased_index == F
+
+ggplot(tissue_specific_human_results[filt_index, ], aes(x = auc, y = -log10(auc_adj_pval), color = auc_significance)) + geom_point() + 
+  geom_hline(yintercept = -log10(.05), color = 'red', linetype = 'dashed') + xlim(0,1) +
+  scale_color_manual(values = c('TRUE' = 'red', 'FALSE' = 'black'), name = 'AUROC significance') +
+  ylab('-log10( FDR corrected p-value)') + ggtitle('Human tissue-specific AUROCs')
+#ggsave(filename = 'human_tissue_specific_xci_variant_auroc_scatter.pdf', device = 'pdf', 
+#       path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/human_experiments/',
+#       useDingbats = F, height = 4, width = 6)
+
+
+
+
+
+```
+
+
+save final dataframe
+```{r}
+
+save(tissue_specific_human_results, file = '')
+
+```
+
+
+
+
+
+###########################################################################################
+And now try an aggregate approach, first get the mean tissue XCI skew for each donor 
+Then average the ratios of the same variant detected across multiple tissues for a donor
+
+So I'll essentially make a single vcf for each donor with the mean ratio for each variant
+
+Then run the variant-skew association statistic
+
+###################################################################################
+
+
+
+```{r}
+filt_human = human_skew_and_stats_df$num_snps >= 10 & human_skew_and_stats_df$autosome_imbalance == F
+all_donors = unique(human_skew_and_stats_df$donor[filt_human])
+avg_vcf = vector(mode = 'list', length = length(all_donors))
+names(avg_vcf) = all_donors
+
+#Get the mean tissue skew per donor
+human_scores = human_skew_and_stats_df %>% filter(num_snps >= 10 & autosome_imbalance == F) %>% group_by(donor) %>% summarize(mean_skew = mean(skew))
+index = match(all_donors, human_scores$donor)
+human_scores = human_scores[index, ]
+human_scores = human_scores$mean_skew
+
+#Combine all tissue vcfs for each donor
+for(i in 1:length(all_donors)){
+  
+  #Get all the tissue vcfs for the donor
+  donor_index = human_skew_and_stats_df$sample_index[human_skew_and_stats_df$donor == all_donors[i] & filt_human]
+  donor_vcfs = list.vcf[donor_index]
+  #Combine into one vcf
+  comb_donor_vcf = do.call('rbind', donor_vcfs)
+  comb_donor_vcf$variant = paste0(comb_donor_vcf[ ,1], paste0(comb_donor_vcf$V3, comb_donor_vcf$V4))
+  comb_donor_vcf$ref_ratio = comb_donor_vcf$A / (comb_donor_vcf$A + comb_donor_vcf$C)
+  #Drop the nucleotide count columns because of the A C duplicate column names
+  comb_donor_vcf = comb_donor_vcf[ , c(1,2,3,8,9,10,11)]
+  #Get the mean reference ratio per variant along with other info
+  comb_donor_vcf = comb_donor_vcf %>% group_by(variant) %>% summarize(mean_ref_ratio = mean(ref_ratio), sd_ref_ratio = sd(ref_ratio), num_variant = length(ref_ratio))
+  
+  avg_vcf[[i]] = comb_donor_vcf
+}
+
+
+#Go through the vcf to get all the variants present
+total_human_samps = length(all_donors) #Total number of samples
+test_variants = c()
+for(i in 1:length(avg_vcf)){
+  data_variants = avg_vcf[[i]]$variant
+  test_variants = c(test_variants, data_variants)
+}
+#Get the sample counts of each test variant
+test_variants = table(test_variants)
+#Number of positives and negatives for each variant and the prevalence of each variant
+n_pos = as.numeric(test_variants[test_variants >= 10])
+n_neg = total_human_samps - n_pos
+variant_prevalence = n_pos / total_human_samps
+test_variants = names(test_variants[test_variants >= 10])
+length(test_variants)
+
+
+#Just using the samples with XCI ratios from 10 genes or more
+auc_test_variants = vector(mode = 'numeric', length = length(test_variants))
+auc_pval = vector(mode = 'numeric', length = length(test_variants))
+auc_power_sig = vector(mode = 'numeric', length = length(test_variants))
+auc_power_effect_55 = vector(mode = 'numeric', length = length(test_variants))
+auc_power_effect_75 = vector(mode = 'numeric', length = length(test_variants))
+bootstrap_auc_var = vector(mode = 'numeric', length = length(test_variants))
+auc_null = vector(mode = 'numeric', length = length(test_variants))
+
+
+for(j in 1:length(test_variants)){
+
+  if(j%%100==0){print(j)}
+  #Go through all samples and get a boolean vector for which samples have that variant
+  variant_present = vector(mode = 'logical', length = length(avg_vcf))
+  for(i in 1:length(avg_vcf)){
+  
+    data_variants = avg_vcf[[i]]$variant
+    variant_present[i] = test_variants[j] %in% data_variants
+  }
+
+  #If there are no negatives, just skip the variant
+  if(sum(variant_present) == length(human_scores)){next}
+  #Get the auroc and it's p_value
+  auc_results = compute_auc(human_scores, variant_present)
+  auc_test_variants[j] = auc_results$auc
+  auc_pval[j] = auc_results$p_value
+  #Compute the power calculation
+  power_results = compute_auc_power(human_scores, variant_present)
+  auc_power_sig[j] = power_results$power_sig
+  auc_power_effect_55[j] = power_results$power_effect_55
+  auc_power_effect_75[j] = power_results$power_effect_75
+  bootstrap_auc_var[j] = power_results$bootstrap_auc_var
+  #Get a permuted auroc
+  auc_null[j] = compute_auc(human_scores, sample(variant_present))$auc #AUC with the labels randomly shuffled for a null
+}
+
+#Get the index for all the SNPs classified as reference biased
+ref_index = test_variants %in% human_snp_stat_df$variant[human_snp_stat_df$filter == FALSE]
+
+avg_human_results = data_frame(variants = test_variants, reference_biased_index = ref_index,
+                     n_pos = n_pos, n_neg = n_neg, variant_prevalence = variant_prevalence, 
+                     auc = auc_test_variants, auc_pval = auc_pval, auc_power_significance = auc_power_sig, auc_power_effect_55 = auc_power_effect_55,
+                     auc_power_effect_75 = auc_power_effect_75, bootstrap_auc_var = bootstrap_auc_var, auc_null = auc_null)
+
+avg_human_results
+
+
+```
+
+
+```{r}
+
+save(avg_human_results, 
+     file = '/home/werner/projects/cross_species_XCI/data/species_data_analysis/snp_skew_auc/avg_human_variant_XCI_4_10_24.Rdata')
+
+```
+
+
+```{r}
+load(file = '/home/werner/projects/cross_species_XCI/data/species_data_analysis/snp_skew_auc/avg_human_variant_XCI_4_10_24.Rdata')
+
+avg_human_results
+```
+
+
+
+Go through human samples since I didnt gather the snp info prior like I did with the other species
+
+```{r}
+human_snp_pos = as.numeric(str_extract(avg_human_results$variants, "[0-9]+")) # extract positions from human variants
+
+human_x_meta = human_x_gtf[human_x_gtf$type == 'gene'& !is.na(human_x_gtf$type),]
+x_gene_starts = human_x_meta$start
+x_gene_ends = human_x_meta$end
+#Add gene_annotations
+human_gene_annots = vector(mode = 'character', length = length(human_snp_pos))
+for( i in 1:length(human_snp_pos)){
+
+  test_gene_start = human_snp_pos[i]
+  gene_index = findInterval(test_gene_start, x_gene_starts)
+  if(gene_index == 0){next}
+  
+  if(test_gene_start <= x_gene_ends[gene_index]){
+    human_gene_annots[i] = human_x_meta$gene_name[gene_index]
+  }
+}
+
+avg_human_results$gene = human_gene_annots
+
+
+all_adj_pvals = p.adjust(avg_human_results$auc_pval, method = 'BH')
+auc_significance = all_adj_pvals <= .05
+
+avg_human_results$auc_adj_pval = all_adj_pvals
+avg_human_results$auc_significance = auc_significance
+
+avg_human_results
+```
+
+
+
+```{r}
+
+
+filt_index = avg_human_results$reference_biased_index == F
+
+ggplot(avg_human_results[filt_index, ], aes(x = auc, y = -log10(auc_adj_pval), color = auc_significance)) + geom_point() + 
+  geom_hline(yintercept = -log10(.05), color = 'red', linetype = 'dashed') + xlim(0,1) +
+  scale_color_manual(values = c('TRUE' = 'red', 'FALSE' = 'black'), name = 'AUROC significance') +
+  ylab('-log10( FDR corrected p-value)') + ggtitle('Averaged variant AUROC')
+#ggsave(filename = 'human_avg_variant_xci_variant_auroc_scatter.pdf', device = 'pdf', 
+#       path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/human_experiments/',
+#       useDingbats = F, height = 4, width = 6)
+
+
+
+```
+
+```{r}
+
+avg_human_results %>% filter(auc >= .7)
+
+```
+
+
+
+
+####################################
+And now pick the tissue with the highest sequencing depth per donor
+Somewhat representative of the other species, where we presumably only have one tissue sample per donor
+####################################
+
+
+Grab the sequencing depth per sample from the /data/GTEx/STARouts
+I don't have the .Log.final.out files for the v8 samples, so am going to have the use the ReadsPerGene.out.tab files
+Was planning on using the number of uniquely mapped reads, but the total number of uniquely mapped reads to gene annotations (ReadsPerGene.out.tab)
+will suffice
+
+Do a quick sanity check to show to two are correlated
+Edit: they are highly correlated, 0.985
+
+The number of uniquely mapped reads is on the 9th line of the .Log.final.out files
+
+```{r}
+
+log_file_paths = paste(human_skew_and_stats_df$sample_id, 'Log.final.out', sep='.')
+log_file_paths = paste0('/data/GTEx/STARouts/', log_file_paths)
+
+sample_reads = vector(mode = 'numeric', length = length(log_file_paths))
+
+for(i in 1:length(log_file_paths)){
+  sample_exp = readLines(log_file_paths[i],n = 9)
+  sample_reads[i] = as.numeric(strsplit( sample_exp[9], split = '\t', fixed = T)[[1]][2])
+}
+
+
+
+```
+
+
+```{r}
+#V7 samples stops at 3285
+
+exp_file_paths = paste(human_skew_and_stats_df$sample_id, 'ReadsPerGene.out.tab', sep='.')
+exp_file_paths = paste0('/data/GTEx/STARouts/', exp_file_paths)
+
+sample_annot_reads = vector(mode = 'numeric', length = length(exp_file_paths))
+
+for(i in 1:length(exp_file_paths)){
+
+  sample_exp = read.table(exp_file_paths[i], header = F, skip = 4)
+  sample_annot_reads[i] = sum(sample_exp$V2)
+}
+
+
+plot(sample_reads[1:3285], sample_annot_reads[1:3285])
+cor(sample_reads[1:3285], sample_annot_reads[1:3285])
+
+```
+
+
+```{r}
+
+human_skew_and_stats_df$reads = sample_annot_reads
+
+maxReads_human_skew_and_stats = human_skew_and_stats_df %>% 
+     group_by(donor) %>% 
+     mutate(maxReads = max(reads)) %>% 
+     ungroup() %>%
+     filter(maxReads == reads)
+
+maxReads_human_skew_and_stats
+```
+
+
+
+
+```{r}
+filt_human = maxReads_human_skew_and_stats$num_snps >= 10 & maxReads_human_skew_and_stats$autosome_imbalance == F
+sample_index = maxReads_human_skew_and_stats$sample_index[filt_human]
+length(sample_index)
+maxRead_vcfs = list.vcf[sample_index]
+human_scores = maxReads_human_skew_and_stats$skew[filt_human]
+
+#Go through the vcf to get all the variants present
+total_human_samps = length(human_scores) #Total number of samples
+test_variants = c()
+for(i in 1:length(maxRead_vcfs)){
+
+  data = maxRead_vcfs[[i]]
+  data_variants = paste0(data[ ,1], paste0(data$V3, data$V4))
+  test_variants = c(test_variants, data_variants)
+}
+#Get the sample counts of each test variant
+test_variants = table(test_variants)
+#Number of positives and negatives for each variant and the prevalence of each variant
+n_pos = as.numeric(test_variants[test_variants >= 10])
+n_neg = total_human_samps - n_pos
+variant_prevalence = n_pos / total_human_samps
+test_variants = names(test_variants[test_variants >= 10])
+length(test_variants)
+
+
+#Just using the samples with XCI ratios from 10 genes or more
+auc_test_variants = vector(mode = 'numeric', length = length(test_variants))
+auc_pval = vector(mode = 'numeric', length = length(test_variants))
+auc_power_sig = vector(mode = 'numeric', length = length(test_variants))
+auc_power_effect_55 = vector(mode = 'numeric', length = length(test_variants))
+auc_power_effect_75 = vector(mode = 'numeric', length = length(test_variants))
+bootstrap_auc_var = vector(mode = 'numeric', length = length(test_variants))
+auc_null = vector(mode = 'numeric', length = length(test_variants))
+
+
+for(j in 1:length(test_variants)){
+
+  if(j%%100==0){print(j)}
+  #Go through all samples and get a boolean vector for which samples have that variant
+  variant_present = vector(mode = 'logical', length = length(maxRead_vcfs))
+  for(i in 1:length(maxRead_vcfs)){
+    data = maxRead_vcfs[[i]]
+    data_variants = paste0(data[ ,1], paste0(data$V3, data$V4))
+    variant_present[i] = test_variants[j] %in% data_variants
+  }
+
+  #If there are no negatives, just skip the variant
+  if(sum(variant_present) == length(human_scores)){next}
+  #Get the auroc and it's p_value
+  auc_results = compute_auc(human_scores, variant_present)
+  auc_test_variants[j] = auc_results$auc
+  auc_pval[j] = auc_results$p_value
+  #Compute the power calculation
+  power_results = compute_auc_power(human_scores, variant_present)
+  auc_power_sig[j] = power_results$power_sig
+  auc_power_effect_55[j] = power_results$power_effect_55
+  auc_power_effect_75[j] = power_results$power_effect_75
+  bootstrap_auc_var[j] = power_results$bootstrap_auc_var
+  #Get a permuted auroc
+  auc_null[j] = compute_auc(human_scores, sample(variant_present))$auc #AUC with the labels randomly shuffled for a null
+}
+
+#Get the index for all the SNPs classified as reference biased
+ref_index = test_variants %in% human_snp_stat_df$variant[human_snp_stat_df$filter == FALSE]
+
+maxReads_human_results = data_frame(variants = test_variants, reference_biased_index = ref_index,
+                     n_pos = n_pos, n_neg = n_neg, variant_prevalence = variant_prevalence, 
+                     auc = auc_test_variants, auc_pval = auc_pval, auc_power_significance = auc_power_sig, auc_power_effect_55 = auc_power_effect_55,
+                     auc_power_effect_75 = auc_power_effect_75, bootstrap_auc_var = bootstrap_auc_var, auc_null = auc_null)
+
+maxReads_human_results
+
+
+```
+
+
+
+
+```{r}
+
+save(maxReads_human_results, 
+     file = '/home/werner/projects/cross_species_XCI/data/species_data_analysis/snp_skew_auc/maxReads_human_variant_XCI_4_10_24.Rdata')
+
+```
+
+
+```{r}
+load(file = '/home/werner/projects/cross_species_XCI/data/species_data_analysis/snp_skew_auc/maxReads_human_variant_XCI_4_10_24.Rdata')
+maxReads_human_results
+
+```
+
+
+
+Go through human samples since I didnt gather the snp info prior like I did with the other species
+
+```{r}
+human_snp_pos = as.numeric(str_extract(maxReads_human_results$variants, "[0-9]+")) # extract positions from human variants
+
+human_x_meta = human_x_gtf[human_x_gtf$type == 'gene'& !is.na(human_x_gtf$type),]
+x_gene_starts = human_x_meta$start
+x_gene_ends = human_x_meta$end
+#Add gene_annotations
+human_gene_annots = vector(mode = 'character', length = length(human_snp_pos))
+for( i in 1:length(human_snp_pos)){
+
+  test_gene_start = human_snp_pos[i]
+  gene_index = findInterval(test_gene_start, x_gene_starts)
+  if(gene_index == 0){next}
+  
+  if(test_gene_start <= x_gene_ends[gene_index]){
+    human_gene_annots[i] = human_x_meta$gene_name[gene_index]
+  }
+}
+
+maxReads_human_results$gene = human_gene_annots
+
+
+all_adj_pvals = p.adjust(maxReads_human_results$auc_pval, method = 'BH')
+auc_significance = all_adj_pvals <= .05
+
+maxReads_human_results$auc_adj_pval = all_adj_pvals
+maxReads_human_results$auc_significance = auc_significance
+
+maxReads_human_results
+```
+
+
+
+
+```{r}
+
+
+filt_index = maxReads_human_results$reference_biased_index == F
+
+
+ggplot(maxReads_human_results[filt_index, ], aes(x = auc, y = -log10(auc_adj_pval), color = auc_significance)) + geom_point() + 
+  geom_hline(yintercept = -log10(.05), color = 'red', linetype = 'dashed') + xlim(0,1) +
+  scale_color_manual(values = c('TRUE' = 'red', 'FALSE' = 'black'), name = 'AUROC significance') +
+  ylab('-log10( FDR corrected p-value)') + ggtitle('Human Max reads sample')
+#ggsave(filename = 'human_max_reads_xci_variant_auroc_scatter.pdf', device = 'pdf', 
+#       path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/human_experiments/',
+#       useDingbats = F, height = 4, width = 6)
+
+
+```
+
+```{r}
+
+filter(maxReads_human_results, auc >= .65)
+
+```
+
+
+remove the variant information and then save all the final dataframes
+
+```{r}
+
+tissue_specific_human_results  = tissue_specific_human_results %>% dplyr::select(-variants)
+avg_human_results = avg_human_results %>% dplyr::select(-variants)
+maxReads_human_results = maxReads_human_results %>% dplyr::select(-variants)
+
+save(tissue_specific_human_results,avg_human_results ,maxReads_human_results,   
+     file= '/home/werner/projects/cross_species_XCI/final_plots/R/data_for_plots/human_xci_variant_auc_dfs.Rdata')
+
+```
+
+
+
+
+
+
+
+
+
+
+

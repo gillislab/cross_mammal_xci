@@ -1,0 +1,1398 @@
+
+
+
+samples are here
+
+GTEx v7
+/grid/gillis/home/hover/work/cmxci.gtex.7.2/Homo_sapiens
+
+GTEx v8
+/grid/gillis/home/hover/work/cmxci.gtex.8/Homo_sapiens
+
+
+```{r}
+library(ggplot2)
+library(ggExtra)
+library(stringr)
+library(parallel)
+library(dplyr)
+library(ggridges)
+library(MetBrewer)
+
+
+```
+
+```{r}
+#Version 8
+processed_files = list.files('/grid/gillis/home/hover/work/cmxci.gtex.8/Homo_sapiens')
+wasp_vcf_files_paired = processed_files[grepl('.wasp.7.snps_filtered.vcf',processed_files  )]
+#Ignore the .vcf.idx files
+wasp_vcf_files_paired = wasp_vcf_files_paired[!grepl('.idx',wasp_vcf_files_paired )]
+wasp_wig_files_paired = processed_files[grepl('.wasp.7.split.filtered.wig',processed_files  )]
+
+length(wasp_vcf_files_paired)
+length(wasp_wig_files_paired)
+
+head(wasp_vcf_files_paired)
+
+#There are a handful of missing vcfs
+
+wig_samples_7 = sapply(strsplit(wasp_wig_files_paired, split = '.', fixed = T), '[[', 1)
+vcf_samples_7 = sapply(strsplit(wasp_vcf_files_paired, split = '.', fixed = T), '[[', 1)
+
+shared_samples = intersect(wig_samples_7, vcf_samples_7)
+wasp_wig_files_paired = wasp_wig_files_paired[wig_samples_7 %in% shared_samples]
+wasp_vcf_files_paired = wasp_vcf_files_paired[vcf_samples_7 %in% shared_samples]
+wig_samples_7 = wig_samples_7[wig_samples_7 %in% shared_samples]
+vcf_samples_7 = vcf_samples_7[vcf_samples_7 %in% shared_samples]
+
+length(wig_samples_7)
+length(vcf_samples_7)
+
+
+table(wig_samples_7 == vcf_samples_7)
+
+
+wasp_vcf_files_paired = paste('/grid/gillis/home/hover/work/cmxci.gtex.8/Homo_sapiens/',wasp_vcf_files_paired, sep = '')
+
+wasp_wig_files_paired = paste('/grid/gillis/home/hover/work/cmxci.gtex.8/Homo_sapiens/',wasp_wig_files_paired, sep = '')
+
+wasp_vcf_files_chr7 = wasp_vcf_files_paired
+wasp_wig_files_chr7 = wasp_wig_files_paired
+
+length(wasp_vcf_files_chr7)
+
+
+
+#Version 7 has slightly differently named files
+processed_files_v7 = list.files('/grid/gillis/home/hover/work/cmxci.gtex.7.2/Homo_sapiens')
+wasp_vcf_files_paired_v7 = processed_files_v7[grepl('.wasp.chr7.snps_filtered.vcf',processed_files_v7  )]
+#Ignore the .vcf.idx files
+wasp_vcf_files_paired_v7 = wasp_vcf_files_paired_v7[!grepl('.idx',wasp_vcf_files_paired_v7 )]
+wasp_wig_files_paired_v7 = processed_files_v7[grepl('.wasp.chr7.split.filtered.wig',processed_files_v7  )]
+
+length(wasp_vcf_files_paired_v7)
+length(wasp_wig_files_paired_v7)
+
+head(wasp_vcf_files_paired_v7)
+
+#There are a handful of missing vcfs
+
+wig_samples_7_v7 = sapply(strsplit(wasp_wig_files_paired_v7, split = '.', fixed = T), '[[', 1)
+vcf_samples_7_v7 = sapply(strsplit(wasp_vcf_files_paired_v7, split = '.', fixed = T), '[[', 1)
+
+shared_samples_v7 = intersect(wig_samples_7_v7, vcf_samples_7_v7)
+wasp_wig_files_paired_v7 = wasp_wig_files_paired_v7[wig_samples_7_v7 %in% shared_samples_v7]
+wasp_vcf_files_paired_v7 = wasp_vcf_files_paired_v7[vcf_samples_7_v7 %in% shared_samples_v7]
+wig_samples_7_v7 = wig_samples_7_v7[wig_samples_7_v7 %in% shared_samples_v7]
+vcf_samples_7_v7 = vcf_samples_7_v7[vcf_samples_7_v7 %in% shared_samples_v7]
+
+length(wig_samples_7_v7)
+length(vcf_samples_7_v7)
+
+
+table(wig_samples_7_v7 == vcf_samples_7_v7)
+
+
+wasp_vcf_files_paired_v7 = paste('/grid/gillis/home/hover/work/cmxci.gtex.7.2/Homo_sapiens/',wasp_vcf_files_paired_v7, sep = '')
+
+wasp_wig_files_paired_v7 = paste('/grid/gillis/home/hover/work/cmxci.gtex.7.2/Homo_sapiens/',wasp_wig_files_paired_v7, sep = '')
+
+
+#Add all the files
+wasp_vcf_files_chr7 = c(wasp_vcf_files_chr7, wasp_vcf_files_paired_v7)
+wasp_wig_files_chr7 = c(wasp_wig_files_chr7, wasp_wig_files_paired_v7)
+
+wig_samples_7 = c(wig_samples_7, wig_samples_7_v7)
+vcf_samples_7 = c(vcf_samples_7, vcf_samples_7_v7)
+```
+
+```{r}
+
+processed_files = list.files('/grid/gillis/home/hover/work/cmxci.gtex.8/Homo_sapiens')
+wasp_vcf_files_paired = processed_files[grepl('.wasp.8.snps_filtered.vcf',processed_files  )]
+#Ignore the .vcf.idx files
+wasp_vcf_files_paired = wasp_vcf_files_paired[!grepl('.idx',wasp_vcf_files_paired )]
+wasp_wig_files_paired = processed_files[grepl('.wasp.8.split.filtered.wig',processed_files  )]
+
+length(wasp_vcf_files_paired)
+length(wasp_wig_files_paired)
+
+head(wasp_vcf_files_paired)
+
+#There are a handful of missing vcfs
+
+wig_samples_8 = sapply(strsplit(wasp_wig_files_paired, split = '.', fixed = T), '[[', 1)
+vcf_samples_8 = sapply(strsplit(wasp_vcf_files_paired, split = '.', fixed = T), '[[', 1)
+
+shared_samples = intersect(wig_samples_8, vcf_samples_8)
+wasp_wig_files_paired = wasp_wig_files_paired[wig_samples_8 %in% shared_samples]
+wasp_vcf_files_paired = wasp_vcf_files_paired[vcf_samples_8 %in% shared_samples]
+wig_samples_8 = wig_samples_8[wig_samples_8 %in% shared_samples]
+vcf_samples_8 = vcf_samples_8[vcf_samples_8 %in% shared_samples]
+
+length(wig_samples_8)
+length(vcf_samples_8)
+
+
+table(wig_samples_8 == vcf_samples_8)
+
+
+wasp_vcf_files_paired = paste('/grid/gillis/home/hover/work/cmxci.gtex.8/Homo_sapiens/',wasp_vcf_files_paired, sep = '')
+
+wasp_wig_files_paired = paste('/grid/gillis/home/hover/work/cmxci.gtex.8/Homo_sapiens/',wasp_wig_files_paired, sep = '')
+
+wasp_vcf_files_chr8 = wasp_vcf_files_paired
+wasp_wig_files_chr8 = wasp_wig_files_paired
+
+length(wasp_vcf_files_chr8)
+
+
+
+#Version 7 has slightly differently named files
+wasp_vcf_files_paired_v7 = processed_files_v7[grepl('.wasp.chr8.snps_filtered.vcf',processed_files_v7  )]
+#Ignore the .vcf.idx files
+wasp_vcf_files_paired_v7 = wasp_vcf_files_paired_v7[!grepl('.idx',wasp_vcf_files_paired_v7 )]
+wasp_wig_files_paired_v7 = processed_files_v7[grepl('.wasp.chr8.split.filtered.wig',processed_files_v7  )]
+
+length(wasp_vcf_files_paired_v7)
+length(wasp_wig_files_paired_v7)
+
+head(wasp_vcf_files_paired_v7)
+
+#There are a handful of missing vcfs
+
+wig_samples_8_v7 = sapply(strsplit(wasp_wig_files_paired_v7, split = '.', fixed = T), '[[', 1)
+vcf_samples_8_v7 = sapply(strsplit(wasp_vcf_files_paired_v7, split = '.', fixed = T), '[[', 1)
+
+shared_samples_v7 = intersect(wig_samples_8_v7, vcf_samples_8_v7)
+wasp_wig_files_paired_v7 = wasp_wig_files_paired_v7[wig_samples_8_v7 %in% shared_samples_v7]
+wasp_vcf_files_paired_v7 = wasp_vcf_files_paired_v7[vcf_samples_8_v7 %in% shared_samples_v7]
+wig_samples_8_v7 = wig_samples_8_v7[wig_samples_8_v7 %in% shared_samples_v7]
+vcf_samples_8_v7 = vcf_samples_8_v7[vcf_samples_8_v7 %in% shared_samples_v7]
+
+length(wig_samples_8_v7)
+length(vcf_samples_8_v7)
+
+
+table(wig_samples_8_v7 == vcf_samples_8_v7)
+
+
+wasp_vcf_files_paired_v7 = paste('/grid/gillis/home/hover/work/cmxci.gtex.7.2/Homo_sapiens/',wasp_vcf_files_paired_v7, sep = '')
+
+wasp_wig_files_paired_v7 = paste('/grid/gillis/home/hover/work/cmxci.gtex.7.2/Homo_sapiens/',wasp_wig_files_paired_v7, sep = '')
+
+
+#Add all the files
+wasp_vcf_files_chr8 = c(wasp_vcf_files_chr8, wasp_vcf_files_paired_v7)
+wasp_wig_files_chr8 = c(wasp_wig_files_chr8, wasp_wig_files_paired_v7)
+
+wig_samples_8 = c(wig_samples_8, wig_samples_8_v7)
+vcf_samples_8 = c(vcf_samples_8, vcf_samples_8_v7)
+
+```
+
+
+Function for merging the wig and vcf info, filtering for heterozygous SNPs with 2 alleles and a minimum of 10 reads per allele
+
+```{r}
+source('get_exp_vcf.R')
+
+```
+
+
+```{r}
+Sys.time()
+wasp_filt_vcf_chr7 = mclapply(1:length(wasp_vcf_files_chr7), function(i) get_exp_vcf(vcf_file_path = wasp_vcf_files_chr7[i], 
+                                                                           wig_file_path = wasp_wig_files_chr7[i]), mc.cores = 10)
+Sys.time()
+head(wasp_filt_vcf_chr7)
+length(wasp_filt_vcf_chr7)
+
+
+Sys.time()
+wasp_filt_vcf_chr8 = mclapply(1:length(wasp_vcf_files_chr8), function(i) get_exp_vcf(vcf_file_path = wasp_vcf_files_chr8[i], 
+                                                                           wig_file_path = wasp_wig_files_chr8[i]), mc.cores = 10)
+Sys.time()
+
+head(wasp_filt_vcf_chr8)
+length(wasp_filt_vcf_chr8)
+
+```
+
+```{r}
+
+length(wasp_filt_vcf_chr7)
+length(wasp_filt_vcf_chr8)
+
+```
+
+
+
+
+
+Number of filtered SNPs kept
+```{r}
+
+num_snps = vector(mode = 'numeric', length = length(wasp_filt_vcf_chr7))
+
+for(i in 1:length(wasp_filt_vcf_chr7)){
+  data = wasp_filt_vcf_chr7[[i]]
+  
+  if(is.null(dim(data))){
+    num_snps[i] = 0
+  }else{num_snps[i] = dim(data)[1]}
+}
+
+hist(num_snps)
+
+
+num_snps = vector(mode = 'numeric', length = length(wasp_filt_vcf_chr8))
+
+for(i in 1:length(wasp_filt_vcf_chr8)){
+  data = wasp_filt_vcf_chr8[[i]]
+  
+  if(is.null(dim(data))){
+    num_snps[i] = 0
+  }else{num_snps[i] = dim(data)[1]}
+}
+
+hist(num_snps)
+
+
+```
+
+
+Getting the genome annotations
+
+
+```{r}
+
+human_gtf = rtracklayer::import('/home/werner/projects/cross_species_XCI/genomes/Homo_sapiens/refseq.GRCh38.p14/annotation.gtf')
+human_gtf = as.data.frame(human_gtf)
+
+#Genome specific 7 chromosome name
+human_7_chrom_name = readLines('/home/werner/projects/cross_species_XCI/genomes/Homo_sapiens/refseq.GRCh38.p14/7label.txt', n = 1)
+
+human_7_gtf = human_gtf[human_gtf$seqnames == human_7_chrom_name, ]
+
+human_7_genenames = unique(human_7_gtf$gene)
+length(human_7_genenames)
+
+#Genome specific 8 chromosome name
+human_8_chrom_name = readLines('/home/werner/projects/cross_species_XCI/genomes/Homo_sapiens/refseq.GRCh38.p14/8label.txt', n = 1)
+
+human_8_gtf = human_gtf[human_gtf$seqnames == human_8_chrom_name, ]
+
+human_8_genenames = unique(human_8_gtf$gene)
+length(human_8_genenames)
+```
+
+
+number of protein coding genes on the X and Y
+```{r}
+#Genome specific X chromosome name
+human_X_chrom_name = readLines('/home/werner/projects/cross_species_XCI/genomes/Homo_sapiens/refseq.GRCh38.p14/Xlabel.txt', n = 1)
+
+human_X_gtf = human_gtf[human_gtf$seqnames == human_X_chrom_name, ]
+
+human_X_genenames = unique(human_X_gtf$gene)
+length(human_X_genenames)
+
+human_X_genenames = unique(human_X_gtf$gene[human_X_gtf$gene_biotype == 'protein_coding'])
+length(human_X_genenames)
+
+
+#Genome specific Y chromosome name
+human_Y_chrom_name = readLines('/home/werner/projects/cross_species_XCI/genomes/Homo_sapiens/refseq.GRCh38.p14/Ylabel.txt', n = 1)
+
+human_Y_gtf = human_gtf[human_gtf$seqnames == human_Y_chrom_name, ]
+
+human_Y_genenames = unique(human_Y_gtf$gene)
+length(human_Y_genenames)
+
+human_Y_genenames = unique(human_Y_gtf$gene[human_Y_gtf$gene_biotype == 'protein_coding'])
+length(human_Y_genenames)
+
+```
+
+
+
+
+
+Adding gene annotations to each sample
+
+
+```{r}
+human_7_meta = human_7_gtf[human_7_gtf$gbkey == 'Gene',]
+human_7_meta = human_7_meta[!is.na(human_7_meta$gbkey), ] #A lot of NA entries in the human GTF file
+human_7_meta = human_7_meta[!duplicated(human_7_meta$gene), ]
+gene_starts_7 = human_7_meta$start
+gene_ends_7 = human_7_meta$end
+
+
+annot_human_vcfs_chr7 = wasp_filt_vcf_chr7
+
+for(j in 1:length(annot_human_vcfs_chr7)){
+  test = annot_human_vcfs_chr7[[j]]
+  if(is.null(dim(test)) | nrow(test) ==0){next}
+  
+  
+  gene_annots = vector(mode = 'character', length = length(test$Pos))
+  gene_biotype = vector(mode = 'character', length = length(test$Pos))
+  for( i in 1:dim(test)[1]){
+  
+    test_gene_start = test$Pos[i]
+    test_gene_start = test$Pos[i]
+    gene_index = findInterval(test_gene_start, gene_starts_7)
+    if(gene_index == 0){next}
+    
+    if(test_gene_start <= gene_ends_7[gene_index]){
+      
+      gene_annots[i] = human_7_meta$gene[gene_index]
+      gene_biotype[i] = human_7_meta$gene_biotype[gene_index]
+    }
+  }
+  
+  test$gene = gene_annots
+  test$gene_biotype = gene_biotype
+  annot_human_vcfs_chr7[[j]] = test
+}
+
+head(annot_human_vcfs_chr7)
+
+```
+
+
+
+```{r}
+
+save(annot_human_vcfs_chr7, file = '/home/werner/projects/cross_species_XCI/data/species_data_analysis/homo_sapiens/chr7/all_snp_vcf_7_11_23.Rdata')
+```
+
+
+
+```{r}
+human_8_meta = human_8_gtf[human_8_gtf$gbkey == 'Gene',]
+human_8_meta = human_8_meta[!is.na(human_8_meta$gbkey), ] #A lot of NA entries in the human GTF file
+human_8_meta = human_8_meta[!duplicated(human_8_meta$gene), ]
+gene_starts_8 = human_8_meta$start
+gene_ends_8 = human_8_meta$end
+
+
+annot_human_vcfs_chr8 = wasp_filt_vcf_chr8
+
+for(j in 1:length(annot_human_vcfs_chr8)){
+  test = annot_human_vcfs_chr8[[j]]
+  if(is.null(dim(test)) | nrow(test) == 0){next}
+  
+  
+  gene_annots = vector(mode = 'character', length = length(test$Pos))
+  gene_biotype = vector(mode = 'character', length = length(test$Pos))
+  for( i in 1:dim(test)[1]){
+  
+    test_gene_start = test$Pos[i]
+    test_gene_start = test$Pos[i]
+    gene_index = findInterval(test_gene_start, gene_starts_8)
+    if(gene_index == 0){next}
+    
+    if(test_gene_start <= gene_ends_8[gene_index]){
+      
+      gene_annots[i] = human_8_meta$gene[gene_index]
+      gene_biotype[i] = human_8_meta$gene_biotype[gene_index]
+    }
+  }
+  
+  test$gene = gene_annots
+  test$gene_biotype = gene_biotype
+  annot_human_vcfs_chr8[[j]] = test
+}
+
+head(annot_human_vcfs_chr8)
+
+```
+
+
+```{r}
+save(annot_human_vcfs_chr8, file = '/home/werner/projects/cross_species_XCI/data/species_data_analysis/homo_sapiens/chr8/all_snp_vcf_7_11_23.Rdata')
+```
+
+
+
+
+
+
+
+
+Looking at global distribution of reference ratios versus read counts for all SNPs
+```{r}
+all_total_counts = c()
+all_ref_ratios = c()
+
+for(i in 1:length(annot_human_vcfs_chr7)){
+
+  data = annot_human_vcfs_chr7[[i]]
+  if(is.null(dim(data))){next}
+  total_counts = data$ref_counts + data$alt_counts
+  ref_ratios = data$ref_counts / total_counts
+  
+  all_total_counts = c(all_total_counts, total_counts)
+  all_ref_ratios = c(all_ref_ratios, ref_ratios)
+
+}
+
+length(all_total_counts)
+
+
+plot(all_ref_ratios, log10(all_total_counts), cex = .5)
+
+
+all_total_counts = c()
+all_ref_ratios = c()
+
+for(i in 1:length(annot_human_vcfs_chr8)){
+
+  data = annot_human_vcfs_chr8[[i]]
+  if(is.null(dim(data))){next}
+  total_counts = data$ref_counts + data$alt_counts
+  ref_ratios = data$ref_counts / total_counts
+  
+  all_total_counts = c(all_total_counts, total_counts)
+  all_ref_ratios = c(all_ref_ratios, ref_ratios)
+
+}
+
+length(all_total_counts)
+
+
+plot(all_ref_ratios, log10(all_total_counts), cex = .5)
+
+
+```
+
+
+Looking at gene specific expression 
+
+
+```{r}
+
+captured_genes = c()
+for( i in 1:length(annot_human_vcfs_chr7)){
+  suppressWarnings(if(is.null(dim(annot_human_vcfs_chr7[[i]]))){next})
+  captured_genes = c(captured_genes, annot_human_vcfs_chr7[[i]]$gene)
+}
+
+captured_genes = unique(captured_genes)
+captured_genes = captured_genes[captured_genes != ""]
+
+length(captured_genes)
+```
+
+
+```{r}
+for(i in 1:100){
+  
+  current_gene = captured_genes[i]
+  
+  gene_ref_exp = c()
+  for(j in 1:length(annot_human_vcfs_chr7)){
+    suppressWarnings(if(is.null(dim(annot_human_vcfs_chr7[[j]]))){next})
+    gene_index = annot_human_vcfs_chr7[[j]]$gene == current_gene
+    ref_counts = annot_human_vcfs_chr7[[j]]$ref_counts[gene_index]
+    alt_counts = annot_human_vcfs_chr7[[j]]$alt_counts[gene_index]
+    total_counts = ref_counts + alt_counts
+    gene_ref_exp = c(gene_ref_exp, ref_counts / total_counts )
+
+  }
+  
+  
+  hist(gene_ref_exp, main = current_gene, xlim = c(0,1), breaks = seq(0,1, .025))  
+  
+}
+
+```
+
+
+chr8
+
+
+```{r}
+
+captured_genes = c()
+for( i in 1:length(annot_human_vcfs_chr8)){
+  suppressWarnings(if(is.null(dim(annot_human_vcfs_chr8[[i]]))){next})
+  captured_genes = c(captured_genes, annot_human_vcfs_chr8[[i]]$gene)
+}
+
+captured_genes = unique(captured_genes)
+captured_genes = captured_genes[captured_genes != ""]
+
+length(captured_genes)
+```
+
+
+```{r}
+for(i in 1:100){
+  
+  current_gene = captured_genes[i]
+  
+  gene_ref_exp = c()
+  for(j in 1:length(annot_human_vcfs_chr8)){
+    suppressWarnings(if(is.null(dim(annot_human_vcfs_chr8[[j]]))){next})
+    gene_index = annot_human_vcfs_chr8[[j]]$gene == current_gene
+    ref_counts = annot_human_vcfs_chr8[[j]]$ref_counts[gene_index]
+    alt_counts = annot_human_vcfs_chr8[[j]]$alt_counts[gene_index]
+    total_counts = ref_counts + alt_counts
+    gene_ref_exp = c(gene_ref_exp, ref_counts / total_counts )
+
+  }
+  
+  
+  hist(gene_ref_exp, main = current_gene, xlim = c(0,1), breaks = seq(0,1, .025))  
+  
+}
+
+```
+
+
+
+chr7
+
+```{r}
+
+captured_SNPs = c()
+for( i in 1:length(annot_human_vcfs_chr7)){
+  suppressWarnings(if(is.null(dim(annot_human_vcfs_chr7[[i]]))){next})
+  captured_SNPs = c(captured_SNPs, annot_human_vcfs_chr7[[i]]$Pos)
+}
+
+captured_SNPs = unique(captured_SNPs)
+captured_SNPs = captured_SNPs[captured_SNPs != ""]
+
+length(captured_SNPs)
+```
+
+
+```{r}
+
+snp_stat_df_chr7 = data.frame(snp_pos = integer(length(captured_SNPs)), num_samples_present = integer(length(captured_SNPs)), 
+                         mean_ref_ratio = integer(length(captured_SNPs)), mean_total_counts = integer(length(captured_SNPs)), sd_total_counts = integer(length(captured_SNPs)))
+
+
+
+for(i in 1:length(captured_SNPs)){
+
+  if(i %% 1000 == 0){print(i)}
+  current_SNP = captured_SNPs[i]
+  
+  snp_ref_exp = c()
+  snp_total_reads = c()
+  for(j in 1:length(annot_human_vcfs_chr7)){
+    suppressWarnings(if(is.null(dim(annot_human_vcfs_chr7[[j]]))){next})
+    gene_index = annot_human_vcfs_chr7[[j]]$Pos == current_SNP
+    ref_counts = annot_human_vcfs_chr7[[j]]$ref_counts[gene_index]
+    alt_counts = annot_human_vcfs_chr7[[j]]$alt_counts[gene_index]
+    total_counts = ref_counts + alt_counts
+    snp_ref_exp = c(snp_ref_exp, ref_counts / total_counts )
+    snp_total_reads = c(snp_total_reads, total_counts)
+    
+    
+  }
+  
+  snp_stat_df_chr7$snp_pos[i] = current_SNP
+  snp_stat_df_chr7$num_samples_present[i] = length(snp_ref_exp)
+  snp_stat_df_chr7$mean_ref_ratio[i] = mean(snp_ref_exp)
+  snp_stat_df_chr7$mean_total_counts[i] = mean(snp_total_reads)
+  snp_stat_df_chr7$sd_total_counts[i] = sd(snp_total_reads)
+}
+
+```
+
+
+
+```{r}
+hist(snp_stat_df_chr7$mean_ref_ratio, breaks = seq(0,1,.01))
+hist(snp_stat_df_chr7$num_samples_present)
+par(pty = 's')
+plot(snp_stat_df_chr7$mean_ref_ratio,snp_stat_df_chr7$num_samples_present, cex = .25, xlab = 'Mean reference ratio', 
+     ylab = '# of samples SNP is detected', main = 'Homo sapiens Het SNPs chr7')
+abline(v = .5, col = 'red')
+abline(v = .4, col = 'blue')
+abline(v = .6, col = 'blue')
+```
+
+```{r}
+
+
+snp_stat_df_chr7$filter = !(snp_stat_df_chr7$mean_ref_ratio < .4 | snp_stat_df_chr7$mean_ref_ratio > .6)
+table(snp_stat_df_chr7$filter)
+
+
+```
+
+
+Save the SNP dataframe
+
+```{r}
+
+save(snp_stat_df_chr7, file = '/home/werner/projects/cross_species_XCI/data/species_data_analysis/homo_sapiens/chr7/detected_het_snps_df_7_11_23.Rdata')
+```
+
+```{r}
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/homo_sapiens/chr7/detected_het_snps_df_7_11_23.Rdata')
+
+```
+
+
+
+chr8
+
+```{r}
+
+captured_SNPs = c()
+for( i in 1:length(annot_human_vcfs_chr8)){
+  suppressWarnings(if(is.null(dim(annot_human_vcfs_chr8[[i]]))){next})
+  captured_SNPs = c(captured_SNPs, annot_human_vcfs_chr8[[i]]$Pos)
+}
+
+captured_SNPs = unique(captured_SNPs)
+captured_SNPs = captured_SNPs[captured_SNPs != ""]
+
+length(captured_SNPs)
+```
+
+
+```{r}
+
+snp_stat_df_chr8 = data.frame(snp_pos = integer(length(captured_SNPs)), num_samples_present = integer(length(captured_SNPs)), 
+                         mean_ref_ratio = integer(length(captured_SNPs)), mean_total_counts = integer(length(captured_SNPs)), sd_total_counts = integer(length(captured_SNPs)))
+
+
+
+for(i in 1:length(captured_SNPs)){
+
+  if(i %% 1000 == 0){print(i)}
+  current_SNP = captured_SNPs[i]
+  
+  snp_ref_exp = c()
+  snp_total_reads = c()
+  for(j in 1:length(annot_human_vcfs_chr8)){
+    suppressWarnings(if(is.null(dim(annot_human_vcfs_chr8[[j]]))){next})
+    gene_index = annot_human_vcfs_chr8[[j]]$Pos == current_SNP
+    ref_counts = annot_human_vcfs_chr8[[j]]$ref_counts[gene_index]
+    alt_counts = annot_human_vcfs_chr8[[j]]$alt_counts[gene_index]
+    total_counts = ref_counts + alt_counts
+    snp_ref_exp = c(snp_ref_exp, ref_counts / total_counts )
+    snp_total_reads = c(snp_total_reads, total_counts)
+    
+    
+  }
+  
+  snp_stat_df_chr8$snp_pos[i] = current_SNP
+  snp_stat_df_chr8$num_samples_present[i] = length(snp_ref_exp)
+  snp_stat_df_chr8$mean_ref_ratio[i] = mean(snp_ref_exp)
+  snp_stat_df_chr8$mean_total_counts[i] = mean(snp_total_reads)
+  snp_stat_df_chr8$sd_total_counts[i] = sd(snp_total_reads)
+}
+
+```
+
+
+
+```{r}
+hist(snp_stat_df_chr8$mean_ref_ratio, breaks = seq(0,1,.01))
+hist(snp_stat_df_chr8$num_samples_present)
+par(pty = 's')
+plot(snp_stat_df_chr8$mean_ref_ratio,snp_stat_df_chr8$num_samples_present, cex = .25, xlab = 'Mean reference ratio', 
+     ylab = '# of samples SNP is detected', main = 'Canis lupus familiaris Het SNPs')
+abline(v = .5, col = 'red')
+abline(v = .4, col = 'blue')
+abline(v = .6, col = 'blue')
+```
+
+```{r}
+
+
+snp_stat_df_chr8$filter = !(snp_stat_df_chr8$mean_ref_ratio < .4 | snp_stat_df_chr8$mean_ref_ratio > .6)
+table(snp_stat_df_chr8$filter)
+
+
+```
+
+
+Save the SNP dataframe
+
+```{r}
+
+save(snp_stat_df_chr8, file = '/home/werner/projects/cross_species_XCI/data/species_data_analysis/homo_sapiens/chr8/detected_het_snps_df_7_11_23.Rdata')
+```
+
+```{r}
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/homo_sapiens/chr8/detected_het_snps_df_7_11_23.Rdata')
+
+```
+
+
+
+
+
+
+
+
+Filtering the vcfs for only annotated genes and the max powered SNP per gene
+chr7
+
+```{r}
+filt_human_vcfs_chr7 = annot_human_vcfs_chr7
+
+for(i in 1:length(filt_human_vcfs_chr7)){
+  test = filt_human_vcfs_chr7[[i]]
+  suppressWarnings(if(is.null(dim(test))){next})
+  #Get rid of SNPs in nonannotated genes
+  test = test[test$gene != "", ]
+  suppressWarnings(if(dim(test)[1] == 0){filt_human_vcfs_chr7[[i]] = NA; next})
+
+  #Get the unique number of genes
+  sample_genes = unique(test$gene)
+  test_2 = data.frame(matrix(NA, 
+                             nrow = length(sample_genes), 
+                             ncol = dim(test)[2]))
+  colnames(test_2) = colnames(test)
+  
+  
+  for(j in 1:length(sample_genes)){
+    
+    current_gene_data = test[test$gene == sample_genes[j], ]
+    if(dim(current_gene_data)[1] == 1){
+      test_2[j, ] = current_gene_data
+    }else{
+      
+      current_tot_exp = current_gene_data$ref_counts + current_gene_data$alt_counts
+      test_2[j, ] = current_gene_data[which.max(current_tot_exp), ]
+    }
+  }
+
+  filt_human_vcfs_chr7[[i]] = test_2
+}
+
+```
+
+
+
+save the filtered vcf list
+
+```{r}
+
+save(filt_human_vcfs_chr7, file = '/home/werner/projects/cross_species_XCI/data/species_data_analysis/homo_sapiens/chr7/max_snp_vcf_7_11_23.Rdata')
+
+```
+
+```{r}
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/homo_sapiens/chr7/max_snp_vcf_7_11_23.Rdata')
+
+```
+
+
+chr 8
+```{r}
+filt_human_vcfs_chr8 = annot_human_vcfs_chr8
+
+for(i in 1:length(filt_human_vcfs_chr8)){
+  test = filt_human_vcfs_chr8[[i]]
+  suppressWarnings(if(is.null(dim(test))){next})
+  #Get rid of SNPs in nonannotated genes
+  test = test[test$gene != "", ]
+  suppressWarnings(if(dim(test)[1] == 0){filt_human_vcfs_chr8[[i]] = NA; next})
+
+  #Get the unique number of genes
+  sample_genes = unique(test$gene)
+  test_2 = data.frame(matrix(NA, 
+                             nrow = length(sample_genes), 
+                             ncol = dim(test)[2]))
+  colnames(test_2) = colnames(test)
+  
+  
+  for(j in 1:length(sample_genes)){
+    
+    current_gene_data = test[test$gene == sample_genes[j], ]
+    if(dim(current_gene_data)[1] == 1){
+      test_2[j, ] = current_gene_data
+    }else{
+      
+      current_tot_exp = current_gene_data$ref_counts + current_gene_data$alt_counts
+      test_2[j, ] = current_gene_data[which.max(current_tot_exp), ]
+    }
+  }
+
+  filt_human_vcfs_chr8[[i]] = test_2
+}
+
+```
+
+
+
+save the filtered vcf list
+
+```{r}
+
+save(filt_human_vcfs_chr8, file = '/home/werner/projects/cross_species_XCI/data/species_data_analysis/homo_sapiens/chr8/max_snp_vcf_7_11_23.Rdata')
+
+```
+
+```{r}
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/homo_sapiens/chr8/max_snp_vcf_7_11_23.Rdata')
+
+```
+
+
+
+
+
+
+
+```{r}
+num_filt_genes = vector(mode = 'numeric', length = length(filt_human_vcfs_chr7))
+for(i in 1:length(filt_human_vcfs_chr7)){
+  
+  suppressWarnings(if(is.null(dim(filt_human_vcfs_chr7[[i]]))){
+    num_filt_genes[i] = 0
+    next
+    
+  })
+  
+  num_filt_genes[i] = sum(filt_human_vcfs_chr7[[i]]$Pos %in% snp_stat_df_chr7$snp_pos[snp_stat_df_chr7$filter])
+
+}
+
+hist(num_filt_genes)
+sum(num_filt_genes >= 10)
+
+
+num_filt_genes = vector(mode = 'numeric', length = length(filt_human_vcfs_chr8))
+for(i in 1:length(filt_human_vcfs_chr8)){
+  
+  suppressWarnings(if(is.null(dim(filt_human_vcfs_chr8[[i]]))){
+    num_filt_genes[i] = 0
+    next
+    
+  })
+  
+  num_filt_genes[i] = sum(filt_human_vcfs_chr8[[i]]$Pos %in% snp_stat_df_chr8$snp_pos[snp_stat_df_chr8$filter])
+
+}
+
+hist(num_filt_genes)
+sum(num_filt_genes >= 10)
+
+```
+
+
+
+
+look at the SNP distributions, with and without including the potentially reference biased SNPs
+
+
+```{r}
+
+
+index_num_samps = which(num_filt_genes >= 30)
+length(index_num_samps)
+
+
+for(i in 1:length(index_num_samps)){
+
+  data = filt_human_vcfs_chr7[[index_num_samps[i]]]
+  
+  snp_filter = data$Pos %in% snp_stat_df_chr7$snp_pos[snp_stat_df_chr7$filter]
+  
+  total_exp = data$ref_counts + data$alt_counts
+  ref_ratios_filt = data$ref_counts[snp_filter] / total_exp[snp_filter]
+  ref_ratios = data$ref_counts / total_exp
+
+  
+  hist(ref_ratios, xlim = c(0,1), breaks = seq(0,1, .025))
+  abline(v = .5, col = 'red')
+  hist(ref_ratios_filt, xlim = c(0,1), breaks = seq(0,1, .025), main = index_num_samps[i])
+  abline(v = .5, col = 'red')
+
+}
+```
+
+
+
+chr8
+
+
+```{r}
+
+
+index_num_samps = which(num_filt_genes >= 30)
+length(index_num_samps)
+
+
+for(i in 1:length(index_num_samps)){
+
+  data = filt_human_vcfs_chr8[[index_num_samps[i]]]
+  
+  snp_filter = data$Pos %in% snp_stat_df_chr8$snp_pos[snp_stat_df_chr8$filter]
+  
+  total_exp = data$ref_counts + data$alt_counts
+  ref_ratios_filt = data$ref_counts[snp_filter] / total_exp[snp_filter]
+  ref_ratios = data$ref_counts / total_exp
+
+  
+  hist(ref_ratios, xlim = c(0,1), breaks = seq(0,1, .025))
+  abline(v = .5, col = 'red')
+  hist(ref_ratios_filt, xlim = c(0,1), breaks = seq(0,1, .025), main = index_num_samps[i])
+  abline(v = .5, col = 'red')
+
+}
+```
+
+
+
+
+
+```{r}
+
+
+# Functions to fold and unfold ratios 
+folded <- function(x) { apply( cbind(x,1-x), 1, max)} 
+unfold <- function(x) { c(x,1-x) } 
+
+
+mle_folded <- function(x){ 
+  mus = seq(0.5,1, by = 0.001)
+  sigmas = seq(0,0.5, by = 0.01)
+  
+  mles = sapply(mus, function(mu)
+    sapply(sigmas, function(sigma)
+      -sum( log(dnorm( x,   mean = mu, sd = sigma )
+                + dnorm( x,   mean = 1-mu, sd = sigma ) )  )))
+  mles[!is.finite(mles)] = NA
+  coefs = which(mles==min(mles, na.rm=T), arr.ind=T)
+  return (list( mus[coefs[2]] , sigmas[coefs[1]]))
+} 
+
+```
+
+
+```{r}
+
+est_skew_func = function(list.skew.max, Ns, ratios.max, snp_stat_df, filter_snps = T){
+  
+  #If there's only 1 or 0 SNPs, don't estimate a skew
+  if(Ns <= 0){return(NA)}
+  
+  #Filter for the good snps
+  if(filter_snps){
+    snp_index = list.skew.max$Pos %in% snp_stat_df$snp_pos[snp_stat_df$filter]
+    #Fold the reference skews
+    folded_ref_skews = folded(ratios.max[snp_index])
+  }else{
+    folded_ref_skews = folded(ratios.max)
+  }
+  #return the mean and sigma estimates
+  return(mle_folded(folded_ref_skews))
+}
+
+
+Ns = vector(mode='numeric', length = length(filt_human_vcfs_chr7))
+
+for(i in 1:length(filt_human_vcfs_chr7)){
+  
+  suppressWarnings(if(is.null(dim(filt_human_vcfs_chr7[[i]]))){Ns[i] = 0}
+  else{Ns[i] = dim(filt_human_vcfs_chr7[[i]])[1]})
+  
+}
+
+
+ratios.max = list()
+for(i in 1: length(filt_human_vcfs_chr7)){
+  
+  if(Ns[i] == 0){next}
+  
+  total_exp = filt_human_vcfs_chr7[[i]]$ref_counts + filt_human_vcfs_chr7[[i]]$alt_counts
+  ref_ratios = filt_human_vcfs_chr7[[i]]$ref_counts / total_exp
+  ratios.max[[i]] = ref_ratios
+
+}
+
+
+
+```
+
+```{r}
+
+Sys.time()
+folded_norm_fits = mclapply(1:length(filt_human_vcfs_chr7), function(i) est_skew_func(filt_human_vcfs_chr7[[i]], Ns[i], ratios.max[[i]], snp_stat_df_chr7), mc.cores = 20)
+Sys.time()
+
+Sys.time()
+folded_norm_fits_bad_snps = mclapply(1:length(filt_human_vcfs_chr7), function(i) est_skew_func(filt_human_vcfs_chr7[[i]], Ns[i], ratios.max[[i]], snp_stat_df_chr7, filter_snps = F), mc.cores = 20)
+Sys.time()
+
+#Grab the skew and variance estimates
+est_skew_chr7 = vector(mode = 'numeric', length = length(folded_norm_fits))
+est_var_chr7 = vector(mode = 'numeric', length = length(folded_norm_fits))
+for(i in 1:length(folded_norm_fits)){
+  
+  if(is.na(folded_norm_fits[i])){
+    est_skew_chr7[i] = NA
+    est_var_chr7[i] = NA
+    next
+  }
+  
+  est_skew_chr7[i] = folded_norm_fits[[i]][[1]]
+  est_var_chr7[i] = folded_norm_fits[[i]][[2]]
+}
+
+#Grab the skew and variance estimates
+est_skew_bad_snps_chr7 = vector(mode = 'numeric', length = length(folded_norm_fits_bad_snps))
+est_var_bad_snps_chr7 = vector(mode = 'numeric', length = length(folded_norm_fits_bad_snps))
+for(i in 1:length(folded_norm_fits_bad_snps)){
+  
+  if(is.na(folded_norm_fits_bad_snps[i])){
+    est_skew_bad_snps_chr7[i] = NA
+    est_var_bad_snps_chr7[i] = NA
+    next
+  }
+  
+  est_skew_bad_snps_chr7[i] = folded_norm_fits_bad_snps[[i]][[1]]
+  est_var_bad_snps_chr7[i] = folded_norm_fits_bad_snps[[i]][[2]]
+}
+
+hist(est_skew_chr7, main = 'human skew estimates filtering out bad SNPs', breaks=seq(.5, 1, .005))
+hist(est_skew_bad_snps_chr7, main = 'human skew estimates filtering out bad SNPs', breaks=seq(.5, 1, .005))
+hist(est_var_chr7, main = 'Variance estimates', breaks = 32)
+plot(est_skew_chr7, est_var_chr7)
+```
+
+
+```{r}
+par(pty = 's')
+plot(est_skew_chr7, est_skew_bad_snps_chr7, cex = .5)
+abline(a = 0, b = 1, col = 'red')
+```
+
+Make a dataframe from with the estimated skew stats
+
+```{r}
+
+num_good_snps_chr7 = vector(length = length(filt_human_vcfs_chr7), mode = 'numeric')
+total_snps_chr7 = vector(length = length(filt_human_vcfs_chr7), mode = 'numeric')
+
+for(i in 1:length(filt_human_vcfs_chr7)){
+  
+  data = filt_human_vcfs_chr7[[i]]
+  suppressWarnings(if(is.null(dim(data))){num_good_snps_chr7[i] = 0; total_snps_chr7[i] = 0; next})
+  
+  snp_filter = data$Pos %in% snp_stat_df_chr7$snp_pos[snp_stat_df_chr7$filter]
+  
+  total_snps_chr7[i] = length(data$Pos)
+  num_good_snps_chr7[i] = length(data$Pos[snp_filter])
+}
+
+plot(total_snps_chr7, num_good_snps_chr7)
+
+```
+
+
+```{r}
+plot(est_skew_chr7, num_good_snps_chr7)
+abline(h = 10, col = 'red')
+
+
+hist(unfold(est_skew_chr7[num_good_snps_chr7 >= 10]), breaks = seq(0,1,.01), xlab = 'Estimated sample skew', main = 'human chromosome 7')
+```
+
+
+
+chr8
+
+
+```{r}
+Ns = vector(mode='numeric', length = length(filt_human_vcfs_chr8))
+
+for(i in 1:length(filt_human_vcfs_chr8)){
+  
+  suppressWarnings(if(is.null(dim(filt_human_vcfs_chr8[[i]]))){Ns[i] = 0}
+  else{Ns[i] = dim(filt_human_vcfs_chr8[[i]])[1]})
+  
+}
+
+
+ratios.max = list()
+for(i in 1: length(filt_human_vcfs_chr8)){
+  
+  if(Ns[i] == 0){next}
+  
+  total_exp = filt_human_vcfs_chr8[[i]]$ref_counts + filt_human_vcfs_chr8[[i]]$alt_counts
+  ref_ratios = filt_human_vcfs_chr8[[i]]$ref_counts / total_exp
+  ratios.max[[i]] = ref_ratios
+
+}
+
+
+```
+
+
+```{r}
+
+Sys.time()
+folded_norm_fits = mclapply(1:length(filt_human_vcfs_chr8), function(i) est_skew_func(filt_human_vcfs_chr8[[i]], Ns[i], ratios.max[[i]], snp_stat_df_chr8), mc.cores = 20)
+Sys.time()
+
+Sys.time()
+folded_norm_fits_bad_snps = mclapply(1:length(filt_human_vcfs_chr8), function(i) est_skew_func(filt_human_vcfs_chr8[[i]], Ns[i], ratios.max[[i]], snp_stat_df_chr8, filter_snps = F), mc.cores = 20)
+Sys.time()
+
+#Grab the skew and variance estimates
+est_skew_chr8 = vector(mode = 'numeric', length = length(folded_norm_fits))
+est_var_chr8 = vector(mode = 'numeric', length = length(folded_norm_fits))
+for(i in 1:length(folded_norm_fits)){
+  
+  if(is.na(folded_norm_fits[i])){
+    est_skew_chr8[i] = NA
+    est_var_chr8[i] = NA
+    next
+  }
+  
+  est_skew_chr8[i] = folded_norm_fits[[i]][[1]]
+  est_var_chr8[i] = folded_norm_fits[[i]][[2]]
+}
+
+#Grab the skew and variance estimates
+est_skew_bad_snps_chr8 = vector(mode = 'numeric', length = length(folded_norm_fits_bad_snps))
+est_var_bad_snps_chr8 = vector(mode = 'numeric', length = length(folded_norm_fits_bad_snps))
+for(i in 1:length(folded_norm_fits_bad_snps)){
+  
+  if(is.na(folded_norm_fits_bad_snps[i])){
+    est_skew_bad_snps_chr8[i] = NA
+    est_var_bad_snps_chr8[i] = NA
+    next
+  }
+  
+  est_skew_bad_snps_chr8[i] = folded_norm_fits_bad_snps[[i]][[1]]
+  est_var_bad_snps_chr8[i] = folded_norm_fits_bad_snps[[i]][[2]]
+}
+
+hist(est_skew_chr8, main = 'human skew estimates filtering out bad SNPs', breaks=seq(.5, 1, .005))
+hist(est_skew_bad_snps_chr8, main = 'human skew estimates filtering out bad SNPs', breaks=seq(.5, 1, .005))
+hist(est_var_chr8, main = 'Variance estimates', breaks = 32)
+plot(est_skew_chr8, est_var_chr8)
+```
+
+```{r}
+par(pty = 's')
+plot(est_skew_chr8, est_skew_bad_snps_chr8, cex = .5)
+abline(a = 0, b = 1, col = 'red')
+```
+
+Make a dataframe from with the estimated skew stats
+
+```{r}
+
+num_good_snps_chr8 = vector(length = length(filt_human_vcfs_chr8), mode = 'numeric')
+total_snps_chr8 = vector(length = length(filt_human_vcfs_chr8), mode = 'numeric')
+
+for(i in 1:length(filt_human_vcfs_chr8)){
+  
+  data = filt_human_vcfs_chr8[[i]]
+  suppressWarnings(if(is.null(dim(data))){num_good_snps_chr8[i] = 0; total_snps_chr8[i] = 0; next})
+  
+  snp_filter = data$Pos %in% snp_stat_df_chr8$snp_pos[snp_stat_df_chr8$filter]
+  
+  total_snps_chr8[i] = length(data$Pos)
+  num_good_snps_chr8[i] = length(data$Pos[snp_filter])
+}
+
+plot(total_snps_chr8, num_good_snps_chr8)
+
+```
+
+
+
+```{r}
+plot(est_skew_chr8, num_good_snps_chr8)
+abline(h = 10, col = 'red')
+
+length(est_skew_chr8[num_good_snps_chr8 >= 10])
+hist(unfold(est_skew_chr8[num_good_snps_chr8 >= 10]), breaks = seq(0,1,.01), xlab = 'Estimated sample skew', main = 'human chromosome 8')
+```
+
+
+######################################
+Looking at the chromosome 7 samples that are supposedly skewed
+What's going on
+
+######################################
+
+
+```{r}
+
+chr7_skewed_index = which(est_skew_chr7 >= .6 & num_good_snps_chr7 >= 10)
+
+all_chr7_skewed_snps = c()
+for(i in 1:length(chr7_skewed_index)){
+  
+  data = filt_human_vcfs_chr7[[chr7_skewed_index[i]]]
+  #data = data[data$Pos %in% snp_stat_df$snp_pos[snp_stat_df$filter], ]
+  ref_ratios = data$ref_counts / (data$ref_counts + data$alt_counts)
+  hist(ref_ratios, breaks = seq(0,1,.025), main = sprintf('Sample index: %i est skew: %0.3f',chr7_skewed_index[i], est_skew_chr7[chr7_skewed_index[i]]))
+  all_chr7_skewed_snps = c(all_chr7_skewed_snps, ref_ratios)
+  
+}
+
+hist(all_chr7_skewed_snps, breaks = seq(0,1,.025), main = 'All compiled SNPs')
+
+
+chr7_Nonskewed_index = which(est_skew_chr7 < .6 & num_good_snps_chr7 >= 10)
+
+all_chr7_Nonskewed_snps = c()
+for(i in 1:length(chr7_Nonskewed_index)){
+  
+  data = filt_human_vcfs_chr7[[chr7_Nonskewed_index[i]]]
+  #data = data[data$Pos %in% snp_stat_df$snp_pos[snp_stat_df$filter], ]
+  ref_ratios = data$ref_counts / (data$ref_counts + data$alt_counts)
+  all_chr7_Nonskewed_snps = c(all_chr7_Nonskewed_snps, ref_ratios)
+  
+}
+
+hist(all_chr7_Nonskewed_snps, breaks = seq(0,1,.025), main = 'All compiled SNPs')
+
+```
+
+
+
+```{r}
+human_chr7_skew_and_stats_df = data.frame(sample_id = wig_samples_7, 
+                                   est_skew = est_skew_chr7, est_var = est_var_chr7,  #Skew estimates filtering out bad genes
+                                   est_skew_total_snps = est_skew_bad_snps_chr7, est_var_total_snps = est_var_bad_snps_chr7,   #Skew estimates with all genes 
+                                   num_good_snps = num_good_snps_chr7, total_snps = total_snps_chr7)
+
+human_chr7_skew_and_stats_df
+```
+
+
+```{r}
+
+save(human_chr7_skew_and_stats_df, file = '/home/werner/projects/cross_species_XCI/data/species_data_analysis/homo_sapiens/chr7/human_chr7_skew_and_stats_df_7_11_23.Rdata')
+```
+
+```{r}
+
+load( '/home/werner/projects/cross_species_XCI/data/species_data_analysis/homo_sapiens/chr7/human_chr7_skew_and_stats_df_7_11_23.Rdata')
+
+```
+
+
+
+
+
+##################################
+
+Looking at chromosome 3 now
+
+check if the same samples that were skewed on chromosome 1 anre skewed on chromosome 3
+
+#################################
+
+
+```{r}
+
+chr8_skewed_index = which(est_skew_chr8 >= .6 & num_good_snps_chr8 >= 10)
+
+all_chr8_skewed_snps = c()
+for(i in 1:length(chr8_skewed_index)){
+  
+  data = filt_human_vcfs_chr8[[chr8_skewed_index[i]]]
+  data = data[data$Pos %in% snp_stat_df_chr8$snp_pos[snp_stat_df_chr8$filter], ]
+  ref_ratios = data$ref_counts / (data$ref_counts + data$alt_counts)
+  hist(ref_ratios, breaks = seq(0,1,.025), main = sprintf('Sample index: %i est skew: %0.3f',chr8_skewed_index[i], est_skew_chr8[chr8_skewed_index[i]]))
+  all_chr8_skewed_snps = c(all_chr8_skewed_snps, ref_ratios)
+  
+}
+
+hist(all_chr8_skewed_snps, breaks = seq(0,1,.025), main = 'All compiled SNPs')
+
+
+chr8_Nonskewed_index = which(est_skew_chr8 < .6 & num_good_snps_chr8 >= 10)
+
+all_chr8_Nonskewed_snps = c()
+for(i in 1:length(chr8_Nonskewed_index)){
+  
+  data = filt_human_vcfs_chr8[[chr8_Nonskewed_index[i]]]
+  data = data[data$Pos %in% snp_stat_df_chr8$snp_pos[snp_stat_df_chr8$filter], ]
+  ref_ratios = data$ref_counts / (data$ref_counts + data$alt_counts)
+  all_chr8_Nonskewed_snps = c(all_chr8_Nonskewed_snps, ref_ratios)
+  
+}
+
+hist(all_chr8_Nonskewed_snps, breaks = seq(0,1,.025), main = 'All compiled SNPs')
+
+```
+
+
+```{r}
+human_chr8_skew_and_stats_df = data.frame(sample_id = wig_samples_8, 
+                                   est_skew = est_skew_chr8, est_var = est_var_chr8,  #Skew estimates filtering out bad genes
+                                   est_skew_total_snps = est_skew_bad_snps_chr8, est_var_total_snps = est_var_bad_snps_chr8,   #Skew estimates with all genes 
+                                   num_good_snps = num_good_snps_chr8, total_snps = total_snps_chr8)
+
+human_chr8_skew_and_stats_df
+```
+
+
+```{r}
+
+save(human_chr8_skew_and_stats_df, file = '/home/werner/projects/cross_species_XCI/data/species_data_analysis/homo_sapiens/chr8/human_chr8_skew_and_stats_df_7_11_23.Rdata')
+```
+
+```{r}
+
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/homo_sapiens/chr8/human_chr8_skew_and_stats_df_7_11_23.Rdata')
+
+```
+
+
+################################
+Compare across the chromosomes and see if the same samples are throwing the skewed estimates
+################################
+
+
+
+```{r}
+
+chr7_weird_samps = human_chr7_skew_and_stats_df$sample_id[human_chr7_skew_and_stats_df$est_skew >= .6 & human_chr7_skew_and_stats_df$num_good_snps >= 10]
+
+chr8_weird_samps = human_chr8_skew_and_stats_df$sample_id[human_chr8_skew_and_stats_df$est_skew >= .6 & human_chr8_skew_and_stats_df$num_good_snps >= 10]
+
+
+index = match(human_chr8_skew_and_stats_df$sample_id, human_chr7_skew_and_stats_df$sample_id )
+#Reorder to match chromosome 8
+human_chr7_skew_and_stats_df = human_chr7_skew_and_stats_df[index, ]
+```
+
+
+```{r}
+par(pty = 's')
+plot(human_chr7_skew_and_stats_df$est_skew, human_chr8_skew_and_stats_df$est_skew, xlim = c(.5, 1), ylim = c(.5, 1))
+abline(a = 0, b = 1, col ='red' )
+
+
+num_snp_index = human_chr7_skew_and_stats_df$num_good_snps >= 10 & human_chr8_skew_and_stats_df$num_good_snps >= 10
+plot(human_chr7_skew_and_stats_df$est_skew[num_snp_index], human_chr8_skew_and_stats_df$est_skew[num_snp_index], xlab = 'chr7 estimated skew', 
+     ylab = 'chr8 estimated skew', main = 'human autosome skew estimates')
+abline(a = 0, b = 1, col ='red' )
+```
+
+
+
+
+
+
+
+
+
+

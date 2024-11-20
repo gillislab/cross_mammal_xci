@@ -1,0 +1,2538 @@
+
+
+Analysis to quantify the relationship between XCI ratios and individual variants
+Quantify with an AUROC, ranking on the XCI ratios and calling the samples with any given individual variant as the positives
+
+```{r}
+library(ggplot2)
+library(dplyr)
+library(MetBrewer)
+library(ggrepel)
+library(parallel)
+library(stringr)
+```
+
+
+get colors for the species
+
+```{r}
+
+species_colors = met.brewer("Tiepolo", n=10,type="continuous")
+
+#Going by the ranking of estimated cell counts
+species_palette = c('Macaca' = species_colors[1], 'Rat' = species_colors[2], 'Pig' = species_colors[3],
+                    'Goat' = species_colors[4], 'Horse' = species_colors[5], 'Sheep' = species_colors[6],
+                    'Human' = species_colors[8], 'Mouse' = species_colors[7], 'Cow' = species_colors[9], 'Dog' = species_colors[10])
+
+species_palette
+
+```
+
+
+skew and stat dataframes with escape bins filtered and the autosome filter
+```{r}
+
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/equus_caballus/horse_skew_and_stats_autoFilt_df_7_12_23.Rdata')
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/bos_taurus/cow_skew_and_stats_autoFilt_df_7_12_23.Rdata')
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/sus_scrofa/pig_skew_and_stats_autoFilt_df_7_12_23.Rdata')
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/ovis_aries/sheep_skew_and_stats_autoFilt_df_7_12_23.Rdata')
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/capra_hircus/goat_skew_and_stats_autoFilt_df_7_12_23.Rdata')
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/macaca_mulatta/macaca_skew_and_stats_autoFilt_df_7_12_23.Rdata')
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/rattus_norvegicus/rat_skew_and_stats_autoFilt_df_7_12_23.Rdata')
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/canis_lupus_familiaris/dog_skew_and_stats_autoFilt_df_7_12_23.Rdata')
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/mus_musculus/mouse_skew_and_stats_autoFilt_df_4_22_24.Rdata')
+```
+
+
+human data
+```{r}
+
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/homo_sapiens/human_skew_and_stats_autoFilt_df_7_12_23.Rdata')
+dim(human_skew_and_stats_df)
+```
+
+
+snp stat dataframes
+```{r}
+x = load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/canis_lupus_familiaris/detected_het_snps_df_3_15_23.Rdata')
+dog_snp_stat_df = get(x)
+
+x = load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/equus_caballus/detected_het_snps_df_3_15_23.Rdata')
+horse_snp_stat_df = get(x)
+
+x = load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/bos_taurus/detected_het_snps_df_3_15_23.Rdata')
+cow_snp_stat_df = get(x)
+
+x = load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/ovis_aries/detected_het_snps_df_3_15_23.Rdata')
+sheep_snp_stat_df = get(x)
+
+x = load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/capra_hircus/detected_het_snps_df_3_15_23.Rdata')
+goat_snp_stat_df = get(x)
+
+x = load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/rattus_norvegicus/detected_het_snps_df_3_15_23.Rdata')
+rat_snp_stat_df = get(x)
+
+x = load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/macaca_mulatta/detected_het_snps_df_3_15_23.Rdata')
+macaca_snp_stat_df = get(x)
+
+x = load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/sus_scrofa/detected_het_snps_df_3_15_23.Rdata')
+pig_snp_stat_df = get(x)
+
+x = load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/mus_musculus/detected_het_snps_df_4_22_24.Rdata')
+mouse_snp_stat_df = get(x)
+
+x = load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/homo_sapiens/detected_het_snps_df_8_3_23.Rdata')
+human_snp_stat_df = get(x)
+
+```
+
+
+vcfs with the annotated snp ratios
+
+```{r}
+#Dog variants
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/canis_lupus_familiaris/all_snp_vcf_3_15_23.Rdata')
+#Horse variants
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/equus_caballus/all_snp_vcf_3_15_23.Rdata')
+#Cow variants
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/bos_taurus/all_snp_vcf_3_15_23.Rdata')
+#Sheep variants
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/ovis_aries/all_snp_vcf_3_15_23.Rdata')
+#Goat variants
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/capra_hircus/all_snp_vcf_3_15_23.Rdata')
+#Rat variants
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/rattus_norvegicus/all_snp_vcf_3_15_23.Rdata')
+#Macaca variants
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/macaca_mulatta/all_snp_vcf_3_15_23.Rdata')
+#Pig variants
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/sus_scrofa/all_snp_vcf_3_15_23.Rdata')
+
+#Mouse variants
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/mus_musculus/all_snp_vcf_4_22_24.Rdata')
+
+#Human
+#All the detected snps from the GTEx data
+#in the list.vcf object
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/homo_sapiens/all_v8_GATK_mod.Rdata')
+
+```
+
+
+
+```{r}
+
+length(annot_cow_vcfs)
+cow_skew_and_stats_df
+cow_snp_stat_df
+```
+
+
+
+```{r}
+#Dog genome
+dog_gtf = rtracklayer::import('/home/werner/projects/cross_species_XCI/genomes/Canis_lupus_familiaris/annotation.gtf')
+dog_gtf = as.data.frame(dog_gtf)
+#Genome specific x chromosome name
+dog_x_chrom_name = readLines('/home/werner/projects/cross_species_XCI/genomes/Canis_lupus_familiaris/chrXlabel.txt', n = 1)
+dog_x_gtf = dog_gtf[dog_gtf$seqnames == dog_x_chrom_name, ]
+dog_x_genenames = unique(dog_x_gtf$gene)
+
+dog_chromX_end = max(dog_x_gtf$end)
+
+dog_x_meta = dog_x_gtf[dog_x_gtf$gbkey == 'Gene',]
+dog_x_meta = dog_x_meta[!is.na(dog_x_meta$gbkey), ] #A lot of NA entries in the dog GTF file
+dog_x_meta = dog_x_meta[!duplicated(dog_x_meta$gene), ]
+
+
+
+#Horse genome
+horse_gtf = rtracklayer::import('/home/werner/projects/cross_species_XCI/genomes/Equus_caballus/annotation.gtf')
+horse_gtf = as.data.frame(horse_gtf)
+
+#Genome specific x chromosome name
+horse_x_chrom_name = readLines('/home/werner/projects/cross_species_XCI/genomes/Equus_caballus/chrXlabel.txt', n = 1)
+horse_x_gtf = horse_gtf[horse_gtf$seqnames == horse_x_chrom_name, ]
+horse_x_genenames = unique(horse_x_gtf$gene)
+horse_chromX_end = max(horse_x_gtf$end)
+
+horse_x_meta = horse_x_gtf[horse_x_gtf$gbkey == 'Gene',]
+
+
+
+#Cow genome
+cow_gtf = rtracklayer::import('/home/werner/projects/cross_species_XCI/genomes/Bos_taurus/annotation.gtf')
+cow_gtf = as.data.frame(cow_gtf)
+
+#Genome specific x chromosome name
+cow_x_chrom_name = readLines('/home/werner/projects/cross_species_XCI/genomes/Bos_taurus/chrXlabel.txt', n = 1)
+cow_x_gtf = cow_gtf[cow_gtf$seqnames == cow_x_chrom_name, ]
+cow_x_genenames = unique(cow_x_gtf$gene)
+cow_chromX_end = max(cow_x_gtf$end)
+
+cow_x_meta = cow_x_gtf[cow_x_gtf$gbkey == 'Gene',]
+
+
+
+#Sheep genome
+sheep_gtf = rtracklayer::import('/home/werner/projects/cross_species_XCI/genomes/Ovis_aries/annotation.gtf')
+sheep_gtf = as.data.frame(sheep_gtf)
+
+#Genome specific x chromosome name
+sheep_x_chrom_name = readLines('/home/werner/projects/cross_species_XCI/genomes/Ovis_aries/chrXlabel.txt', n = 1)
+sheep_x_gtf = sheep_gtf[sheep_gtf$seqnames == sheep_x_chrom_name, ]
+sheep_x_genenames = unique(sheep_x_gtf$gene)
+sheep_chromX_end = max(sheep_x_gtf$end)
+
+sheep_x_meta = sheep_x_gtf[sheep_x_gtf$gbkey == 'Gene',]
+sheep_x_meta = sheep_x_meta[!is.na(sheep_x_meta$gbkey), ] #A lot of NA entries in the sheep GTF file
+sheep_x_meta = sheep_x_meta[!duplicated(sheep_x_meta$gene), ]
+
+
+
+#Goat genome
+goat_gtf = rtracklayer::import('/home/werner/projects/cross_species_XCI/genomes/Capra_hircus/annotation.gtf')
+goat_gtf = as.data.frame(goat_gtf)
+
+#Genome specific x chromosome name
+goat_x_chrom_name = readLines('/home/werner/projects/cross_species_XCI/genomes/Capra_hircus/chrXlabel.txt', n = 1)
+goat_x_gtf = goat_gtf[goat_gtf$seqnames == goat_x_chrom_name, ]
+goat_x_genenames = unique(goat_x_gtf$gene)
+goat_chromX_end = max(goat_x_gtf$end)
+
+goat_x_meta = goat_x_gtf[goat_x_gtf$gbkey == 'Gene',]
+
+
+
+#Pig genome
+pig_gtf = rtracklayer::import('/home/werner/projects/cross_species_XCI/genomes/Sus_scrofa/annotation.gtf')
+pig_gtf = as.data.frame(pig_gtf)
+
+#Genome specific x chromosome name
+pig_x_chrom_name = readLines('/home/werner/projects/cross_species_XCI/genomes/Sus_scrofa/chrXlabel.txt', n = 1)
+pig_x_gtf = pig_gtf[pig_gtf$seqnames == pig_x_chrom_name, ]
+pig_x_genenames = unique(pig_x_gtf$gene)
+pig_chromX_end = max(pig_x_gtf$end)
+
+pig_x_meta = pig_x_gtf[pig_x_gtf$gbkey == 'Gene',]
+
+
+
+#Macaca genome
+macaca_gtf = rtracklayer::import('/home/werner/projects/cross_species_XCI/genomes/Macaca_mulatta/annotation.gtf')
+macaca_gtf = as.data.frame(macaca_gtf)
+
+#Genome specific x chromosome name
+macaca_x_chrom_name = readLines('/home/werner/projects/cross_species_XCI/genomes/Macaca_mulatta/chrXlabel.txt', n = 1)
+macaca_x_gtf = macaca_gtf[macaca_gtf$seqnames == macaca_x_chrom_name, ]
+macaca_x_genenames = unique(macaca_x_gtf$gene)
+macaca_chromX_end = max(macaca_x_gtf$end)
+
+macaca_x_meta = macaca_x_gtf[macaca_x_gtf$gbkey == 'Gene',]
+
+
+
+#Rat genome
+rat_gtf = rtracklayer::import('/home/werner/projects/cross_species_XCI/genomes/Rattus_norvegicus/annotation.gtf')
+rat_gtf = as.data.frame(rat_gtf)
+
+#Genome specific x chromosome name
+rat_x_chrom_name = readLines('/home/werner/projects/cross_species_XCI/genomes/Rattus_norvegicus/chrXlabel.txt', n = 1)
+rat_x_gtf = rat_gtf[rat_gtf$seqnames == rat_x_chrom_name, ]
+rat_x_genenames = unique(rat_x_gtf$gene)
+rat_chromX_end = max(rat_x_gtf$end)
+
+rat_x_meta = rat_x_gtf[rat_x_gtf$gbkey == 'Gene',]
+rat_x_meta = rat_x_meta[!is.na(rat_x_meta$gbkey), ] #A lot of NA entries in the rat GTF file
+rat_x_meta = rat_x_meta[!duplicated(rat_x_meta$gene), ]
+
+
+#Mouse genome
+mouse_gtf = rtracklayer::import('/home/werner/projects/cross_species_XCI/genomes/Mus_musculus/GCF_000001635.27_GRCm39_genomic.gtf')
+mouse_gtf = as.data.frame(mouse_gtf)
+
+#Genome specific x chromosome name
+mouse_x_chrom_name = readLines('/home/werner/projects/cross_species_XCI/genomes/Mus_musculus/chrXlabel.txt', n = 1)
+mouse_x_gtf = mouse_gtf[mouse_gtf$seqnames == mouse_x_chrom_name, ]
+mouse_x_genenames = unique(mouse_x_gtf$gene)
+mouse_chromX_end = max(mouse_x_gtf$end)
+
+mouse_x_meta = mouse_x_gtf[mouse_x_gtf$gbkey == 'Gene',]
+
+#Human genome
+human_gtf = rtracklayer::import('/home/werner/projects/cross_species_XCI/genomes/Homo_sapiens/gencode.v25.annotation.gtf')
+human_gtf = as.data.frame(human_gtf)
+human_x_gtf = human_gtf[human_gtf$seqnames == 'chrX', ]
+
+human_x_genenames = unique(human_x_gtf$gene_name)
+human_chromX_end = max(human_x_gtf$end)
+
+human_x_meta = human_x_gtf[human_x_gtf$type== 'gene',]
+
+
+
+```
+
+
+Add gene annotations to the species snp dataframes for ease of use later
+
+```{r}
+#horse
+x_gene_starts = horse_x_meta$start
+x_gene_ends = horse_x_meta$end
+#Add gene_annotations
+positions = horse_snp_stat_df$snp_pos
+horse_gene_annots = vector(mode = 'character', length = length(positions))
+for( i in 1:length(positions)){
+
+  test_gene_start = positions[i]
+  gene_index = findInterval(test_gene_start, x_gene_starts)
+  if(gene_index == 0){next}
+  
+  if(test_gene_start <= x_gene_ends[gene_index]){
+    horse_gene_annots[i] = horse_x_meta$gene[gene_index]
+  }
+}
+
+horse_snp_stat_df$gene = horse_gene_annots
+
+#cow
+x_gene_starts = cow_x_meta$start
+x_gene_ends = cow_x_meta$end
+#Add gene_annotations
+positions = cow_snp_stat_df$snp_pos
+cow_gene_annots = vector(mode = 'character', length = length(positions))
+for( i in 1:length(positions)){
+
+  test_gene_start = positions[i]
+  gene_index = findInterval(test_gene_start, x_gene_starts)
+  if(gene_index == 0){next}
+  
+  if(test_gene_start <= x_gene_ends[gene_index]){
+    cow_gene_annots[i] = cow_x_meta$gene[gene_index]
+  }
+}
+
+cow_snp_stat_df$gene = cow_gene_annots
+
+
+#pig
+x_gene_starts = pig_x_meta$start
+x_gene_ends = pig_x_meta$end
+#Add gene_annotations
+positions = pig_snp_stat_df$snp_pos
+pig_gene_annots = vector(mode = 'character', length = length(positions))
+for( i in 1:length(positions)){
+
+  test_gene_start = positions[i]
+  gene_index = findInterval(test_gene_start, x_gene_starts)
+  if(gene_index == 0){next}
+  
+  if(test_gene_start <= x_gene_ends[gene_index]){
+    pig_gene_annots[i] = pig_x_meta$gene[gene_index]
+  }
+}
+
+pig_snp_stat_df$gene = pig_gene_annots
+
+#sheep
+x_gene_starts = sheep_x_meta$start
+x_gene_ends = sheep_x_meta$end
+#Add gene_annotations
+positions = sheep_snp_stat_df$snp_pos
+sheep_gene_annots = vector(mode = 'character', length = length(positions))
+for( i in 1:length(positions)){
+  
+  test_gene_start = positions[i]
+  gene_index = findInterval(test_gene_start, x_gene_starts)
+  if(gene_index == 0){next}
+  
+  if(test_gene_start <= x_gene_ends[gene_index]){
+    sheep_gene_annots[i] = sheep_x_meta$gene[gene_index]
+  }
+}
+
+sheep_snp_stat_df$gene = sheep_gene_annots
+
+#goat
+x_gene_starts = goat_x_meta$start
+x_gene_ends = goat_x_meta$end
+#Add gene_annotations
+positions = goat_snp_stat_df$snp_pos
+goat_gene_annots = vector(mode = 'character', length = length(positions))
+for( i in 1:length(positions)){
+
+  test_gene_start = positions[i]
+  gene_index = findInterval(test_gene_start, x_gene_starts)
+  if(gene_index == 0){next}
+  
+  if(test_gene_start <= x_gene_ends[gene_index]){
+    goat_gene_annots[i] = goat_x_meta$gene[gene_index]
+  }
+}
+
+goat_snp_stat_df$gene = goat_gene_annots
+
+#macaca
+x_gene_starts = macaca_x_meta$start
+x_gene_ends = macaca_x_meta$end
+#Add gene_annotations
+positions = macaca_snp_stat_df$snp_pos
+macaca_gene_annots = vector(mode = 'character', length = length(positions))
+for( i in 1:length(positions)){
+
+  test_gene_start = positions[i]
+  gene_index = findInterval(test_gene_start, x_gene_starts)
+  if(gene_index == 0){next}
+  
+  if(test_gene_start <= x_gene_ends[gene_index]){
+    macaca_gene_annots[i] = macaca_x_meta$gene[gene_index]
+  }
+}
+
+macaca_snp_stat_df$gene = macaca_gene_annots
+
+#dog
+x_gene_starts = dog_x_meta$start
+x_gene_ends = dog_x_meta$end
+#Add gene_annotations
+positions = dog_snp_stat_df$snp_pos
+dog_gene_annots = vector(mode = 'character', length = length(positions))
+for( i in 1:length(positions)){
+
+  test_gene_start = positions[i]
+  gene_index = findInterval(test_gene_start, x_gene_starts)
+  if(gene_index == 0){next}
+  
+  if(test_gene_start <= x_gene_ends[gene_index]){
+    dog_gene_annots[i] = dog_x_meta$gene[gene_index]
+  }
+}
+
+dog_snp_stat_df$gene = dog_gene_annots
+
+#rat
+x_gene_starts = rat_x_meta$start
+x_gene_ends = rat_x_meta$end
+#Add gene_annotations
+positions = rat_snp_stat_df$snp_pos
+rat_gene_annots = vector(mode = 'character', length = length(positions))
+for( i in 1:length(positions)){
+
+  test_gene_start = positions[i]
+  gene_index = findInterval(test_gene_start, x_gene_starts)
+  if(gene_index == 0){next}
+  
+  if(test_gene_start <= x_gene_ends[gene_index]){
+    rat_gene_annots[i] = rat_x_meta$gene[gene_index]
+  }
+}
+
+rat_snp_stat_df$gene = rat_gene_annots
+
+
+#mouse
+x_gene_starts = mouse_x_meta$start
+x_gene_ends = mouse_x_meta$end
+#Add gene_annotations
+positions = mouse_snp_stat_df$snp_pos
+mouse_gene_annots = vector(mode = 'character', length = length(positions))
+for( i in 1:length(positions)){
+
+  test_gene_start = positions[i]
+  gene_index = findInterval(test_gene_start, x_gene_starts)
+  if(gene_index == 0){next}
+  
+  if(test_gene_start <= x_gene_ends[gene_index]){
+    mouse_gene_annots[i] = mouse_x_meta$gene[gene_index]
+  }
+}
+
+mouse_snp_stat_df$gene = mouse_gene_annots
+
+
+#human
+x_gene_starts = human_x_meta$start
+x_gene_ends = human_x_meta$end
+#Add gene_annotations
+positions =  as.numeric(stringr::str_extract(human_snp_stat_df$variant, "[0-9]+"))
+human_snp_stat_df$snp_pos = positions
+human_gene_annots = vector(mode = 'character', length = length(positions))
+for( i in 1:length(positions)){
+
+  test_gene_start = positions[i]
+  gene_index = findInterval(test_gene_start, x_gene_starts)
+  if(gene_index == 0){next}
+  
+  if(test_gene_start <= x_gene_ends[gene_index]){
+    human_gene_annots[i] = human_x_meta$gene_name[gene_index]
+  }
+}
+
+
+human_snp_stat_df$gene = human_gene_annots
+
+```
+
+
+
+
+
+###################################
+Get the number of SNPs around XIST for species with XIST annotations, see if heterzygosity tracks with estimated skew
+##################################
+
+
+
+```{r}
+
+
+dog_x_genenames[grepl('X',dog_x_genenames)] 
+
+cow_x_genenames[grepl('X',cow_x_genenames)] 
+
+pig_x_genenames[grepl('X',pig_x_genenames)] 
+
+sheep_x_genenames[grepl('X',sheep_x_genenames)] 
+
+goat_x_genenames[grepl('X',goat_x_genenames)] 
+
+rat_x_genenames[grepl('x',rat_x_genenames)] 
+
+macaca_x_genenames[grepl('X',macaca_x_genenames)] 
+
+horse_x_genenames[grepl('X',horse_x_genenames)] 
+
+human_x_genenames[grepl('X',human_x_genenames)] 
+```
+
+
+```{r}
+#Rat XIST is LOC100911498
+#XIC is roughly 68426668 to 68630338
+#So approximately 68400000 to 68650000
+rat_x_meta[!is.na(rat_x_meta$start), ]
+
+
+rat_xic_start = 68400000
+rat_xic_end = 68650000
+rat_xic_hetSNPs = vector(mode = 'numeric', length = length(annot_rat_vcfs))
+for(i in 1:length(annot_rat_vcfs)){
+  
+  if(is.null(dim(annot_rat_vcfs[[i]]))){rat_xic_hetSNPs[i] = NA; next}
+  data = annot_rat_vcfs[[i]]
+  rat_xic_hetSNPs[i] = sum(data$Pos >= rat_xic_start & data$Pos <= rat_xic_end)
+}
+
+hist(rat_xic_hetSNPs)
+
+plot(rat_skew_and_stats_df$est_skew_no_escape, rat_xic_hetSNPs)
+plot(rat_skew_and_stats_df$est_skew_total_snps, rat_xic_hetSNPs)
+```
+
+
+```{r}
+
+
+compute_auc = function(scores, label){
+  w_test = wilcox.test(scores[label],scores[!label], alternative = 'two.sided', exact = F)
+  p_value = w_test$p.value
+  auc = as.numeric(w_test$statistic / (sum(label) * sum(!label)))
+  return(list('p_value' = p_value, 'auc' = auc))
+}
+
+
+bootstrap_auc = function(scores, label){
+  #Randomly sample with replacement, same number as the original sample
+  positive_sample = sample(scores[label], size = sum(label), replace = T)  
+  negative_sample = sample(scores[!label], size = sum(!label), replace = T)  
+  w_test = wilcox.test(positive_sample, negative_sample, alternative = 'two.sided', exact = F)
+  p_value = w_test$p.value
+  auc = as.numeric(w_test$statistic / (sum(label) * sum(!label)))
+  #auc = compute_auc(scores = c(positive_sample, negative_sample), label = c(rep(TRUE, length = length(positive_sample)), rep(FALSE, length = length(negative_sample))) )
+  return(list('p_value' = p_value, 'auc' = auc))
+}
+
+
+compute_auc_power = function(scores, label, num_sims = 2000, sig_level = .05){
+  bootstrap_results = mclapply(1:num_sims, function(i) bootstrap_auc(scores, label), mc.cores = 10)
+  bootstrap_pvals = sapply(bootstrap_results, '[[', 1)
+  bootstrap_aucs = sapply(bootstrap_results, '[[', 2)
+  
+  power_sig = sum(bootstrap_pvals <= sig_level) / num_sims
+  power_effect_55 = sum(bootstrap_aucs >= .55) / num_sims
+  power_effect_75 = sum(bootstrap_aucs >= .75) / num_sims
+  auc_var = var(bootstrap_aucs)
+  return(list('power_sig' = power_sig, 'power_effect_55' = power_effect_55, 'power_effect_75' = power_effect_75, 'bootstrap_auc_var' = auc_var))
+
+}
+
+# Functions to fold and unfold ratios 
+folded <- function(x) { apply( cbind(x,1-x), 1, max)} 
+unfold <- function(x) { c(x,1-x) } 
+
+```
+
+
+```{r}
+#sample index is a vector of indices for samples with at least 10 good SNPs
+xci_skew_predict_variant_experiment = function(skew_and_stats_df, annot_vcfs, sample_index, snp_stats){
+  #Go through all the good samples and get the list of all the variants present
+  test_variants = c()
+  for(i in 1:length(sample_index)){
+  data_variants = paste0(annot_vcfs[[sample_index[i]]]$Pos, paste0(annot_vcfs[[sample_index[i]]]$ref, annot_vcfs[[sample_index[i]]]$alt))
+  test_variants = c(test_variants, data_variants)
+  }
+  
+  #Get the sample counts of each test variant
+  test_variants = table(test_variants)
+  total_samples = length(sample_index)
+  #Number of positives and negatives for each variant and the prevalence of each variant
+  n_pos = as.numeric(test_variants[test_variants >= 10])
+  n_neg = total_samples - n_pos
+  variant_prevalence = n_pos / total_samples
+  test_variants = names(test_variants[test_variants >= 10])
+  
+  #Just using the samples with XCI ratios from 10 genes or more
+  filt_annot_vcfs = annot_vcfs[sample_index]
+  auc_test_variants = vector(mode = 'numeric', length = length(test_variants))
+  auc_pval = vector(mode = 'numeric', length = length(test_variants))
+  auc_power_sig = vector(mode = 'numeric', length = length(test_variants))
+  auc_power_effect_55 = vector(mode = 'numeric', length = length(test_variants))
+  auc_power_effect_75 = vector(mode = 'numeric', length = length(test_variants))
+  bootstrap_auc_var = vector(mode = 'numeric', length = length(test_variants))
+  auc_null = vector(mode = 'numeric', length = length(test_variants))
+  
+  for(j in 1:length(test_variants)){
+    if(j%%100 == 0){print(j)}
+    #Go through all samples and get a boolean vector for which samples have that variant
+    variant_present = vector(mode = 'logical', length = length(filt_annot_vcfs))
+    for(i in 1:length(filt_annot_vcfs)){
+      data_variants = paste0(filt_annot_vcfs[[i]]$Pos, paste0(filt_annot_vcfs[[i]]$ref, filt_annot_vcfs[[i]]$alt))
+      variant_present[i] = test_variants[j] %in% data_variants
+    }
+    #AUC using the estimated skew without escape
+    scores = skew_and_stats_df$est_skew_no_escape[sample_index]
+    #Get the auroc and it's p_value
+    auc_results = compute_auc(scores, variant_present)
+    auc_test_variants[j] = auc_results$auc
+    auc_pval[j] = auc_results$p_value
+    #Compute the power calculation
+    power_results = compute_auc_power(scores, variant_present)
+    auc_power_sig[j] = power_results$power_sig
+    auc_power_effect_55[j] = power_results$power_effect_55
+    auc_power_effect_75[j] = power_results$power_effect_75
+    bootstrap_auc_var[j] = power_results$bootstrap_auc_var
+    #Get a permuted auroc
+    auc_null[j] = compute_auc(scores, sample(variant_present))$auc #AUC with the labels randomly shuffled for a null
+  }
+  
+  #Variant positions
+  positions =  as.numeric(stringr::str_extract(test_variants, "[0-9]+"))
+  #reference biased positions
+  ref_biased_pos = snp_stats$snp_pos[snp_stats$filter == FALSE]
+  #Which of the variants are reference biased
+  ref_index = positions %in% ref_biased_pos
+  
+  results = list('variants' = test_variants, 'reference_biased_index' = ref_index, 'n_pos' = n_pos, 'n_neg' = n_neg, 'variant_prevalence' = variant_prevalence, 
+                 'auc' = auc_test_variants, 'auc_pval' = auc_pval, 'auc_power_significance' = auc_power_sig, 'auc_power_effect_55' = auc_power_effect_55, 
+                 'auc_power_effect_75' = auc_power_effect_75, 'bootstrap_auc_var' = bootstrap_auc_var, 'auc_null' = auc_null)
+  return(results)
+}
+
+```
+
+
+
+
+
+
+
+```{r}
+
+start = Sys.time()
+sample_index = which(rat_skew_and_stats_df$num_good_snps_no_escape >= 10 & rat_skew_and_stats_df$autosome_imbalance == F)
+rat_results = xci_skew_predict_variant_experiment(rat_skew_and_stats_df, annot_rat_vcfs, sample_index, rat_snp_stat_df)
+Sys.time() - start
+
+hist(rat_results$auc_null, breaks = seq(0,1,.01), main = 'rat skew predicting SNP aurocs: null')
+abline(v = .5, col = 'red')
+hist(rat_results$auc, breaks = seq(0,1,.01), main = 'rat skew predicting SNP aurocs')
+abline(v = .5, col = 'red')
+plot(rat_results$auc, rat_results$auc_power_significance, main = 'rat AUROC against significance power', xlab = 'AUROC', ylab = 'Simulated significance power')
+plot(rat_results$auc, rat_results$auc_power_effect_55, main = 'rat effect size power thresh: 0.55', xlab = 'AUROC', ylab = 'Simulated effect size power')
+plot(rat_results$auc, rat_results$auc_power_effect_75, main = 'rat effect size power thresh: 0.75', xlab = 'AUROC', ylab = 'Simulated effect size power')
+plot(rat_results$variant_prevalence, rat_results$auc_power_effect_55, main = 'rat variant % against effect size power', xlab = 'Variant prevalence', ylab = 'Simulated effect size power')
+plot(rat_results$variant_prevalence, rat_results$auc_power_effect_75, main = 'rat variant % against effect size power', xlab = 'Variant prevalence', ylab = 'Simulated effect size power')
+plot(rat_results$variant_prevalence, rat_results$bootstrap_auc_var, main = 'rat variant % against boostrap auc variance', xlab = 'Variant prevalence', ylab = 'Variance of bootstrap aurocs')
+plot(rat_results$auc, rat_results$bootstrap_auc_var, xlab = 'AUROC', ylab = 'Variance of bootstrap AUROC distribution', main = 'rat samples')
+
+
+hist(rat_results$auc_pval, main = 'Raw auroc p-values', breaks = seq(0,1,.05))
+adj_pval = p.adjust(rat_results$auc_pval, method = 'BH')
+hist(adj_pval, main = 'FDR adjusted auroc p-values', breaks = seq(0,1,.05))
+fdr_index = which(adj_pval <= .05)
+hist(rat_results$auc[fdr_index], main = 'Significant aurocs', breaks = seq(0,1,.01))
+
+
+rat_ref_check_df = data.frame(auc = rat_results$auc, ref_biased_index = rat_results$reference_biased_index)
+ggplot(rat_ref_check_df, aes(x = ref_biased_index, y = auc, fill = ref_biased_index)) + geom_violin(scale = 'width') + geom_boxplot(width = .25) + ggtitle('Rat') +
+  xlab('Reference biased SNPs') + ylab('XCI ratio and variant AUROC') 
+#ggsave(filename = 'rat_ref_biased_xci_ratio_auroc_violins_v2.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/',
+#       device = 'pdf', useDingbats = F, height = 4, width = 5)
+
+```
+
+
+
+```{r}
+
+start = Sys.time()
+sample_index = which(mouse_skew_and_stats_df$num_good_snps_no_escape >= 10 & mouse_skew_and_stats_df$autosome_imbalance == F)
+mouse_results = xci_skew_predict_variant_experiment(mouse_skew_and_stats_df, annot_mouse_vcfs, sample_index, mouse_snp_stat_df)
+Sys.time() - start
+
+hist(mouse_results$auc_null, breaks = seq(0,1,.01), main = 'mouse skew predicting SNP aurocs: null')
+abline(v = .5, col = 'red')
+hist(mouse_results$auc, breaks = seq(0,1,.01), main = 'mouse skew predicting SNP aurocs')
+abline(v = .5, col = 'red')
+plot(mouse_results$auc, mouse_results$auc_power_significance, main = 'mouse AUROC against significance power', xlab = 'AUROC', ylab = 'Simulated significance power')
+plot(mouse_results$auc, mouse_results$auc_power_effect_55, main = 'mouse effect size power thresh: 0.55', xlab = 'AUROC', ylab = 'Simulated effect size power')
+plot(mouse_results$auc, mouse_results$auc_power_effect_75, main = 'mouse effect size power thresh: 0.75', xlab = 'AUROC', ylab = 'Simulated effect size power')
+plot(mouse_results$variant_prevalence, mouse_results$auc_power_effect_55, main = 'mouse variant % against effect size power', xlab = 'Variant prevalence', ylab = 'Simulated effect size power')
+plot(mouse_results$variant_prevalence, mouse_results$auc_power_effect_75, main = 'mouse variant % against effect size power', xlab = 'Variant prevalence', ylab = 'Simulated effect size power')
+plot(mouse_results$variant_prevalence, mouse_results$bootstrap_auc_var, main = 'mouse variant % against boostrap auc variance', xlab = 'Variant prevalence', ylab = 'Variance of bootstrap aurocs')
+plot(mouse_results$auc, mouse_results$bootstrap_auc_var, xlab = 'AUROC', ylab = 'Variance of bootstrap AUROC distribution', main = 'mouse samples')
+
+
+hist(mouse_results$auc_pval, main = 'Raw auroc p-values', breaks = seq(0,1,.05))
+adj_pval = p.adjust(mouse_results$auc_pval, method = 'BH')
+hist(adj_pval, main = 'FDR adjusted auroc p-values', breaks = seq(0,1,.05))
+fdr_index = which(adj_pval <= .05)
+hist(mouse_results$auc[fdr_index], main = 'Significant aurocs', breaks = seq(0,1,.01))
+
+
+mouse_ref_check_df = data.frame(auc = mouse_results$auc, ref_biased_index = mouse_results$reference_biased_index)
+ggplot(mouse_ref_check_df, aes(x = ref_biased_index, y = auc, fill = ref_biased_index)) + geom_violin(scale = 'width') + geom_boxplot(width = .25) + ggtitle('Mouse') +
+  xlab('Reference biased SNPs') + ylab('XCI ratio and variant AUROC') 
+#ggsave(filename = 'mouse_ref_biased_xci_ratio_auroc_violins_v2.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/',
+#       device = 'pdf', useDingbats = F, height = 4, width = 5)
+
+```
+
+
+
+
+
+
+```{r}
+#macaca
+start = Sys.time()
+sample_index = which(macaca_skew_and_stats_df$num_good_snps_no_escape >= 10 & macaca_skew_and_stats_df$autosome_imbalance == F)
+macaca_results = xci_skew_predict_variant_experiment(macaca_skew_and_stats_df, annot_macaca_vcfs, sample_index, macaca_snp_stat_df)
+Sys.time() - start
+#dog
+start = Sys.time()
+sample_index = which(dog_skew_and_stats_df$num_good_snps_no_escape >= 10 & dog_skew_and_stats_df$autosome_imbalance == F)
+dog_results = xci_skew_predict_variant_experiment(dog_skew_and_stats_df, annot_dog_vcfs, sample_index, dog_snp_stat_df)
+Sys.time() - start
+#goat
+start = Sys.time()
+sample_index = which(goat_skew_and_stats_df$num_good_snps_no_escape >= 10 & goat_skew_and_stats_df$autosome_imbalance == F)
+goat_results = xci_skew_predict_variant_experiment(goat_skew_and_stats_df, annot_goat_vcfs, sample_index, goat_snp_stat_df)
+Sys.time() - start
+#pig
+start = Sys.time()
+sample_index = which(pig_skew_and_stats_df$num_good_snps_no_escape >= 10 & pig_skew_and_stats_df$autosome_imbalance == F)
+pig_results = xci_skew_predict_variant_experiment(pig_skew_and_stats_df, annot_pig_vcfs, sample_index, pig_snp_stat_df)
+Sys.time() - start
+#horse
+start = Sys.time()
+sample_index = which(horse_skew_and_stats_df$num_good_snps_no_escape >= 10 & horse_skew_and_stats_df$autosome_imbalance == F)
+horse_results = xci_skew_predict_variant_experiment(horse_skew_and_stats_df, annot_horse_vcfs, sample_index, horse_snp_stat_df)
+Sys.time() - start
+#cow
+start = Sys.time()
+sample_index = which(cow_skew_and_stats_df$num_good_snps_no_escape >= 10 & cow_skew_and_stats_df$autosome_imbalance == F)
+cow_results = xci_skew_predict_variant_experiment(cow_skew_and_stats_df, annot_cow_vcfs, sample_index, cow_snp_stat_df)
+Sys.time() - start
+#sheep
+start = Sys.time()
+sample_index = which(sheep_skew_and_stats_df$num_good_snps_no_escape >= 10 & sheep_skew_and_stats_df$autosome_imbalance == F)
+sheep_results = xci_skew_predict_variant_experiment(sheep_skew_and_stats_df, annot_sheep_vcfs, sample_index, sheep_snp_stat_df)
+Sys.time() - start
+
+```
+
+
+```{r}
+
+hist(macaca_results$auc_null, breaks = seq(0,1,.01), main = 'macaca skew predicting SNP aurocs: null')
+abline(v = .5, col = 'red')
+hist(macaca_results$auc, breaks = seq(0,1,.01), main = 'macaca skew predicting SNP aurocs')
+abline(v = .5, col = 'red')
+plot(macaca_results$auc, macaca_results$auc_power_significance, main = 'macaca AUROC against significance power', xlab = 'AUROC', ylab = 'Simulated significance power')
+plot(macaca_results$auc, macaca_results$auc_power_effect_55, main = 'macaca effect size power thresh: 0.55', xlab = 'AUROC', ylab = 'Simulated effect size power')
+plot(macaca_results$auc, macaca_results$auc_power_effect_75, main = 'macaca effect size power thresh: 0.75', xlab = 'AUROC', ylab = 'Simulated effect size power')
+plot(macaca_results$variant_prevalence, macaca_results$auc_power_effect_55, main = 'macaca variant % against effect size power', xlab = 'Variant prevalence', ylab = 'Simulated effect size power')
+plot(macaca_results$variant_prevalence, macaca_results$auc_power_effect_75, main = 'macaca variant % against effect size power', xlab = 'Variant prevalence', ylab = 'Simulated effect size power')
+plot(macaca_results$variant_prevalence, macaca_results$bootstrap_auc_var, main = 'macaca variant % against boostrap auc variance', xlab = 'Variant prevalence', ylab = 'Variance of bootstrap aurocs')
+plot(macaca_results$auc, macaca_results$bootstrap_auc_var, xlab = 'AUROC', ylab = 'Variance of bootstrap AUROC distribution', main = 'macaca samples')
+
+
+hist(macaca_results$auc_pval, main = 'Raw auroc p-values', breaks = seq(0,1,.05))
+adj_pval = p.adjust(macaca_results$auc_pval, method = 'BH')
+hist(adj_pval, main = 'FDR adjusted auroc p-values', breaks = seq(0,1,.05))
+fdr_index = which(adj_pval <= .05)
+hist(macaca_results$auc[fdr_index], main = 'Significant aurocs', breaks = seq(0,1,.01))
+
+
+macaca_ref_check_df = data.frame(auc = macaca_results$auc, ref_biased_index = macaca_results$reference_biased_index)
+ggplot(macaca_ref_check_df, aes(x = ref_biased_index, y = auc, fill = ref_biased_index)) + geom_violin(scale = 'width') + geom_boxplot(width = .25) + ggtitle('macaca') +
+  xlab('Reference biased SNPs') + ylab('XCI ratio and variant AUROC') 
+#ggsave(filename = 'macaca_ref_biased_xci_ratio_auroc_violins_v2.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/',
+#       device = 'pdf', useDingbats = F, height = 4, width = 5)
+```
+
+
+```{r}
+
+hist(dog_results$auc_null, breaks = seq(0,1,.01), main = 'dog skew predicting SNP aurocs: null')
+abline(v = .5, col = 'red')
+hist(dog_results$auc, breaks = seq(0,1,.01), main = 'dog skew predicting SNP aurocs')
+abline(v = .5, col = 'red')
+plot(dog_results$auc, dog_results$auc_power_significance, main = 'dog AUROC against significance power', xlab = 'AUROC', ylab = 'Simulated significance power')
+plot(dog_results$auc, dog_results$auc_power_effect_55, main = 'dog effect size power thresh: 0.55', xlab = 'AUROC', ylab = 'Simulated effect size power')
+plot(dog_results$auc, dog_results$auc_power_effect_75, main = 'dog effect size power thresh: 0.75', xlab = 'AUROC', ylab = 'Simulated effect size power')
+plot(dog_results$variant_prevalence, dog_results$auc_power_effect_55, main = 'dog variant % against effect size power', xlab = 'Variant prevalence', ylab = 'Simulated effect size power')
+plot(dog_results$variant_prevalence, dog_results$auc_power_effect_75, main = 'dog variant % against effect size power', xlab = 'Variant prevalence', ylab = 'Simulated effect size power')
+plot(dog_results$variant_prevalence, dog_results$bootstrap_auc_var, main = 'dog variant % against boostrap auc variance', xlab = 'Variant prevalence', ylab = 'Variance of bootstrap aurocs')
+plot(dog_results$auc, dog_results$bootstrap_auc_var, xlab = 'AUROC', ylab = 'Variance of bootstrap AUROC distribution', main = 'dog samples')
+
+
+hist(dog_results$auc_pval, main = 'Raw auroc p-values', breaks = seq(0,1,.05))
+adj_pval = p.adjust(dog_results$auc_pval, method = 'BH')
+hist(adj_pval, main = 'FDR adjusted auroc p-values', breaks = seq(0,1,.05))
+fdr_index = which(adj_pval <= .05)
+hist(dog_results$auc[fdr_index], main = 'Significant aurocs', breaks = seq(0,1,.01))
+
+
+dog_ref_check_df = data.frame(auc = dog_results$auc, ref_biased_index = dog_results$reference_biased_index)
+ggplot(dog_ref_check_df, aes(x = ref_biased_index, y = auc, fill = ref_biased_index)) + geom_violin(scale = 'width') + geom_boxplot(width = .25) + ggtitle('dog') +
+  xlab('Reference biased SNPs') + ylab('XCI ratio and variant AUROC') 
+#ggsave(filename = 'dog_ref_biased_xci_ratio_auroc_violins_v2.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/',
+#       device = 'pdf', useDingbats = F, height = 4, width = 5)
+```
+
+
+```{r}
+
+hist(goat_results$auc_null, breaks = seq(0,1,.01), main = 'goat skew predicting SNP aurocs: null')
+abline(v = .5, col = 'red')
+hist(goat_results$auc, breaks = seq(0,1,.01), main = 'goat skew predicting SNP aurocs')
+abline(v = .5, col = 'red')
+plot(goat_results$auc, goat_results$auc_power_significance, main = 'goat AUROC against significance power', xlab = 'AUROC', ylab = 'Simulated significance power')
+plot(goat_results$auc, goat_results$auc_power_effect_55, main = 'goat effect size power thresh: 0.55', xlab = 'AUROC', ylab = 'Simulated effect size power')
+plot(goat_results$auc, goat_results$auc_power_effect_75, main = 'goat effect size power thresh: 0.75', xlab = 'AUROC', ylab = 'Simulated effect size power')
+plot(goat_results$variant_prevalence, goat_results$auc_power_effect_55, main = 'goat variant % against effect size power', xlab = 'Variant prevalence', ylab = 'Simulated effect size power')
+plot(goat_results$variant_prevalence, goat_results$auc_power_effect_75, main = 'goat variant % against effect size power', xlab = 'Variant prevalence', ylab = 'Simulated effect size power')
+plot(goat_results$variant_prevalence, goat_results$bootstrap_auc_var, main = 'goat variant % against boostrap auc variance', xlab = 'Variant prevalence', ylab = 'Variance of bootstrap aurocs')
+plot(goat_results$auc, goat_results$bootstrap_auc_var, xlab = 'AUROC', ylab = 'Variance of bootstrap AUROC distribution', main = 'goat samples')
+
+
+hist(goat_results$auc_pval, main = 'Raw auroc p-values', breaks = seq(0,1,.05))
+adj_pval = p.adjust(goat_results$auc_pval, method = 'BH')
+hist(adj_pval, main = 'FDR adjusted auroc p-values', breaks = seq(0,1,.05))
+fdr_index = which(adj_pval <= .05)
+hist(goat_results$auc[fdr_index], main = 'Significant aurocs', breaks = seq(0,1,.01))
+
+goat_ref_check_df = data.frame(auc = goat_results$auc, ref_biased_index = goat_results$reference_biased_index)
+ggplot(goat_ref_check_df, aes(x = ref_biased_index, y = auc, fill = ref_biased_index)) + geom_violin(scale = 'width') + geom_boxplot(width = .25) + ggtitle('goat') +
+  xlab('Reference biased SNPs') + ylab('XCI ratio and variant AUROC') 
+#ggsave(filename = 'goat_ref_biased_xci_ratio_auroc_violins_v2.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/',
+#       device = 'pdf', useDingbats = F, height = 4, width = 5)
+```
+
+
+```{r}
+
+hist(pig_results$auc_null, breaks = seq(0,1,.01), main = 'pig skew predicting SNP aurocs: null')
+abline(v = .5, col = 'red')
+hist(pig_results$auc, breaks = seq(0,1,.01), main = 'pig skew predicting SNP aurocs')
+abline(v = .5, col = 'red')
+plot(pig_results$auc, pig_results$auc_power_significance, main = 'pig AUROC against significance power', xlab = 'AUROC', ylab = 'Simulated significance power')
+plot(pig_results$auc, pig_results$auc_power_effect_55, main = 'pig effect size power thresh: 0.55', xlab = 'AUROC', ylab = 'Simulated effect size power')
+plot(pig_results$auc, pig_results$auc_power_effect_75, main = 'pig effect size power thresh: 0.75', xlab = 'AUROC', ylab = 'Simulated effect size power')
+plot(pig_results$variant_prevalence, pig_results$auc_power_effect_55, main = 'pig variant % against effect size power', xlab = 'Variant prevalence', ylab = 'Simulated effect size power')
+plot(pig_results$variant_prevalence, pig_results$auc_power_effect_75, main = 'pig variant % against effect size power', xlab = 'Variant prevalence', ylab = 'Simulated effect size power')
+plot(pig_results$variant_prevalence, pig_results$bootstrap_auc_var, main = 'pig variant % against boostrap auc variance', xlab = 'Variant prevalence', ylab = 'Variance of bootstrap aurocs')
+plot(pig_results$auc, pig_results$bootstrap_auc_var, xlab = 'AUROC', ylab = 'Variance of bootstrap AUROC distribution', main = 'pig samples')
+
+
+hist(pig_results$auc_pval, main = 'Raw auroc p-values', breaks = seq(0,1,.05))
+adj_pval = p.adjust(pig_results$auc_pval, method = 'BH')
+hist(adj_pval, main = 'FDR adjusted auroc p-values', breaks = seq(0,1,.05))
+fdr_index = which(adj_pval <= .05)
+hist(pig_results$auc[fdr_index], main = 'Significant aurocs', breaks = seq(0,1,.01))
+
+pig_ref_check_df = data.frame(auc = pig_results$auc, ref_biased_index = pig_results$reference_biased_index)
+ggplot(pig_ref_check_df, aes(x = ref_biased_index, y = auc, fill = ref_biased_index)) + geom_violin(scale = 'width') + geom_boxplot(width = .25) + ggtitle('pig') +
+  xlab('Reference biased SNPs') + ylab('XCI ratio and variant AUROC') 
+#ggsave(filename = 'pig_ref_biased_xci_ratio_auroc_violins_v2.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/',
+#       device = 'pdf', useDingbats = F, height = 4, width = 5)
+```
+
+
+
+```{r}
+
+hist(horse_results$auc_null, breaks = seq(0,1,.01), main = 'horse skew predicting SNP aurocs: null')
+abline(v = .5, col = 'red')
+hist(horse_results$auc, breaks = seq(0,1,.01), main = 'horse skew predicting SNP aurocs')
+abline(v = .5, col = 'red')
+plot(horse_results$auc, horse_results$auc_power_significance, main = 'horse AUROC against significance power', xlab = 'AUROC', ylab = 'Simulated significance power')
+plot(horse_results$auc, horse_results$auc_power_effect_55, main = 'horse effect size power thresh: 0.55', xlab = 'AUROC', ylab = 'Simulated effect size power')
+plot(horse_results$auc, horse_results$auc_power_effect_75, main = 'horse effect size power thresh: 0.75', xlab = 'AUROC', ylab = 'Simulated effect size power')
+plot(horse_results$variant_prevalence, horse_results$auc_power_effect_55, main = 'horse variant % against effect size power', xlab = 'Variant prevalence', ylab = 'Simulated effect size power')
+plot(horse_results$variant_prevalence, horse_results$auc_power_effect_75, main = 'horse variant % against effect size power', xlab = 'Variant prevalence', ylab = 'Simulated effect size power')
+plot(horse_results$variant_prevalence, horse_results$bootstrap_auc_var, main = 'horse variant % against boostrap auc variance', xlab = 'Variant prevalence', ylab = 'Variance of bootstrap aurocs')
+plot(horse_results$auc, horse_results$bootstrap_auc_var, xlab = 'AUROC', ylab = 'Variance of bootstrap AUROC distribution', main = 'horse samples')
+
+
+hist(horse_results$auc_pval, main = 'Raw auroc p-values', breaks = seq(0,1,.05))
+adj_pval = p.adjust(horse_results$auc_pval, method = 'BH')
+hist(adj_pval, main = 'FDR adjusted auroc p-values', breaks = seq(0,1,.05))
+fdr_index = which(adj_pval <= .05)
+hist(horse_results$auc[fdr_index], main = 'Significant aurocs', breaks = seq(0,1,.01))
+
+
+horse_ref_check_df = data.frame(auc = horse_results$auc, ref_biased_index = horse_results$reference_biased_index)
+ggplot(horse_ref_check_df, aes(x = ref_biased_index, y = auc, fill = ref_biased_index)) + geom_violin(scale = 'width') + geom_boxplot(width = .25) + ggtitle('horse') +
+  xlab('Reference biased SNPs') + ylab('XCI ratio and variant AUROC') 
+#ggsave(filename = 'horse_ref_biased_xci_ratio_auroc_violins_v2.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/',
+#       device = 'pdf', useDingbats = F, height = 4, width = 5)
+```
+
+
+
+```{r}
+
+hist(cow_results$auc_null, breaks = seq(0,1,.01), main = 'cow skew predicting SNP aurocs: null')
+abline(v = .5, col = 'red')
+hist(cow_results$auc, breaks = seq(0,1,.01), main = 'cow skew predicting SNP aurocs')
+abline(v = .5, col = 'red')
+plot(cow_results$auc, cow_results$auc_power_significance, main = 'cow AUROC against significance power', xlab = 'AUROC', ylab = 'Simulated significance power')
+plot(cow_results$auc, cow_results$auc_power_effect_55, main = 'cow effect size power thresh: 0.55', xlab = 'AUROC', ylab = 'Simulated effect size power')
+plot(cow_results$auc, cow_results$auc_power_effect_75, main = 'cow effect size power thresh: 0.75', xlab = 'AUROC', ylab = 'Simulated effect size power')
+plot(cow_results$variant_prevalence, cow_results$auc_power_effect_55, main = 'cow variant % against effect size power', xlab = 'Variant prevalence', ylab = 'Simulated effect size power')
+plot(cow_results$variant_prevalence, cow_results$auc_power_effect_75, main = 'cow variant % against effect size power', xlab = 'Variant prevalence', ylab = 'Simulated effect size power')
+plot(cow_results$variant_prevalence, cow_results$bootstrap_auc_var, main = 'cow variant % against boostrap auc variance', xlab = 'Variant prevalence', ylab = 'Variance of bootstrap aurocs')
+plot(cow_results$auc, cow_results$bootstrap_auc_var, xlab = 'AUROC', ylab = 'Variance of bootstrap AUROC distribution', main = 'cow samples')
+
+
+hist(cow_results$auc_pval, main = 'Raw auroc p-values', breaks = seq(0,1,.05))
+adj_pval = p.adjust(cow_results$auc_pval, method = 'BH')
+hist(adj_pval, main = 'FDR adjusted auroc p-values', breaks = seq(0,1,.05))
+fdr_index = which(adj_pval <= .05)
+hist(cow_results$auc[fdr_index], main = 'Significant aurocs', breaks = seq(0,1,.01))
+
+cow_ref_check_df = data.frame(auc = cow_results$auc, ref_biased_index = cow_results$reference_biased_index)
+ggplot(cow_ref_check_df, aes(x = ref_biased_index, y = auc, fill = ref_biased_index)) + geom_violin(scale = 'width') + geom_boxplot(width = .25) + ggtitle('cow') +
+  xlab('Reference biased SNPs') + ylab('XCI ratio and variant AUROC') 
+#ggsave(filename = 'cow_ref_biased_xci_ratio_auroc_violins_v2.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/',
+#       device = 'pdf', useDingbats = F, height = 4, width = 5)
+```
+
+
+```{r}
+
+hist(sheep_results$auc_null, breaks = seq(0,1,.01), main = 'sheep skew predicting SNP aurocs: null')
+abline(v = .5, col = 'red')
+hist(sheep_results$auc, breaks = seq(0,1,.01), main = 'sheep skew predicting SNP aurocs')
+abline(v = .5, col = 'red')
+plot(sheep_results$auc, sheep_results$auc_power_significance, main = 'sheep AUROC against significance power', xlab = 'AUROC', ylab = 'Simulated significance power')
+plot(sheep_results$auc, sheep_results$auc_power_effect_55, main = 'sheep effect size power thresh: 0.55', xlab = 'AUROC', ylab = 'Simulated effect size power')
+plot(sheep_results$auc, sheep_results$auc_power_effect_75, main = 'sheep effect size power thresh: 0.75', xlab = 'AUROC', ylab = 'Simulated effect size power')
+plot(sheep_results$variant_prevalence, sheep_results$auc_power_effect_55, main = 'sheep variant % against effect size power', xlab = 'Variant prevalence', ylab = 'Simulated effect size power')
+plot(sheep_results$variant_prevalence, sheep_results$auc_power_effect_75, main = 'sheep variant % against effect size power', xlab = 'Variant prevalence', ylab = 'Simulated effect size power')
+plot(sheep_results$variant_prevalence, sheep_results$bootstrap_auc_var, main = 'sheep variant % against boostrap auc variance', xlab = 'Variant prevalence', ylab = 'Variance of bootstrap aurocs')
+plot(sheep_results$auc, sheep_results$bootstrap_auc_var, xlab = 'AUROC', ylab = 'Variance of bootstrap AUROC distribution', main = 'sheep samples')
+
+
+hist(sheep_results$auc_pval, main = 'Raw auroc p-values', breaks = seq(0,1,.05))
+adj_pval = p.adjust(sheep_results$auc_pval, method = 'BH')
+hist(adj_pval, main = 'FDR adjusted auroc p-values', breaks = seq(0,1,.05))
+fdr_index = which(adj_pval <= .05)
+hist(sheep_results$auc[fdr_index], main = 'Significant aurocs', breaks = seq(0,1,.01))
+
+sheep_ref_check_df = data.frame(auc = sheep_results$auc, ref_biased_index = sheep_results$reference_biased_index)
+ggplot(sheep_ref_check_df, aes(x = ref_biased_index, y = auc, fill = ref_biased_index)) + geom_violin(scale = 'width') + geom_boxplot(width = .25) + ggtitle('sheep') +
+  xlab('Reference biased SNPs') + ylab('XCI ratio and variant AUROC') 
+#ggsave(filename = 'sheep_ref_biased_xci_ratio_auroc_violins_v2.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/',
+#       device = 'pdf', useDingbats = F, height = 4, width = 5)
+```
+
+#human samples
+
+```{r}
+
+#Go through the samples that have XCI ratio estimates with at least 10 genes and grab all the variants present across all samples
+skew_index = human_skew_and_stats_df$sample_index[human_skew_and_stats_df$num_snps >= 10 & human_skew_and_stats_df$autosome_imbalance == F]
+human_scores = human_skew_and_stats_df$skew[human_skew_and_stats_df$num_snps >= 10 & human_skew_and_stats_df$autosome_imbalance == F]
+total_human_samps = length(skew_index) #Total number of rat samples
+test_variants = c()
+for(i in 1:length(skew_index)){
+  data_variants = paste0(list.vcf[[skew_index[i]]][ ,1], paste0(list.vcf[[skew_index[i]]]$V3, list.vcf[[skew_index[i]]]$V4))
+  test_variants = c(test_variants, data_variants)
+}
+#Get the sample counts of each test variant
+test_variants = table(test_variants)
+#Number of positives and negatives for each variant and the prevalence of each variant
+n_pos = as.numeric(test_variants[test_variants >= 10])
+n_neg = total_human_samps - n_pos
+variant_prevalence = n_pos / total_human_samps
+test_variants = names(test_variants[test_variants >= 10])
+length(test_variants)
+
+#Just using the samples with XCI ratios from 10 genes or more
+skew_filt_annot_human_vcfs = list.vcf[skew_index]
+auc_test_variants = vector(mode = 'numeric', length = length(test_variants))
+auc_pval = vector(mode = 'numeric', length = length(test_variants))
+auc_power_sig = vector(mode = 'numeric', length = length(test_variants))
+auc_power_effect_55 = vector(mode = 'numeric', length = length(test_variants))
+auc_power_effect_75 = vector(mode = 'numeric', length = length(test_variants))
+bootstrap_auc_var = vector(mode = 'numeric', length = length(test_variants))
+auc_null = vector(mode = 'numeric', length = length(test_variants))
+
+for(j in 1:length(test_variants)){
+  if(j%%100 == 0){print(j)}
+  #Go through all samples and get a boolean vector for which samples have that variant
+  variant_present = vector(mode = 'logical', length = length(skew_filt_annot_human_vcfs))
+  for(i in 1:length(skew_filt_annot_human_vcfs)){
+  
+    data_variants = paste0(skew_filt_annot_human_vcfs[[i]][ ,1], paste0(skew_filt_annot_human_vcfs[[i]]$V3, skew_filt_annot_human_vcfs[[i]]$V4))
+    variant_present[i] = test_variants[j] %in% data_variants
+  }
+  
+  #Get the auroc and it's p_value
+  auc_results = compute_auc(human_scores, variant_present)
+  auc_test_variants[j] = auc_results$auc
+  auc_pval[j] = auc_results$p_value
+  #Compute the power calculation
+  power_results = compute_auc_power(human_scores, variant_present)
+  auc_power_sig[j] = power_results$power_sig
+  auc_power_effect_55[j] = power_results$power_effect_55
+  auc_power_effect_75[j] = power_results$power_effect_75
+  bootstrap_auc_var[j] = power_results$bootstrap_auc_var
+  #Get a permuted auroc
+  auc_null[j] = compute_auc(human_scores, sample(variant_present))$auc #AUC with the labels randomly shuffled for a null
+}
+
+#Get the index for all the SNPs classified as reference biased
+ref_index = test_variants %in% human_snp_stat_df$variant[human_snp_stat_df$filter == FALSE]
+
+human_results = list('variants' = test_variants,'reference_biased_index' = ref_index, 'n_pos' = n_pos, 'n_neg' = n_neg, 'variant_prevalence' = variant_prevalence, 
+                     'auc' = auc_test_variants, 'auc_pval' = auc_pval, 'auc_power_significance' = auc_power_sig, 'auc_power_effect_55' = auc_power_effect_55,
+                     'auc_power_effect_75' = auc_power_effect_75, 'bootstrap_auc_var' = bootstrap_auc_var, 'auc_null' = auc_null)
+
+
+hist(human_results$auc_null, breaks = seq(0,1,.01), main = 'human skew predicting SNP aurocs: null')
+abline(v = .5, col = 'red')
+hist(human_results$auc, breaks = seq(0,1,.01), main = 'human skew predicting SNP aurocs')
+abline(v = .5, col = 'red')
+plot(human_results$auc, human_results$auc_power_significance, main = 'human AUROC against significance power', xlab = 'AUROC', ylab = 'Simulated significance power')
+plot(human_results$auc, human_results$auc_power_effect_55, main = 'human effect size power thresh: 0.55', xlab = 'AUROC', ylab = 'Simulated effect size power')
+plot(human_results$auc, human_results$auc_power_effect_75, main = 'human effect size power thresh: 0.75', xlab = 'AUROC', ylab = 'Simulated effect size power')
+plot(human_results$variant_prevalence, human_results$auc_power_effect_55, main = 'human variant % against effect size power', xlab = 'Variant prevalence', ylab = 'Simulated effect size power')
+plot(human_results$variant_prevalence, human_results$auc_power_effect_75, main = 'human variant % against effect size power', xlab = 'Variant prevalence', ylab = 'Simulated effect size power')
+plot(human_results$variant_prevalence, human_results$bootstrap_auc_var, main = 'human variant % against boostrap auc variance', xlab = 'Variant prevalence', ylab = 'Variance of bootstrap aurocs')
+plot(human_results$auc, human_results$bootstrap_auc_var, xlab = 'AUROC', ylab = 'Variance of bootstrap AUROC distribution', main = 'human samples')
+
+
+hist(human_results$auc_pval, main = 'Raw auroc p-values', breaks = seq(0,1,.05))
+adj_pval = p.adjust(human_results$auc_pval, method = 'BH')
+hist(adj_pval, main = 'FDR adjusted auroc p-values', breaks = seq(0,1,.05))
+fdr_index = which(adj_pval <= .05)
+hist(human_results$auc[fdr_index], main = 'Significant aurocs', breaks = seq(0,1,.01))
+
+human_ref_check_df = data.frame(auc = human_results$auc, ref_biased_index = human_results$reference_biased_index)
+ggplot(human_ref_check_df, aes(x = ref_biased_index, y = auc, fill = ref_biased_index)) + geom_violin(scale = 'width') + geom_boxplot(width = .25) + ggtitle('human') +
+  xlab('Reference biased SNPs') + ylab('XCI ratio and variant AUROC') 
+#ggsave(filename = 'human_ref_biased_xci_ratio_auroc_violins_v2.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/',
+#       device = 'pdf', useDingbats = F, height = 4, width = 5)
+
+```
+
+
+Save the ref_check dataframes
+```{r}
+
+
+save(human_ref_check_df, cow_ref_check_df, pig_ref_check_df, sheep_ref_check_df, goat_ref_check_df, horse_ref_check_df, rat_ref_check_df, 
+     mouse_ref_check_df, macaca_ref_check_df, dog_ref_check_df, file = '/home/werner/projects/cross_species_XCI/final_plots/R/data_for_plots/all_ref_check_dfs.Rdata')
+
+
+
+```
+
+
+
+
+
+put all the null and test distributions together in a plot
+
+```{r}
+
+
+
+all_aucs = c(sheep_results$auc_null, sheep_results$auc, cow_results$auc_null, cow_results$auc, horse_results$auc_null, horse_results$auc,
+             goat_results$auc_null, goat_results$auc, dog_results$auc_null, dog_results$auc, pig_results$auc_null, pig_results$auc, 
+             macaca_results$auc_null, macaca_results$auc, rat_results$auc_null, rat_results$auc, mouse_results$auc_null, mouse_results$auc, 
+  human_results$auc_null, human_results$auc)
+
+all_pvalues = c(rep(NA, length = length(sheep_results$auc_null)), sheep_results$auc_pval, rep(NA, length = length(cow_results$auc_null)), cow_results$auc_pval, 
+                rep(NA, length = length(horse_results$auc_null)), horse_results$auc_pval, rep(NA, length = length(goat_results$auc_null)), goat_results$auc_pval, 
+                rep(NA, length = length(dog_results$auc_null)), dog_results$auc_pval, rep(NA, length = length(pig_results$auc_null)), pig_results$auc_pval,
+                rep(NA, length = length(macaca_results$auc_null)), macaca_results$auc_pval, rep(NA, length = length(rat_results$auc_null)), rat_results$auc_pval, 
+                rep(NA, length = length(mouse_results$auc_null)), mouse_results$auc_pval, 
+                rep(NA, length = length(human_results$auc_null)), human_results$auc_pval)
+
+all_power_sig = c(rep(NA, length = length(sheep_results$auc_null)), sheep_results$auc_power_significance, 
+                  rep(NA, length = length(cow_results$auc_null)), cow_results$auc_power_significance, 
+                rep(NA, length = length(horse_results$auc_null)), horse_results$auc_power_significance, 
+                rep(NA, length = length(goat_results$auc_null)), goat_results$auc_power_significance, 
+                rep(NA, length = length(dog_results$auc_null)), dog_results$auc_power_significance, 
+                rep(NA, length = length(pig_results$auc_null)), pig_results$auc_power_significance,
+                rep(NA, length = length(macaca_results$auc_null)), macaca_results$auc_power_significance, 
+                rep(NA, length = length(rat_results$auc_null)), rat_results$auc_power_significance, 
+                rep(NA, length = length(mouse_results$auc_null)), mouse_results$auc_power_significance, 
+                rep(NA, length = length(human_results$auc_null)), human_results$auc_power_significance)
+
+all_power_effect_55 = c(rep(NA, length = length(sheep_results$auc_null)), sheep_results$auc_power_effect_55, 
+                        rep(NA, length = length(cow_results$auc_null)), cow_results$auc_power_effect_55, 
+                rep(NA, length = length(horse_results$auc_null)), horse_results$auc_power_effect_55, 
+                rep(NA, length = length(goat_results$auc_null)), goat_results$auc_power_effect_55, 
+                rep(NA, length = length(dog_results$auc_null)), dog_results$auc_power_effect_55, 
+                rep(NA, length = length(pig_results$auc_null)), pig_results$auc_power_effect_55,
+                rep(NA, length = length(macaca_results$auc_null)), macaca_results$auc_power_effect_55, 
+                rep(NA, length = length(rat_results$auc_null)), rat_results$auc_power_effect_55, 
+                rep(NA, length = length(mouse_results$auc_null)), mouse_results$auc_power_effect_55, 
+                rep(NA, length = length(human_results$auc_null)), human_results$auc_power_effect_55)
+
+all_power_effect_75 = c(rep(NA, length = length(sheep_results$auc_null)), sheep_results$auc_power_effect_75, 
+                        rep(NA, length = length(cow_results$auc_null)), cow_results$auc_power_effect_75, 
+                rep(NA, length = length(horse_results$auc_null)), horse_results$auc_power_effect_75,
+                rep(NA, length = length(goat_results$auc_null)), goat_results$auc_power_effect_75, 
+                rep(NA, length = length(dog_results$auc_null)), dog_results$auc_power_effect_75, 
+                rep(NA, length = length(pig_results$auc_null)), pig_results$auc_power_effect_75,
+                rep(NA, length = length(macaca_results$auc_null)), macaca_results$auc_power_effect_75,
+                rep(NA, length = length(rat_results$auc_null)), rat_results$auc_power_effect_75, 
+                rep(NA, length = length(mouse_results$auc_null)), mouse_results$auc_power_effect_75, 
+                rep(NA, length = length(human_results$auc_null)), human_results$auc_power_effect_75)
+
+all_bootstrap_auc_var = c(rep(NA, length = length(sheep_results$auc_null)), sheep_results$bootstrap_auc_var, 
+                          rep(NA, length = length(cow_results$auc_null)), cow_results$bootstrap_auc_var, 
+                rep(NA, length = length(horse_results$auc_null)), horse_results$bootstrap_auc_var, 
+                rep(NA, length = length(goat_results$auc_null)), goat_results$bootstrap_auc_var, 
+                rep(NA, length = length(dog_results$auc_null)), dog_results$bootstrap_auc_var, 
+                rep(NA, length = length(pig_results$auc_null)), pig_results$bootstrap_auc_var,
+                rep(NA, length = length(macaca_results$auc_null)), macaca_results$bootstrap_auc_var,
+                rep(NA, length = length(rat_results$auc_null)), rat_results$bootstrap_auc_var, 
+                rep(NA, length = length(mouse_results$auc_null)), mouse_results$bootstrap_auc_var, 
+                rep(NA, length = length(human_results$auc_null)), human_results$bootstrap_auc_var)
+
+all_n_pos = c(rep(NA, length = length(sheep_results$auc_null)), sheep_results$n_pos, rep(NA, length = length(cow_results$auc_null)), cow_results$n_pos, 
+                rep(NA, length = length(horse_results$auc_null)), horse_results$n_pos, rep(NA, length = length(goat_results$auc_null)), goat_results$n_pos, 
+                rep(NA, length = length(dog_results$auc_null)), dog_results$n_pos, rep(NA, length = length(pig_results$auc_null)), pig_results$n_pos,
+                rep(NA, length = length(macaca_results$auc_null)), macaca_results$n_pos, rep(NA, length = length(rat_results$auc_null)), rat_results$n_pos, 
+              rep(NA, length = length(mouse_results$auc_null)), mouse_results$n_pos, 
+                rep(NA, length = length(human_results$auc_null)), human_results$n_pos)
+
+all_n_neg = c(rep(NA, length = length(sheep_results$auc_null)), sheep_results$n_neg, rep(NA, length = length(cow_results$auc_null)), cow_results$n_neg, 
+                rep(NA, length = length(horse_results$auc_null)), horse_results$n_neg, rep(NA, length = length(goat_results$auc_null)), goat_results$n_neg, 
+                rep(NA, length = length(dog_results$auc_null)), dog_results$n_neg, rep(NA, length = length(pig_results$auc_null)), pig_results$n_neg,
+                rep(NA, length = length(macaca_results$auc_null)), macaca_results$n_neg, rep(NA, length = length(rat_results$auc_null)), rat_results$n_neg,
+               rep(NA, length = length(mouse_results$auc_null)), mouse_results$n_neg, 
+                rep(NA, length = length(human_results$auc_null)), human_results$n_neg)
+
+all_variant_prevalence = c(rep(NA, length = length(sheep_results$auc_null)), sheep_results$variant_prevalence,
+                           rep(NA, length = length(cow_results$auc_null)), cow_results$variant_prevalence, 
+                rep(NA, length = length(horse_results$auc_null)), horse_results$variant_prevalence, 
+                rep(NA, length = length(goat_results$auc_null)), goat_results$variant_prevalence, 
+                rep(NA, length = length(dog_results$auc_null)), dog_results$variant_prevalence, 
+                rep(NA, length = length(pig_results$auc_null)), pig_results$variant_prevalence,
+                rep(NA, length = length(macaca_results$auc_null)), macaca_results$variant_prevalence, 
+                rep(NA, length = length(rat_results$auc_null)), rat_results$variant_prevalence, 
+                rep(NA, length = length(mouse_results$auc_null)), mouse_results$variant_prevalence, 
+                rep(NA, length = length(human_results$auc_null)), human_results$variant_prevalence)
+
+
+all_variants = c(sheep_results$variants, sheep_results$variants, cow_results$variants, cow_results$variants, horse_results$variants, horse_results$variants, 
+                 goat_results$variants, goat_results$variants, dog_results$variants, dog_results$variants, 
+                 pig_results$variants, pig_results$variants, macaca_results$variants, macaca_results$variants, 
+                 rat_results$variants, rat_results$variants, mouse_results$variants, mouse_results$variants, human_results$variants, human_results$variants)
+
+all_ref_biased = c(sheep_results$reference_biased_index, sheep_results$reference_biased_index, cow_results$reference_biased_index, cow_results$reference_biased_index,
+                   horse_results$reference_biased_index, horse_results$reference_biased_index, goat_results$reference_biased_index, goat_results$reference_biased_index,
+                   dog_results$reference_biased_index, dog_results$reference_biased_index, pig_results$reference_biased_index, pig_results$reference_biased_index,
+                   macaca_results$reference_biased_index, macaca_results$reference_biased_index, rat_results$reference_biased_index, rat_results$reference_biased_index,
+                   mouse_results$reference_biased_index, mouse_results$reference_biased_index,
+                   human_results$reference_biased_index, human_results$reference_biased_index)
+
+
+null_label = c(rep('null', length = length(sheep_results$auc_null)), rep('data', length = length(sheep_results$auc)),
+  rep('null', length = length(cow_results$auc_null)), rep('data', length = length(cow_results$auc)),
+  rep('null', length = length(horse_results$auc_null)), rep('data', length = length(horse_results$auc)),
+  rep('null', length = length(goat_results$auc_null)), rep('data', length = length(goat_results$auc)),
+  rep('null', length = length(dog_results$auc_null)), rep('data', length = length(dog_results$auc)),
+  rep('null', length = length(pig_results$auc_null)), rep('data', length = length(pig_results$auc)),
+  rep('null', length = length(macaca_results$auc_null)), rep('data', length = length(macaca_results$auc)),
+  rep('null', length = length(rat_results$auc_null)), rep('data', length = length(rat_results$auc)),
+  rep('null', length = length(mouse_results$auc_null)), rep('data', length = length(mouse_results$auc)),
+  rep('null', length = length(human_results$auc_null)), rep('data', length = length(human_results$auc)))
+
+species_label = c(rep('Sheep', length = length(c(sheep_results$auc_null, sheep_results$auc))),
+  rep('Cow', length = length(c(cow_results$auc_null, cow_results$auc))),
+  rep('Horse', length = length(c(horse_results$auc_null, horse_results$auc))),
+  rep('Goat', length = length(c(goat_results$auc_null, goat_results$auc))),
+  rep('Dog', length = length(c(dog_results$auc_null, dog_results$auc))),
+  rep('Pig', length = length(c(pig_results$auc_null, pig_results$auc))),
+  rep('Macaca', length = length(c(macaca_results$auc_null, macaca_results$auc))),
+  rep('Rat', length = length(c(rat_results$auc_null, rat_results$auc))),
+  rep('Mouse', length = length(c(mouse_results$auc_null, mouse_results$auc))),
+  rep('Human', length = length(c(human_results$auc_null, human_results$auc))))
+
+
+snp_skew_auc_df = data.frame(variants = all_variants, reference_bias_index = all_ref_biased, aucs = all_aucs, p_values = all_pvalues, power_significance = all_power_sig,
+                             power_effect_55 = all_power_effect_55, power_effect_75 = all_power_effect_75, bootstrap_auc_var = all_bootstrap_auc_var,
+                             n_pos = all_n_pos, n_neg = all_n_neg, 
+                             variant_prevalence = all_variant_prevalence, null_label = null_label, species = species_label)
+#FDR adjust pvalues and add a significance column
+snp_skew_auc_df$adj_p_values = p.adjust(snp_skew_auc_df$p_values, method = 'BH')
+snp_skew_auc_df$auc_significance = snp_skew_auc_df$adj_p_values <= .05 
+snp_skew_auc_df$auc_significance[is.na(snp_skew_auc_df$p_values)] = NA
+
+
+species_order_df = snp_skew_auc_df %>% filter(null_label == 'data') %>% group_by(species) %>% summarize(median = median(aucs)) %>% arrange(desc(median))
+snp_skew_auc_df$species = factor(snp_skew_auc_df$species, levels = species_order_df$species )
+
+
+
+ggplot(filter(snp_skew_auc_df, reference_bias_index == FALSE), aes(y = species, x = aucs, color = null_label, fill = species, alpha = null_label)) + 
+  geom_violin(scale = 'width', width = .75) +
+  #geom_boxplot() +
+  scale_y_discrete(labels = species_order_df$species, expand = c(.0005, 0)) +
+  scale_fill_manual(values = species_palette, breaks = levels(snp_skew_auc_df$species)) +
+  scale_color_manual(values = c('null' = 'grey', 'data' = 'black')) +
+  scale_alpha_manual(values = c('null' = .5, 'data' = 1)) +
+  xlim(0, 1) +
+  geom_vline(xintercept = .5, color = 'red', linetype = 'dashed')
+ggsave(filename = 'skew_snp_auc_violins_v2.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/', device = 'pdf',
+       useDingbats = F, height = 6, width = 4)
+
+
+ggplot(filter(snp_skew_auc_df, reference_bias_index == FALSE), aes(x = species, y = aucs, color = null_label, fill = species, alpha = null_label)) + 
+  geom_violin(scale = 'width', width = .75) +
+  scale_fill_manual(values = species_palette, breaks = levels(snp_skew_auc_df$species)) +
+  scale_color_manual(values = c('null' = 'grey', 'data' = 'black')) +
+  scale_alpha_manual(values = c('null' = .5, 'data' = 1)) +
+  ylim(0, 1) +
+  geom_hline(yintercept = .5, color = 'red', linetype = 'dashed')
+
+ggsave(filename = 'skew_snp_auc_violins_horz_v2.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/', device = 'pdf',
+       useDingbats = F, height = 4, width = 8)
+```
+
+```{r}
+
+save(snp_skew_auc_df, file = '/home/werner/projects/cross_species_XCI/data/species_data_analysis/snp_skew_auc/snp_skew_auc_df_4_10_24.Rdata')
+
+```
+
+
+```{r}
+
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/snp_skew_auc/snp_skew_auc_df_4_10_24.Rdata')
+
+```
+
+
+
+```{r}
+
+ggplot(snp_skew_auc_df, aes(x = aucs, y = power_significance)) + geom_point()
+```
+
+
+Look at the mean expression of each snp and how it relates to the skew AUC
+
+```{r}
+#Get the variant, variant position, mean counts per variant, and proportion of samples per variant for each species
+#sheep
+sheep_variants = filter(snp_skew_auc_df, null_label == 'data' & species == 'Sheep' & reference_bias_index == FALSE)$variants
+sheep_variant_auc = filter(snp_skew_auc_df, null_label == 'data' & species == 'Sheep' & reference_bias_index == FALSE)$aucs
+sheep_variant_auc_pvals = filter(snp_skew_auc_df, null_label == 'data' & species == 'Sheep' & reference_bias_index == FALSE)$p_values
+sheep_variant_auc_power_sig = filter(snp_skew_auc_df, null_label == 'data' & species == 'Sheep' & reference_bias_index == FALSE)$power_significance
+sheep_variant_auc_power_effect_55 = filter(snp_skew_auc_df, null_label == 'data' & species == 'Sheep' & reference_bias_index == FALSE)$power_effect_55
+sheep_variant_auc_power_effect_75 = filter(snp_skew_auc_df, null_label == 'data' & species == 'Sheep' & reference_bias_index == FALSE)$power_effect_75
+sheep_variant_bootstrap_auc_var = filter(snp_skew_auc_df, null_label == 'data' & species == 'Sheep' & reference_bias_index == FALSE)$bootstrap_auc_var
+sheep_variant_n_pos = filter(snp_skew_auc_df, null_label == 'data' & species == 'Sheep' & reference_bias_index == FALSE)$n_pos
+sheep_variant_n_neg = filter(snp_skew_auc_df, null_label == 'data' & species == 'Sheep' & reference_bias_index == FALSE)$n_neg
+sheep_variant_prevalence = filter(snp_skew_auc_df, null_label == 'data' & species == 'Sheep' & reference_bias_index == FALSE)$variant_prevalence
+sheep_snp_pos = as.numeric(sapply(1:length(sheep_variants), function(i) substr(sheep_variants[i],1,nchar(sheep_variants[i])-2)))
+index = match(sheep_snp_pos, sheep_snp_stat_df$snp_pos)
+sheep_exp = sheep_snp_stat_df[index, 'mean_total_counts' ]
+
+sheep_x_meta = sheep_x_gtf[sheep_x_gtf$gbkey == 'Gene'& !is.na(sheep_x_gtf$gbkey),]
+x_gene_starts = sheep_x_meta$start
+x_gene_ends = sheep_x_meta$end
+#Add gene_annotations
+sheep_gene_annots = vector(mode = 'character', length = length(sheep_snp_pos))
+for( i in 1:length(sheep_snp_pos)){
+
+  test_gene_start = sheep_snp_pos[i]
+  gene_index = findInterval(test_gene_start, x_gene_starts)
+  if(gene_index == 0){next}
+  
+  if(test_gene_start <= x_gene_ends[gene_index]){
+    sheep_gene_annots[i] = sheep_x_meta$gene[gene_index]
+  }
+}
+
+
+#cow
+cow_variants = filter(snp_skew_auc_df, null_label == 'data' & species == 'Cow'& reference_bias_index == FALSE)$variants
+cow_variant_auc = filter(snp_skew_auc_df, null_label == 'data' & species == 'Cow' & reference_bias_index == FALSE)$aucs
+cow_variant_auc_pvals = filter(snp_skew_auc_df, null_label == 'data' & species == 'Cow' & reference_bias_index == FALSE)$p_values
+cow_variant_auc_power_sig = filter(snp_skew_auc_df, null_label == 'data' & species == 'Cow' & reference_bias_index == FALSE)$power_significance
+cow_variant_auc_power_effect_55 = filter(snp_skew_auc_df, null_label == 'data' & species == 'Cow' & reference_bias_index == FALSE)$power_effect_55
+cow_variant_auc_power_effect_75 = filter(snp_skew_auc_df, null_label == 'data' & species == 'Cow' & reference_bias_index == FALSE)$power_effect_75
+cow_variant_bootstrap_auc_var = filter(snp_skew_auc_df, null_label == 'data' & species == 'Cow' & reference_bias_index == FALSE)$bootstrap_auc_var
+cow_variant_n_pos = filter(snp_skew_auc_df, null_label == 'data' & species == 'Cow' & reference_bias_index == FALSE)$n_pos
+cow_variant_n_neg = filter(snp_skew_auc_df, null_label == 'data' & species == 'Cow' & reference_bias_index == FALSE)$n_neg
+cow_variant_prevalence = filter(snp_skew_auc_df, null_label == 'data' & species == 'Cow' & reference_bias_index == FALSE)$variant_prevalence
+cow_snp_pos = as.numeric(sapply(1:length(cow_variants), function(i) substr(cow_variants[i],1,nchar(cow_variants[i])-2)))
+index = match(cow_snp_pos, cow_snp_stat_df$snp_pos)
+cow_exp = cow_snp_stat_df[index, 'mean_total_counts' ]
+#cow_prop = cow_snp_stat_df[index, 'num_samples_present' ] / length(annot_cow_vcfs)
+
+cow_x_meta = cow_x_gtf[cow_x_gtf$gbkey == 'Gene'& !is.na(cow_x_gtf$gbkey),]
+x_gene_starts = cow_x_meta$start
+x_gene_ends = cow_x_meta$end
+#Add gene annotations
+cow_gene_annots = vector(mode = 'character', length = length(cow_snp_pos))
+for( i in 1:length(cow_snp_pos)){
+
+  test_gene_start = cow_snp_pos[i]
+  gene_index = findInterval(test_gene_start, x_gene_starts)
+  if(gene_index == 0){next}
+  
+  if(test_gene_start <= x_gene_ends[gene_index]){
+    cow_gene_annots[i] = cow_x_meta$gene[gene_index]
+  }
+}
+
+#horse
+horse_variants = filter(snp_skew_auc_df, null_label == 'data' & species == 'Horse' & reference_bias_index == FALSE)$variants
+horse_variant_auc = filter(snp_skew_auc_df, null_label == 'data' & species == 'Horse' & reference_bias_index == FALSE)$aucs
+horse_variant_auc_pvals = filter(snp_skew_auc_df, null_label == 'data' & species == 'Horse' & reference_bias_index == FALSE)$p_values
+horse_variant_auc_power_sig = filter(snp_skew_auc_df, null_label == 'data' & species == 'Horse' & reference_bias_index == FALSE)$power_significance
+horse_variant_auc_power_effect_55 = filter(snp_skew_auc_df, null_label == 'data' & species == 'Horse' & reference_bias_index == FALSE)$power_effect_55
+horse_variant_auc_power_effect_75 = filter(snp_skew_auc_df, null_label == 'data' & species == 'Horse' & reference_bias_index == FALSE)$power_effect_75
+horse_variant_bootstrap_auc_var = filter(snp_skew_auc_df, null_label == 'data' & species == 'Horse' & reference_bias_index == FALSE)$bootstrap_auc_var
+horse_variant_n_pos = filter(snp_skew_auc_df, null_label == 'data' & species == 'Horse' & reference_bias_index == FALSE)$n_pos
+horse_variant_n_neg = filter(snp_skew_auc_df, null_label == 'data' & species == 'Horse' & reference_bias_index == FALSE)$n_neg
+horse_variant_prevalence = filter(snp_skew_auc_df, null_label == 'data' & species == 'Horse' & reference_bias_index == FALSE)$variant_prevalence
+horse_snp_pos = as.numeric(sapply(1:length(horse_variants), function(i) substr(horse_variants[i],1,nchar(horse_variants[i])-2)))
+index = match(horse_snp_pos, horse_snp_stat_df$snp_pos)
+horse_exp = horse_snp_stat_df[index, 'mean_total_counts' ]
+#horse_prop = horse_snp_stat_df[index, 'num_samples_present' ] / length(annot_horse_vcfs)
+
+horse_x_meta = horse_x_gtf[horse_x_gtf$gbkey == 'Gene'& !is.na(horse_x_gtf$gbkey),]
+x_gene_starts = horse_x_meta$start
+x_gene_ends = horse_x_meta$end
+#Add gene_annotations
+horse_gene_annots = vector(mode = 'character', length = length(horse_snp_pos))
+for( i in 1:length(horse_snp_pos)){
+
+  test_gene_start = horse_snp_pos[i]
+  gene_index = findInterval(test_gene_start, x_gene_starts)
+  if(gene_index == 0){next}
+  
+  if(test_gene_start <= x_gene_ends[gene_index]){
+    horse_gene_annots[i] = horse_x_meta$gene[gene_index]
+  }
+}
+
+#goat
+goat_variants = filter(snp_skew_auc_df, null_label == 'data' & species == 'Goat' & reference_bias_index == FALSE)$variants
+goat_variant_auc = filter(snp_skew_auc_df, null_label == 'data' & species == 'Goat' & reference_bias_index == FALSE)$aucs
+goat_variant_auc_pvals = filter(snp_skew_auc_df, null_label == 'data' & species == 'Goat' & reference_bias_index == FALSE)$p_values
+goat_variant_auc_power_sig = filter(snp_skew_auc_df, null_label == 'data' & species == 'Goat' & reference_bias_index == FALSE)$power_significance
+goat_variant_auc_power_effect_55 = filter(snp_skew_auc_df, null_label == 'data' & species == 'Goat' & reference_bias_index == FALSE)$power_effect_55
+goat_variant_auc_power_effect_75 = filter(snp_skew_auc_df, null_label == 'data' & species == 'Goat' & reference_bias_index == FALSE)$power_effect_75
+goat_variant_bootstrap_auc_var = filter(snp_skew_auc_df, null_label == 'data' & species == 'Goat' & reference_bias_index == FALSE)$bootstrap_auc_var
+goat_variant_n_pos = filter(snp_skew_auc_df, null_label == 'data' & species == 'Goat' & reference_bias_index == FALSE)$n_pos
+goat_variant_n_neg = filter(snp_skew_auc_df, null_label == 'data' & species == 'Goat' & reference_bias_index == FALSE)$n_neg
+goat_variant_prevalence = filter(snp_skew_auc_df, null_label == 'data' & species == 'Goat' & reference_bias_index == FALSE)$variant_prevalence
+goat_snp_pos = as.numeric(sapply(1:length(goat_variants), function(i) substr(goat_variants[i],1,nchar(goat_variants[i])-2)))
+index = match(goat_snp_pos, goat_snp_stat_df$snp_pos)
+goat_exp = goat_snp_stat_df[index, 'mean_total_counts' ]
+#goat_prop = goat_snp_stat_df[index, 'num_samples_present' ] / length(annot_goat_vcfs)
+
+goat_x_meta = goat_x_gtf[goat_x_gtf$gbkey == 'Gene'& !is.na(goat_x_gtf$gbkey),]
+x_gene_starts = goat_x_meta$start
+x_gene_ends = goat_x_meta$end
+#Add gene_annotations
+goat_gene_annots = vector(mode = 'character', length = length(goat_snp_pos))
+for( i in 1:length(goat_snp_pos)){
+
+  test_gene_start = goat_snp_pos[i]
+  gene_index = findInterval(test_gene_start, x_gene_starts)
+  if(gene_index == 0){next}
+  
+  if(test_gene_start <= x_gene_ends[gene_index]){
+    goat_gene_annots[i] = goat_x_meta$gene[gene_index]
+  }
+}
+
+#dog
+dog_variants = filter(snp_skew_auc_df, null_label == 'data' & species == 'Dog' & reference_bias_index == FALSE)$variants
+dog_variant_auc = filter(snp_skew_auc_df, null_label == 'data' & species == 'Dog' & reference_bias_index == FALSE)$aucs
+dog_variant_auc_pvals = filter(snp_skew_auc_df, null_label == 'data' & species == 'Dog' & reference_bias_index == FALSE)$p_values
+dog_variant_auc_power_sig = filter(snp_skew_auc_df, null_label == 'data' & species == 'Dog' & reference_bias_index == FALSE)$power_significance
+dog_variant_auc_power_effect_55 = filter(snp_skew_auc_df, null_label == 'data' & species == 'Dog' & reference_bias_index == FALSE)$power_effect_55
+dog_variant_auc_power_effect_75 = filter(snp_skew_auc_df, null_label == 'data' & species == 'Dog' & reference_bias_index == FALSE)$power_effect_75
+dog_variant_bootstrap_auc_var = filter(snp_skew_auc_df, null_label == 'data' & species == 'Dog' & reference_bias_index == FALSE)$bootstrap_auc_var
+dog_variant_n_pos = filter(snp_skew_auc_df, null_label == 'data' & species == 'Dog' & reference_bias_index == FALSE)$n_pos
+dog_variant_n_neg = filter(snp_skew_auc_df, null_label == 'data' & species == 'Dog' & reference_bias_index == FALSE)$n_neg
+dog_variant_prevalence = filter(snp_skew_auc_df, null_label == 'data' & species == 'Dog' & reference_bias_index == FALSE)$variant_prevalence
+dog_snp_pos = as.numeric(sapply(1:length(dog_variants), function(i) substr(dog_variants[i],1,nchar(dog_variants[i])-2)))
+index = match(dog_snp_pos, dog_snp_stat_df$snp_pos)
+dog_exp = dog_snp_stat_df[index, 'mean_total_counts' ]
+#dog_prop = dog_snp_stat_df[index, 'num_samples_present' ] / length(annot_dog_vcfs)
+
+dog_x_meta = dog_x_gtf[dog_x_gtf$gbkey == 'Gene',]
+dog_x_meta = dog_x_meta[!is.na(dog_x_meta$gbkey), ] #A lot of NA entries in the dog GTF file
+dog_x_meta = dog_x_meta[!duplicated(dog_x_meta$gene), ]
+x_gene_starts = dog_x_meta$start
+x_gene_ends = dog_x_meta$end
+#Add gene_annotations
+dog_gene_annots = vector(mode = 'character', length = length(dog_snp_pos))
+for( i in 1:length(dog_snp_pos)){
+
+  test_gene_start = dog_snp_pos[i]
+  gene_index = findInterval(test_gene_start, x_gene_starts)
+  if(gene_index == 0){next}
+  
+  if(test_gene_start <= x_gene_ends[gene_index]){
+    dog_gene_annots[i] = dog_x_meta$gene[gene_index]
+  }
+}
+
+#pig
+pig_variants = filter(snp_skew_auc_df, null_label == 'data' & species == 'Pig' & reference_bias_index == FALSE)$variants
+pig_variant_auc = filter(snp_skew_auc_df, null_label == 'data' & species == 'Pig' & reference_bias_index == FALSE)$aucs
+pig_variant_auc_pvals = filter(snp_skew_auc_df, null_label == 'data' & species == 'Pig' & reference_bias_index == FALSE)$p_values
+pig_variant_auc_power_sig = filter(snp_skew_auc_df, null_label == 'data' & species == 'Pig' & reference_bias_index == FALSE)$power_significance
+pig_variant_auc_power_effect_55 = filter(snp_skew_auc_df, null_label == 'data' & species == 'Pig' & reference_bias_index == FALSE)$power_effect_55
+pig_variant_auc_power_effect_75 = filter(snp_skew_auc_df, null_label == 'data' & species == 'Pig' & reference_bias_index == FALSE)$power_effect_75
+pig_variant_bootstrap_auc_var = filter(snp_skew_auc_df, null_label == 'data' & species == 'Pig' & reference_bias_index == FALSE)$bootstrap_auc_var
+pig_variant_n_pos = filter(snp_skew_auc_df, null_label == 'data' & species == 'Pig' & reference_bias_index == FALSE)$n_pos
+pig_variant_n_neg = filter(snp_skew_auc_df, null_label == 'data' & species == 'Pig' & reference_bias_index == FALSE)$n_neg
+pig_variant_prevalence = filter(snp_skew_auc_df, null_label == 'data' & species == 'Pig' & reference_bias_index == FALSE)$variant_prevalence
+pig_snp_pos = as.numeric(sapply(1:length(pig_variants), function(i) substr(pig_variants[i],1,nchar(pig_variants[i])-2)))
+index = match(pig_snp_pos, pig_snp_stat_df$snp_pos)
+pig_exp = pig_snp_stat_df[index, 'mean_total_counts' ]
+#pig_prop = pig_snp_stat_df[index, 'num_samples_present' ] / length(annot_pig_vcfs)
+
+pig_x_meta = pig_x_gtf[pig_x_gtf$gbkey == 'Gene'& !is.na(pig_x_gtf$gbkey),]
+x_gene_starts = pig_x_meta$start
+x_gene_ends = pig_x_meta$end
+#Add gene_annotations
+pig_gene_annots = vector(mode = 'character', length = length(pig_snp_pos))
+for( i in 1:length(pig_snp_pos)){
+
+  test_gene_start = pig_snp_pos[i]
+  gene_index = findInterval(test_gene_start, x_gene_starts)
+  if(gene_index == 0){next}
+  
+  if(test_gene_start <= x_gene_ends[gene_index]){
+    pig_gene_annots[i] = pig_x_meta$gene[gene_index]
+  }
+}
+
+#macaca
+macaca_variants = filter(snp_skew_auc_df, null_label == 'data' & species == 'Macaca' & reference_bias_index == FALSE)$variants
+macaca_variant_auc = filter(snp_skew_auc_df, null_label == 'data' & species == 'Macaca' & reference_bias_index == FALSE)$aucs
+macaca_variant_auc_pvals = filter(snp_skew_auc_df, null_label == 'data' & species == 'Macaca' & reference_bias_index == FALSE)$p_values
+macaca_variant_auc_power_sig = filter(snp_skew_auc_df, null_label == 'data' & species == 'Macaca' & reference_bias_index == FALSE)$power_significance
+macaca_variant_auc_power_effect_55 = filter(snp_skew_auc_df, null_label == 'data' & species == 'Macaca' & reference_bias_index == FALSE)$power_effect_55
+macaca_variant_auc_power_effect_75 = filter(snp_skew_auc_df, null_label == 'data' & species == 'Macaca' & reference_bias_index == FALSE)$power_effect_75
+macaca_variant_bootstrap_auc_var = filter(snp_skew_auc_df, null_label == 'data' & species == 'Macaca' & reference_bias_index == FALSE)$bootstrap_auc_var
+macaca_variant_n_pos = filter(snp_skew_auc_df, null_label == 'data' & species == 'Macaca' & reference_bias_index == FALSE)$n_pos
+macaca_variant_n_neg = filter(snp_skew_auc_df, null_label == 'data' & species == 'Macaca' & reference_bias_index == FALSE)$n_neg
+macaca_variant_prevalence = filter(snp_skew_auc_df, null_label == 'data' & species == 'Macaca' & reference_bias_index == FALSE)$variant_prevalence
+macaca_snp_pos = as.numeric(sapply(1:length(macaca_variants), function(i) substr(macaca_variants[i],1,nchar(macaca_variants[i])-2)))
+index = match(macaca_snp_pos, macaca_snp_stat_df$snp_pos)
+macaca_exp = macaca_snp_stat_df[index, 'mean_total_counts' ]
+#macaca_prop = macaca_snp_stat_df[index, 'num_samples_present' ] / length(annot_macaca_vcfs)
+
+macaca_x_meta = macaca_x_gtf[macaca_x_gtf$gbkey == 'Gene'& !is.na(macaca_x_gtf$gbkey),]
+x_gene_starts = macaca_x_meta$start
+x_gene_ends = macaca_x_meta$end
+#Add gene_annotations
+macaca_gene_annots = vector(mode = 'character', length = length(macaca_snp_pos))
+for( i in 1:length(macaca_snp_pos)){
+
+  test_gene_start = macaca_snp_pos[i]
+  gene_index = findInterval(test_gene_start, x_gene_starts)
+  if(gene_index == 0){next}
+  
+  if(test_gene_start <= x_gene_ends[gene_index]){
+    macaca_gene_annots[i] = macaca_x_meta$gene[gene_index]
+  }
+}
+
+#rat
+rat_variants = filter(snp_skew_auc_df, null_label == 'data' & species == 'Rat' & reference_bias_index == FALSE)$variants
+rat_variant_auc = filter(snp_skew_auc_df, null_label == 'data' & species == 'Rat' & reference_bias_index == FALSE)$aucs
+rat_variant_auc_pvals = filter(snp_skew_auc_df, null_label == 'data' & species == 'Rat' & reference_bias_index == FALSE)$p_values
+rat_variant_auc_power_sig = filter(snp_skew_auc_df, null_label == 'data' & species == 'Rat' & reference_bias_index == FALSE)$power_significance
+rat_variant_auc_power_effect_55 = filter(snp_skew_auc_df, null_label == 'data' & species == 'Rat' & reference_bias_index == FALSE)$power_effect_55
+rat_variant_auc_power_effect_75 = filter(snp_skew_auc_df, null_label == 'data' & species == 'Rat' & reference_bias_index == FALSE)$power_effect_75
+rat_variant_bootstrap_auc_var = filter(snp_skew_auc_df, null_label == 'data' & species == 'Rat' & reference_bias_index == FALSE)$bootstrap_auc_var
+rat_variant_n_pos = filter(snp_skew_auc_df, null_label == 'data' & species == 'Rat' & reference_bias_index == FALSE)$n_pos
+rat_variant_n_neg = filter(snp_skew_auc_df, null_label == 'data' & species == 'Rat' & reference_bias_index == FALSE)$n_neg
+rat_variant_prevalence = filter(snp_skew_auc_df, null_label == 'data' & species == 'Rat' & reference_bias_index == FALSE)$variant_prevalence
+rat_snp_pos = as.numeric(sapply(1:length(rat_variants), function(i) substr(rat_variants[i],1,nchar(rat_variants[i])-2)))
+index = match(rat_snp_pos, rat_snp_stat_df$snp_pos)
+rat_exp = rat_snp_stat_df[index, 'mean_total_counts' ]
+#rat_prop = rat_snp_stat_df[index, 'num_samples_present' ] / length(annot_rat_vcfs)
+
+rat_x_meta = rat_x_gtf[rat_x_gtf$gbkey == 'Gene'& !is.na(rat_x_gtf$gbkey),]
+x_gene_starts = rat_x_meta$start
+x_gene_ends = rat_x_meta$end
+#Add gene_annotations
+rat_gene_annots = vector(mode = 'character', length = length(rat_snp_pos))
+for( i in 1:length(rat_snp_pos)){
+
+  test_gene_start = rat_snp_pos[i]
+  gene_index = findInterval(test_gene_start, x_gene_starts)
+  if(gene_index == 0){next}
+  
+  if(test_gene_start <= x_gene_ends[gene_index]){
+    rat_gene_annots[i] = rat_x_meta$gene[gene_index]
+  }
+}
+
+
+#Mouse
+mouse_variants = filter(snp_skew_auc_df, null_label == 'data' & species == 'Mouse' & reference_bias_index == FALSE)$variants
+mouse_variant_auc = filter(snp_skew_auc_df, null_label == 'data' & species == 'Mouse' & reference_bias_index == FALSE)$aucs
+mouse_variant_auc_pvals = filter(snp_skew_auc_df, null_label == 'data' & species == 'Mouse' & reference_bias_index == FALSE)$p_values
+mouse_variant_auc_power_sig = filter(snp_skew_auc_df, null_label == 'data' & species == 'Mouse' & reference_bias_index == FALSE)$power_significance
+mouse_variant_auc_power_effect_55 = filter(snp_skew_auc_df, null_label == 'data' & species == 'Mouse' & reference_bias_index == FALSE)$power_effect_55
+mouse_variant_auc_power_effect_75 = filter(snp_skew_auc_df, null_label == 'data' & species == 'Mouse' & reference_bias_index == FALSE)$power_effect_75
+mouse_variant_bootstrap_auc_var = filter(snp_skew_auc_df, null_label == 'data' & species == 'Mouse' & reference_bias_index == FALSE)$bootstrap_auc_var
+mouse_variant_n_pos = filter(snp_skew_auc_df, null_label == 'data' & species == 'Mouse' & reference_bias_index == FALSE)$n_pos
+mouse_variant_n_neg = filter(snp_skew_auc_df, null_label == 'data' & species == 'Mouse' & reference_bias_index == FALSE)$n_neg
+mouse_variant_prevalence = filter(snp_skew_auc_df, null_label == 'data' & species == 'Mouse' & reference_bias_index == FALSE)$variant_prevalence
+mouse_snp_pos = as.numeric(sapply(1:length(mouse_variants), function(i) substr(mouse_variants[i],1,nchar(mouse_variants[i])-2)))
+index = match(mouse_snp_pos, mouse_snp_stat_df$snp_pos)
+mouse_exp = mouse_snp_stat_df[index, 'mean_total_counts' ]
+#mouse_prop = mouse_snp_stat_df[index, 'num_samples_present' ] / length(annot_mouse_vcfs)
+
+mouse_x_meta = mouse_x_gtf[mouse_x_gtf$gbkey == 'Gene'& !is.na(mouse_x_gtf$gbkey),]
+x_gene_starts = mouse_x_meta$start
+x_gene_ends = mouse_x_meta$end
+#Add gene_annotations
+mouse_gene_annots = vector(mode = 'character', length = length(mouse_snp_pos))
+for( i in 1:length(mouse_snp_pos)){
+
+  test_gene_start = mouse_snp_pos[i]
+  gene_index = findInterval(test_gene_start, x_gene_starts)
+  if(gene_index == 0){next}
+  
+  if(test_gene_start <= x_gene_ends[gene_index]){
+    mouse_gene_annots[i] = mouse_x_meta$gene[gene_index]
+  }
+}
+
+
+```
+
+
+Go through human samples since I didnt gather the snp info prior like I did with the other species
+
+```{r}
+
+human_variants = filter(snp_skew_auc_df, null_label == 'data' & species == 'Human' & reference_bias_index == FALSE)$variants
+human_variant_auc = filter(snp_skew_auc_df, null_label == 'data' & species == 'Human' & reference_bias_index == FALSE)$aucs
+human_variant_auc_pvals = filter(snp_skew_auc_df, null_label == 'data' & species == 'Human' & reference_bias_index == FALSE)$p_values
+human_variant_auc_power_sig = filter(snp_skew_auc_df, null_label == 'data' & species == 'Human' & reference_bias_index == FALSE)$power_significance
+human_variant_auc_power_effect_55 = filter(snp_skew_auc_df, null_label == 'data' & species == 'Human' & reference_bias_index == FALSE)$power_effect_55
+human_variant_auc_power_effect_75 = filter(snp_skew_auc_df, null_label == 'data' & species == 'Human' & reference_bias_index == FALSE)$power_effect_75
+human_variant_bootstrap_auc_var = filter(snp_skew_auc_df, null_label == 'data' & species == 'Human' & reference_bias_index == FALSE)$bootstrap_auc_var
+human_variant_n_pos = filter(snp_skew_auc_df, null_label == 'data' & species == 'Human' & reference_bias_index == FALSE)$n_pos
+human_variant_n_neg = filter(snp_skew_auc_df, null_label == 'data' & species == 'Human' & reference_bias_index == FALSE)$n_neg
+human_variant_prevalence = filter(snp_skew_auc_df, null_label == 'data' & species == 'Human' & reference_bias_index == FALSE)$variant_prevalence
+human_snp_pos = as.numeric(str_extract(human_variants, "[0-9]+")) # extract positions from human variants
+
+#Go through and get the mean counts and proportions
+human_samples_index = human_skew_and_stats_df$sample_index
+snp_human_counts_mat = matrix(nrow = length(human_variants), ncol = length(human_samples_index))
+rownames(snp_human_counts_mat) = human_variants
+
+for(i in 1:length(human_samples_index)){
+  
+  data = list.vcf[[human_samples_index[i]]]
+  data_variants = paste0(data[ ,1], paste0(data$V3, data$V4)) #Get the sample's variants
+  data_variants_counts = data[ ,2] + data[ ,3] #Get the total counts
+  index = match(data_variants, rownames(snp_human_counts_mat)) #Put counts in the full matrix
+  na_index = !is.na(index) #Ignoring the SNPs not in the human variants list, not detected in at least 10 samples
+  snp_human_counts_mat[index[na_index], i] = data_variants_counts[na_index]
+}
+#Get the mean expression for all snps and the sample proportion snp is detected
+human_exp = rowMeans(snp_human_counts_mat, na.rm = T)
+#human_prop = rowSums(!is.na(snp_human_counts_mat)) / length(human_samples_index)
+
+human_x_meta = human_x_gtf[human_x_gtf$type == 'gene'& !is.na(human_x_gtf$type),]
+x_gene_starts = human_x_meta$start
+x_gene_ends = human_x_meta$end
+#Add gene_annotations
+human_gene_annots = vector(mode = 'character', length = length(human_snp_pos))
+for( i in 1:length(human_snp_pos)){
+
+  test_gene_start = human_snp_pos[i]
+  gene_index = findInterval(test_gene_start, x_gene_starts)
+  if(gene_index == 0){next}
+  
+  if(test_gene_start <= x_gene_ends[gene_index]){
+    human_gene_annots[i] = human_x_meta$gene_name[gene_index]
+  }
+}
+
+#Ignore the SNPs with 0 exp, not sure where those crept into the human data
+snp_index = human_exp > 0
+human_variants = human_variants[snp_index]
+human_snp_pos = human_snp_pos[snp_index]
+human_gene_annots = human_gene_annots[snp_index]
+human_variant_auc = human_variant_auc[snp_index]
+human_variant_auc_pvals = human_variant_auc_pvals[snp_index]
+human_variant_auc_power_sig = human_variant_auc_power_sig[snp_index]
+human_variant_auc_power_effect_55 = human_variant_auc_power_effect_55[snp_index]
+human_variant_auc_power_effect_75 = human_variant_auc_power_effect_75[snp_index]
+human_variant_bootstrap_auc_var = human_variant_bootstrap_auc_var[snp_index]
+human_variant_n_pos = human_variant_n_pos[snp_index]
+human_variant_n_neg = human_variant_n_neg[snp_index]
+human_variant_prevalence = human_variant_prevalence[snp_index]
+human_exp = human_exp[snp_index]
+#human_prop = human_prop[snp_index]
+```
+
+
+```{r}
+
+all_variants = c(sheep_variants, cow_variants, horse_variants, goat_variants, 
+                 dog_variants, pig_variants, macaca_variants, rat_variants, mouse_variants, human_variants)
+all_positions = c(sheep_snp_pos, cow_snp_pos, horse_snp_pos, goat_snp_pos, 
+                  dog_snp_pos, pig_snp_pos, macaca_snp_pos, rat_snp_pos, mouse_snp_pos, human_snp_pos)
+all_genes = c(sheep_gene_annots, cow_gene_annots, horse_gene_annots, goat_gene_annots, 
+              dog_gene_annots, pig_gene_annots, macaca_gene_annots, rat_gene_annots, mouse_gene_annots, human_gene_annots)
+all_aucs = c(sheep_variant_auc, cow_variant_auc, horse_variant_auc, goat_variant_auc, 
+             dog_variant_auc, pig_variant_auc, macaca_variant_auc, rat_variant_auc, mouse_variant_auc, human_variant_auc)
+all_auc_pvals = c(sheep_variant_auc_pvals, cow_variant_auc_pvals, horse_variant_auc_pvals, goat_variant_auc_pvals, 
+                  dog_variant_auc_pvals, pig_variant_auc_pvals, 
+                  macaca_variant_auc_pvals, rat_variant_auc_pvals, mouse_variant_auc_pvals, human_variant_auc_pvals)
+
+all_adj_pvals = p.adjust(all_auc_pvals, method = 'BH')
+auc_significance = all_adj_pvals <= .05
+all_power_sig = c(sheep_variant_auc_power_sig, cow_variant_auc_power_sig, horse_variant_auc_power_sig, goat_variant_auc_power_sig, 
+                  dog_variant_auc_power_sig, pig_variant_auc_power_sig,
+              macaca_variant_auc_power_sig, rat_variant_auc_power_sig, mouse_variant_auc_power_sig, human_variant_auc_power_sig)
+
+all_power_effect_55 = c(sheep_variant_auc_power_effect_55, cow_variant_auc_power_effect_55, horse_variant_auc_power_effect_55, goat_variant_auc_power_effect_55, 
+                        dog_variant_auc_power_effect_55, pig_variant_auc_power_effect_55, macaca_variant_auc_power_effect_55, rat_variant_auc_power_effect_55,
+                        mouse_variant_auc_power_effect_55, human_variant_auc_power_effect_55)
+
+all_power_effect_75 = c(sheep_variant_auc_power_effect_75, cow_variant_auc_power_effect_75, horse_variant_auc_power_effect_75, goat_variant_auc_power_effect_75, 
+                        dog_variant_auc_power_effect_75, pig_variant_auc_power_effect_75, macaca_variant_auc_power_effect_75, rat_variant_auc_power_effect_75,
+                        mouse_variant_auc_power_effect_75, human_variant_auc_power_effect_75)
+
+all_bootstrap_auc_var = c(sheep_variant_bootstrap_auc_var, cow_variant_bootstrap_auc_var, horse_variant_bootstrap_auc_var, goat_variant_bootstrap_auc_var, 
+                          dog_variant_bootstrap_auc_var, pig_variant_bootstrap_auc_var, macaca_variant_bootstrap_auc_var, rat_variant_bootstrap_auc_var,
+                          mouse_variant_bootstrap_auc_var, human_variant_bootstrap_auc_var)
+
+all_exp = c(sheep_exp, cow_exp, horse_exp, goat_exp, dog_exp, pig_exp, macaca_exp, rat_exp, mouse_exp, human_exp)
+all_n_pos = c(sheep_variant_n_pos, cow_variant_n_pos, horse_variant_n_pos, goat_variant_n_pos, dog_variant_n_pos, pig_variant_n_pos,
+              macaca_variant_n_pos, rat_variant_n_pos, mouse_variant_n_pos, human_variant_n_pos)
+all_n_neg = c(sheep_variant_n_neg, cow_variant_n_neg, horse_variant_n_neg, goat_variant_n_neg, dog_variant_n_neg, pig_variant_n_neg,
+              macaca_variant_n_neg, rat_variant_n_neg, mouse_variant_n_neg, human_variant_n_neg)
+all_variant_prevalence = c(sheep_variant_prevalence, cow_variant_prevalence, horse_variant_prevalence, goat_variant_prevalence, 
+                           dog_variant_prevalence, pig_variant_prevalence,macaca_variant_prevalence, rat_variant_prevalence,
+                           mouse_variant_prevalence, human_variant_prevalence)
+species_label = c(rep('Sheep', length = length(sheep_variants)), rep('Cow', length = length(cow_variants)), rep('Horse', length = length(horse_variants)), 
+                  rep('Goat', length = length(goat_variants)), rep('Dog', length = length(dog_variants)), rep('Pig', length = length(pig_variants)),
+                  rep('Macaca', length = length(macaca_variants)), rep('Rat', length = length(rat_variants)), 
+                  rep('Mouse', length = length(mouse_variants)), rep('Human', length = length(human_variants)))
+
+snp_skew_auc_with_meta_df = data.frame(variants = all_variants, chrom_pos = all_positions, gene = all_genes, skew_auc = all_aucs, skew_auc_pval = all_auc_pvals, skew_auc_adj_pval = all_adj_pvals,
+                                       skew_auc_significance = auc_significance, skew_auc_power_significance = all_power_sig,
+                                       skew_auc_power_effect_55 = all_power_effect_55, skew_auc_power_effect_75 = all_power_effect_75,
+                                       skew_auc_bootstrap_var = all_bootstrap_auc_var,
+                                       skew_auc_n_pos = all_n_pos, skew_auc_n_neg = all_n_neg,  
+                                       variant_prevalence = all_variant_prevalence, expression = all_exp, label = species_label)
+
+snp_skew_auc_with_meta_df
+
+
+ggplot(snp_skew_auc_with_meta_df, aes(x = log10(expression), y = skew_auc, color = label)) + geom_point(size = .5, alpha = .25) + facet_wrap(~label, ncol = 3) +
+  ylim(0, 1) + geom_hline(yintercept = .5, linetype = 'dashed', color = 'red') +
+  scale_color_manual(values = species_palette)
+ggsave(filename = 'skewSNP_auc_and_expression_scatter_v2.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/', 
+       device = 'pdf', useDingbats = F, height = 6, width = 8)
+
+
+ggplot(snp_skew_auc_with_meta_df, aes(y = variant_prevalence, x = skew_auc, color = label)) + geom_point(size = .5, alpha = .25) + facet_wrap(~label, ncol = 3) +
+  xlim(0, 1) + geom_vline(xintercept = .5, linetype = 'dashed', color = 'red') +
+  scale_color_manual(values = species_palette)
+ggsave(filename = 'skewSNP_auc_and_sample_prop_scatter_v2.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/', 
+       device = 'pdf', useDingbats = F, height = 6, width = 8)
+
+ggplot(snp_skew_auc_with_meta_df, aes(y = variant_prevalence, x = skew_auc)) + geom_point(size = 1, alpha = .25) + 
+  geom_vline(xintercept = .5, linetype = 'dashed', color = 'red') +
+  scale_color_manual(values = species_palette) +
+  xlab('Strength of XCI ratio and variant association (AUROC)') + ylab('Variant prevalence')
+ggsave(filename = 'all_species_skewSNP_sample_prop_scatter_v2.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/', 
+       device = 'pdf', useDingbats = F, height = 4, width = 5)
+
+
+```
+
+
+```{r}
+snp_skew_auc_with_meta_df
+
+
+ggplot(snp_skew_auc_with_meta_df, aes(y = variant_prevalence, x = skew_auc, color = skew_auc_significance)) + geom_point(size = 1, alpha = .25) + 
+  geom_vline(xintercept = .75, linetype = 'dashed', color = 'red') +
+  scale_color_manual(values = c('TRUE' = 'red', 'FALSE' = 'black'), name = 'AUROC significance') +
+  xlab('Strength of XCI ratio and variant association (AUROC)') + ylab('Variant prevalence')
+ggsave(filename = 'all_species_skewSNP_sample_prop_scatter_sig_label_v2.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/', 
+       device = 'pdf', useDingbats = F, height = 4, width = 6)
+
+
+ggplot(snp_skew_auc_with_meta_df, aes(y = -log10(skew_auc_adj_pval), x = skew_auc, color = skew_auc_significance)) + geom_point(size = 1, alpha = .25) + 
+  geom_vline(xintercept = .75, linetype = 'dashed', color = 'red') +
+  scale_color_manual(values = c('TRUE' = 'red', 'FALSE' = 'black'), name = 'AUROC significance') +
+  #scale_x_continuous(breaks=c(0, 0.25, 0.50, 0.75, 0.80, 1)) +
+  xlab('Strength of XCI ratio and variant association (AUROC)') + ylab('-log10( FDR-adjusted p-value)')
+
+ggsave(filename = 'all_species_skewSNP_auc_volcano_sig_label_v2.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/', 
+       device = 'pdf', useDingbats = F, height = 4, width = 6)
+
+
+
+ggplot(filter(snp_skew_auc_with_meta_df, skew_auc > .5), aes(y = -log10(skew_auc_adj_pval), x = variant_prevalence, color = skew_auc_significance)) + geom_point(size = 1, alpha = .25) + 
+  scale_color_manual(values = c('TRUE' = 'red', 'FALSE' = 'black'), name = 'AUROC significance') +
+  #scale_x_continuous(breaks=c(0, 0.25, 0.50, 0.75, 0.80, 1)) +
+  xlab('Variant prevalence') + ylab('-log10( FDR-adjusted p-value)') + ggtitle('AUROC > 0.50')
+
+ggplot(filter(snp_skew_auc_with_meta_df, skew_auc < .5), aes(y = -log10(skew_auc_adj_pval), x = variant_prevalence, color = skew_auc_significance)) + geom_point(size = 1, alpha = .25) + 
+  scale_color_manual(values = c('TRUE' = 'red', 'FALSE' = 'black'), name = 'AUROC significance') +
+  #scale_x_continuous(breaks=c(0, 0.25, 0.50, 0.75, 0.80, 1)) +
+  xlab('Variant prevalence') + ylab('-log10( FDR-adjusted p-value)') + ggtitle('AUROC < 0.50')
+
+
+
+
+ggplot(snp_skew_auc_with_meta_df, aes(y = skew_auc_power_significance, x = variant_prevalence, color = skew_auc_significance)) + geom_point(size = 1, alpha = .25) + 
+  scale_color_manual(values = c('TRUE' = 'red', 'FALSE' = 'black'), name = 'AUROC significance') +
+  xlab('Variant prevalence') + ylab('Estimated AUROC power')
+ggsave(filename = 'all_species_skewSNP_prevalence_and_power_scatter_sig_label_v2.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/', 
+       device = 'pdf', useDingbats = F, height = 4, width = 6)
+
+ggplot(snp_skew_auc_with_meta_df, aes(y = skew_auc_power_significance, x = skew_auc, color = skew_auc_significance)) + geom_point(size = 1, alpha = .25) + 
+  scale_color_manual(values = c('TRUE' = 'red', 'FALSE' = 'black'), name = 'AUROC significance') +
+  xlab('AUROC') + ylab('Estimated AUROC power') +
+  geom_vline(xintercept = .75, linetype = 'dashed', color = 'red')
+ggsave(filename = 'all_species_skewSNP_auroc_and_power_scatter_sig_label_v2.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/', 
+       device = 'pdf', useDingbats = F, height = 4, width = 6)
+
+```
+
+
+
+
+
+
+```{r}
+
+ggplot(snp_skew_auc_with_meta_df, aes(y = skew_auc_power_effect_55, x = skew_auc, color = skew_auc_significance)) + geom_point(size = 1, alpha = .25) + 
+  scale_color_manual(values = c('TRUE' = 'red', 'FALSE' = 'black'), name = 'AUROC significance') +
+  geom_vline(xintercept = .75, linetype = 'dashed', color = 'red') +
+  xlab('AUROC') + ylab('Estimated AUROC power effect size .55')
+ggsave(filename = 'all_species_skewSNP_skew_and_power_effect55_scatter_sig_label_v2.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/', 
+       device = 'pdf', useDingbats = F, height = 4, width = 6)
+
+ggplot(snp_skew_auc_with_meta_df, aes(y = skew_auc_power_effect_75, x = skew_auc, color = skew_auc_significance)) + geom_point(size = 1, alpha = .25) + 
+  scale_color_manual(values = c('TRUE' = 'red', 'FALSE' = 'black'), name = 'AUROC significance') +
+  geom_vline(xintercept = .75, linetype = 'dashed', color = 'red') +
+  xlab('AUROC') + ylab('Estimated AUROC power effect size .75')
+ggsave(filename = 'all_species_skewSNP_skew_and_power_effect75_scatter_sig_label_v2.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/', 
+       device = 'pdf', useDingbats = F, height = 4, width = 6)
+
+ggplot(snp_skew_auc_with_meta_df, aes(y = skew_auc_bootstrap_var, x = skew_auc, color = skew_auc_significance)) + geom_point(size = 1, alpha = .25) + 
+  scale_color_manual(values = c('TRUE' = 'red', 'FALSE' = 'black'), name = 'AUROC significance') +
+  geom_vline(xintercept = .75, linetype = 'dashed', color = 'red') +
+  xlab('AUROC') + ylab('Variance of bootstrapped AUROC distribution')
+ggsave(filename = 'all_species_skewSNP_skew_and_bootstrapVar_scatter_sig_label_v2.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/', 
+       device = 'pdf', useDingbats = F, height = 4, width = 6)
+
+
+```
+
+
+
+
+
+
+
+```{r}
+
+temp_skew_snp_df = snp_skew_auc_with_meta_df %>% filter(skew_auc >= .75 & skew_auc_significance == TRUE & label != 'Human')
+temp_skew_snp_df = temp_skew_snp_df %>% group_by(label, gene) %>% mutate(gene = replace(gene,  expression < max(expression), ""))
+#Keep the full annotated gene list to include in the paper text
+temp_skew_snp_df
+
+ggplot(temp_skew_snp_df, aes(x = skew_auc, y = variant_prevalence, color = label)) + geom_point(size = 2,show.legend = F) +
+  scale_color_manual(values = species_palette) + facet_wrap(~label,ncol = 3, scales = 'free_y') + geom_label_repel(aes(label = gene), size = 3, force = 3, show.legend = F, max.overlaps = 15) +
+  xlab('Strength of XCI ratio and variant association (AUROC)') + ylab('Variant prevalence') 
+
+ggsave(filename = 'gene_labeled_skewSNP_auc_scatter_v3.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/', 
+       device = 'pdf', useDingbats = F, height = 7, width = 9)
+
+```
+
+
+Rat XIST is LOC100911498
+
+```{r}
+temp_skew_snp_df
+
+rat_x_meta
+```
+
+```{r}
+
+temp_skew_snp_df = snp_skew_auc_with_meta_df %>% filter(skew_auc >= .75 & label == 'Rat' & skew_auc_significance == TRUE)
+#Adding the rat XIST label
+temp_skew_snp_df$gene[temp_skew_snp_df$gene == 'LOC100911498'] = 'XIST'
+
+ggplot(temp_skew_snp_df, aes(x = chrom_pos, y = skew_auc))  + geom_point(size = 3, color = species_palette['Rat']) +
+  geom_vline(xintercept = 68474987, color = 'red', size = 1) + geom_label_repel(aes(label = gene), size = 3, force = 3, show.legend = F ) +
+  ylab('Strength of XCI ratio and variant association (AUROC)') + xlab('Chromosome position')
+ggsave(filename = 'rat_chromPos_skewSNP_auc_scatter_v2.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/', 
+       device = 'pdf', useDingbats = F, height = 4, width = 6)
+
+```
+
+check if those variants are present at all
+
+```{r}
+temp_skew_snp_df = snp_skew_auc_with_meta_df %>% filter(label == 'Rat')
+temp_skew_snp_df[temp_skew_snp_df$gene == 'LOC100911498', ]
+```
+
+
+```{r}
+
+
+save(snp_skew_auc_with_meta_df, file = '/home/werner/projects/cross_species_XCI/data/species_data_analysis/snp_skew_auc/snp_skew_auc_with_meta_4_10_24.Rdata')
+
+```
+
+
+
+```{r}
+
+
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/snp_skew_auc/snp_skew_auc_with_meta_4_10_24.Rdata')
+
+```
+
+
+```{r}
+library(ComplexHeatmap)
+genus_samples_df = read.table(file ='/home/werner/projects/cross_species_XCI/code/all_mammal_metadata.tsv', sep = '\t', header = T, fill = T, quote = "")
+study_1_df = genus_samples_df[genus_samples_df$SRAStudy == 'SRP296549', ]
+study_3_df = genus_samples_df[genus_samples_df$SRAStudy == 'SRP125176', ]
+
+all_xist_mouse_pos = c()
+for(i in 1:length(annot_mouse_vcfs)){
+  data = annot_mouse_vcfs[[i]]
+  all_xist_mouse_pos = c(all_xist_mouse_pos, data$Pos[data$gene == 'Xist'])
+}
+all_xist_mouse_pos = unique(all_xist_mouse_pos)
+length(all_xist_mouse_pos)
+
+
+
+#mouse_xist_variants = snp_skew_auc_with_meta_df %>% filter(label == 'Mouse' & gene == 'Xist') %>% pull(chrom_pos)
+mouse_xist_present_mat = matrix(nrow = length(all_xist_mouse_pos), ncol = length(annot_mouse_vcfs))
+colnames(mouse_xist_present_mat) = mouse_skew_and_stats_df$sample_id
+rownames(mouse_xist_present_mat) = paste0('variant_', 1:length(all_xist_mouse_pos))
+
+
+for(i in 1:ncol(mouse_xist_present_mat)){
+  data = annot_mouse_vcfs[[i]]
+  mouse_xist_present_mat[ ,i] = as.numeric(all_xist_mouse_pos %in% data$Pos)
+}
+
+#Only considering mouse samples with at least 20 XIST snps
+sample_index = colSums(mouse_xist_present_mat) >= 20
+mouse_xist_present_mat = mouse_xist_present_mat[, sample_index]
+
+
+mouse_hap_df = mouse_skew_and_stats_df[sample_index, ] %>% select(est_skew_no_escape, num_good_snps_no_escape, sample_id)
+mouse_hap_df$study =  rep('other', length = nrow(mouse_hap_df))
+mouse_hap_df$study[mouse_hap_df$sample_id %in% study_1_df$Run] = 'Study_1_striatum'
+mouse_hap_df$study[mouse_hap_df$sample_id %in% study_3_df$Run] = 'Study_2_pancreas'
+
+
+col_annot = HeatmapAnnotation(study = mouse_hap_df$study,
+                              col = list(study = c('Study_1_striatum' = '#F8766D', 'Study_2_pancreas' = '#00BFC4')))
+colors = structure(1:2, names = c(0, 1)) # black, red
+h1 = Heatmap(mouse_xist_present_mat, name = "mat", col = colors,top_annotation = col_annot,
+        clustering_distance_columns = function(m) dist(m, method = 'binary'),
+        clustering_distance_rows = function(m) dist(m, method = 'binary'),
+        show_column_names = F, show_row_names = F,
+        clustering_method_rows = "ward.D2", clustering_method_columns = "ward.D2", show_column_dend = T, column_split = 4)
+
+h1 = draw(h1)
+
+#pdf(file = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/mouse_xist_vars/mouse_xist_clust_matrix.pdf',
+#    height = 4, width = 6, useDingbats = F)
+draw(h1)
+#dev.off()
+
+
+mouse_hap_df$label = rep('other', length = nrow(mouse_hap_df))
+mouse_hap_df$label[column_order(h1)[[1]]] = 'haplotype_group 1'
+mouse_hap_df$label[column_order(h1)[[2]]] = 'haplotype_group 2'
+mouse_hap_df$label[column_order(h1)[[3]]] = 'haplotype_group 3'
+mouse_hap_df$label[column_order(h1)[[4]]] = 'haplotype_group 4'
+
+ggplot(mouse_hap_df, aes(x = study, y = est_skew_no_escape, color = label)) + geom_boxplot() + xlab('Mouse XIST putative haplotypes') + ylab('Estimated XCI ratio') +
+  geom_point(position=position_dodge(width=0.75),aes(group=label), color = 'grey50')
+#ggsave(filename = 'mouse_xist_x_axis_study.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/mouse_xist_vars/', device = 'pdf',
+#       useDingbats = F, height = 4, width = 6)
+
+ggplot(mouse_hap_df, aes(x = label, y = est_skew_no_escape, color = study)) + geom_boxplot() + xlab('Mouse XIST putative haplotypes') + ylab('Estimated XCI ratio') +
+  scale_x_discrete(guide = guide_axis(n.dodge=2)) +
+  geom_point(position=position_dodge(width=0.75),aes(group=study), color = 'grey50')
+#ggsave(filename = 'mouse_xist_x_axis_haplotype.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/mouse_xist_vars/', device = 'pdf',
+#       useDingbats = F, height = 4, width = 6)
+
+
+
+```
+
+
+
+
+```{r}
+
+
+save(mouse_xist_present_mat,mouse_hap_df, file = '/home/werner/projects/cross_species_XCI/final_plots/R/data_for_plots/mouse_haplotype_data.Rdata' )
+
+
+```
+
+########################################
+Downsampling results for both cow and sheep. These are our 2 highest sampled species, sheep has a bunch of detected SNPs and Cow
+has a lot less. Downsample to 300 samples and run the XCI variant association experiment, there are 313 human donors we sample over
+Idea is to test how robust the genetic associations are to sample size variation. 
+We currently get no significant results in humans, is it sampling limitation?
+
+##########################################
+
+
+
+```{r}
+all_cow_downsample_df = data.frame(variants = c(), ref_index = c(),
+                                 n_pos = c(), n_neg = c(),
+                                 auc = c(), auc_pval = c(),
+                                 auc_fdr_pval = c(),
+                                 gene = c(), down_sample = c())
+for(s in 1:10){
+  #cow
+  start = Sys.time()
+  sample_index = which(cow_skew_and_stats_df$num_good_snps_no_escape >= 10 & cow_skew_and_stats_df$autosome_imbalance == F)
+  #Get a sample of 300
+  down_sample_index = sample(sample_index, size = 300)
+  cow_results_down_1 = xci_skew_predict_variant_experiment(cow_skew_and_stats_df, annot_cow_vcfs, down_sample_index, cow_snp_stat_df)
+  Sys.time() - start
+  
+  #Get the gene annotations for the variants
+  cow_variants = cow_results_down_1$variants
+  cow_snp_pos = as.numeric(sapply(1:length(cow_variants), 
+                                         function(i) substr(cow_variants[i],1,nchar(cow_variants[i])-2)))
+  cow_x_meta = cow_x_gtf[cow_x_gtf$gbkey == 'Gene'& !is.na(cow_x_gtf$gbkey),]
+  x_gene_starts = cow_x_meta$start
+  x_gene_ends = cow_x_meta$end
+  #Add gene annotations
+  cow_gene_annots = vector(mode = 'character', length = length(cow_snp_pos))
+  for( i in 1:length(cow_snp_pos)){
+  
+    test_gene_start = cow_snp_pos[i]
+    gene_index = findInterval(test_gene_start, x_gene_starts)
+    if(gene_index == 0){next}
+    
+    if(test_gene_start <= x_gene_ends[gene_index]){
+      cow_gene_annots[i] = cow_x_meta$gene[gene_index]
+    }
+  }
+  #Put it all in a dataframe
+  cow_temp_results_df = data.frame(variants = cow_results_down_1$variants, ref_index = cow_results_down_1$reference_biased_index,
+                                   n_pos = cow_results_down_1$n_pos, n_neg = cow_results_down_1$n_neg,
+                                   auc = cow_results_down_1$auc, auc_pval = cow_results_down_1$auc_pval,
+                                   auc_fdr_pval = p.adjust(cow_results_down_1$auc_pval, method = 'BH'),
+                                   gene = cow_gene_annots, down_sample = rep(sprintf('Sample %s', s), 
+                                                                             length = length(cow_results_down_1$variants)))
+  
+  #Add to the complete dataframe
+  all_cow_downsample_df = rbind(all_cow_downsample_df,cow_temp_results_df  )
+
+}
+
+all_cow_downsample_df
+
+gene_hits_down_cow = all_cow_downsample_df %>% filter(auc >= .75 & auc_fdr_pval <= .05 & ref_index == F) %>% group_by(down_sample, gene) %>% summarize(n = length(gene)) %>% group_by(gene) %>% summarize(n = length(gene)) %>% arrange(desc(n))
+
+gene_hits_down_cow$gene = factor(gene_hits_down_cow$gene, levels = c(gene_hits_down_cow$gene))
+ggplot(gene_hits_down_cow, aes(x = gene, y = n)) + geom_col() + theme(axis.text.x = element_text(angle = 90)) +
+  ylab('Number of downsamples') + xlab('Genes with skew associated variants') + ggtitle('Cow')
+```
+
+
+
+```{r}
+
+save(all_cow_downsample_df, 
+     file = '/home/werner/projects/cross_species_XCI/data/species_data_analysis/snp_skew_auc/all_cow_downsample_df.Rdata')
+
+```
+
+
+```{r}
+
+load('/home/werner/projects/cross_species_XCI/data/species_data_analysis/snp_skew_auc/all_cow_downsample_df.Rdata')
+
+```
+
+
+```{r}
+
+ori_variant_data = filter(snp_skew_auc_with_meta_df, label == 'Cow' & gene == 'KDM6A')
+downSamp_variant_data = filter(all_cow_downsample_df, gene == 'KDM6A') %>% group_by(variants) %>% summarize(mean_auc = mean(auc), max_auc = max(auc))
+
+index = match(ori_variant_data$variants, downSamp_variant_data$variants)
+downSamp_variant_data = downSamp_variant_data[index, ]
+downSamp_variant_data[ ,c(2,3)][is.na(downSamp_variant_data[ ,c(2,3)])] = 0
+
+par(pty = 's')
+plot(ori_variant_data$skew_auc, downSamp_variant_data$mean_auc, ylim = c(0, 1), xlim = c(0, 1), ylab = "Mean AUC of downsampled data", xlab='Original AUC of variant',
+     main = 'Cow: KDM6A' )
+abline(v = .75, col = 'red')
+abline(h = .75, col = 'red')
+
+pdf(file = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/human_experiments/cow_downsample_KDM6A.pdf', height = 4, width = 4, useDingbats = F)
+par(pty = 's')
+plot(ori_variant_data$skew_auc, downSamp_variant_data$mean_auc, ylim = c(0, 1), xlim = c(0, 1), ylab = "Mean AUC of downsampled data", xlab='Original AUC of variant',
+     main = 'Cow: KDM6A' )
+abline(v = .75, col = 'red')
+abline(h = .75, col = 'red')
+dev.off()
+
+
+
+ori_variant_data = filter(snp_skew_auc_with_meta_df, label == 'Cow' & gene == 'TMEM164')
+downSamp_variant_data = filter(all_cow_downsample_df, gene == 'TMEM164') %>% group_by(variants) %>% summarize(mean_auc = mean(auc), max_auc = max(auc))
+
+index = match(ori_variant_data$variants, downSamp_variant_data$variants)
+downSamp_variant_data = downSamp_variant_data[index, ]
+downSamp_variant_data[ ,c(2,3)][is.na(downSamp_variant_data[ ,c(2,3)])] = 0
+
+par(pty = 's')
+plot(ori_variant_data$skew_auc, downSamp_variant_data$mean_auc, ylim = c(0, 1), xlim = c(0, 1), ylab = "Mean AUC of downsampled data", xlab='Original AUC of variant',
+     main = 'Cow: TMEM164' )
+abline(v = .75, col = 'red')
+abline(h = .75, col = 'red')
+
+pdf(file = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/human_experiments/cow_downsample_TMEM164.pdf', height = 4, width = 4, useDingbats = F)
+par(pty = 's')
+plot(ori_variant_data$skew_auc, downSamp_variant_data$mean_auc, ylim = c(0, 1), xlim = c(0, 1), ylab = "Mean AUC of downsampled data", xlab='Original AUC of variant',
+     main = 'Cow: TMEM164' )
+abline(v = .75, col = 'red')
+abline(h = .75, col = 'red')
+dev.off()
+
+
+
+ori_variant_data = filter(snp_skew_auc_with_meta_df, label == 'Cow' & gene == 'MAMLD1')
+downSamp_variant_data = filter(all_cow_downsample_df, gene == 'MAMLD1') %>% group_by(variants) %>% summarize(mean_auc = mean(auc), max_auc = max(auc))
+
+index = match(ori_variant_data$variants, downSamp_variant_data$variants)
+downSamp_variant_data = downSamp_variant_data[index, ]
+downSamp_variant_data[ ,c(2,3)][is.na(downSamp_variant_data[ ,c(2,3)])] = 0
+
+par(pty = 's')
+plot(ori_variant_data$skew_auc, downSamp_variant_data$mean_auc, ylim = c(0, 1), xlim = c(0, 1), ylab = "Mean AUC of downsampled data", xlab='Original AUC of variant',
+     main = 'Cow: MAMLD1' )
+abline(v = .75, col = 'red')
+abline(h = .75, col = 'red')
+
+pdf(file = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/human_experiments/cow_downsample_MAMLD1.pdf', height = 4, width = 4, useDingbats = F)
+par(pty = 's')
+plot(ori_variant_data$skew_auc, downSamp_variant_data$mean_auc, ylim = c(0, 1), xlim = c(0, 1), ylab = "Mean AUC of downsampled data", xlab='Original AUC of variant',
+     main = 'Cow: MAMLD1' )
+abline(v = .75, col = 'red')
+abline(h = .75, col = 'red')
+dev.off()
+
+
+
+ori_variant_data = filter(snp_skew_auc_with_meta_df, label == 'Cow' & gene == 'MID2')
+downSamp_variant_data = filter(all_cow_downsample_df, gene == 'MID2') %>% group_by(variants) %>% summarize(mean_auc = mean(auc), max_auc = max(auc))
+
+index = match(ori_variant_data$variants, downSamp_variant_data$variants)
+downSamp_variant_data = downSamp_variant_data[index, ]
+downSamp_variant_data[ ,c(2,3)][is.na(downSamp_variant_data[ ,c(2,3)])] = 0
+
+par(pty = 's')
+plot(ori_variant_data$skew_auc, downSamp_variant_data$mean_auc, ylim = c(0, 1), xlim = c(0, 1), ylab = "Mean AUC of downsampled data", xlab='Original AUC of variant',
+     main = 'Cow: MID2' )
+abline(v = .75, col = 'red')
+abline(h = .75, col = 'red')
+
+pdf(file = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/human_experiments/cow_downsample_MID2.pdf', height = 4, width = 4, useDingbats = F)
+par(pty = 's')
+plot(ori_variant_data$skew_auc, downSamp_variant_data$mean_auc, ylim = c(0, 1), xlim = c(0, 1), ylab = "Mean AUC of downsampled data", xlab='Original AUC of variant',
+     main = 'Cow: MID2' )
+abline(v = .75, col = 'red')
+abline(h = .75, col = 'red')
+dev.off()
+```
+
+
+
+Checking out the Snps associated with XCI skews in horse
+```{r}
+
+snp_skew_auc_with_meta_df %>% filter(label == 'Horse', skew_auc >= .75 )
+
+
+```
+
+
+```{r}
+
+get_var_data = function(filt_annot_vcfs, variant_pos, tissue_skews){
+  
+  variant_present = vector(mode = 'logical', length = length(filt_annot_vcfs))
+  variant_skew = c()
+  for(i in 1:length(filt_annot_vcfs)){
+    #data_variants = paste0(filt_annot_vcfs[[i]]$Pos, paste0(filt_annot_vcfs[[i]]$ref, filt_annot_vcfs[[i]]$alt))
+    
+    variant_present[i] = variant_pos %in% filt_annot_vcfs[[i]]$Pos
+    if(variant_pos %in% filt_annot_vcfs[[i]]$Pos){
+      data_var_skews = folded(filt_annot_vcfs[[i]]$ref_counts / (filt_annot_vcfs[[i]]$ref_counts + filt_annot_vcfs[[i]]$alt_counts))
+      variant_skew = c(variant_skew, data_var_skews[filt_annot_vcfs[[i]]$Pos == variant_pos])
+    }
+  }
+  
+  var_data_df = data.frame(skews = c(tissue_skews[variant_present], variant_skew), variant = rep(variant_pos, length = (sum(variant_present)*2)),
+                           data_label = c(rep('Tissue skew', length = sum(variant_present)), rep('Variant skew', length = sum(variant_present))))
+  return(var_data_df)
+}
+
+filter(horse_snp_stat_df, gene == 'ARHGAP6' & num_samples_present >= 10) %>% arrange(desc(num_samples_present))
+```
+
+
+
+```{r}
+
+sample_index = which(horse_skew_and_stats_df$num_good_snps_no_escape >= 10 & horse_skew_and_stats_df$autosome_imbalance == F)
+filt_annot_horse_vcfs = annot_horse_vcfs[sample_index]
+horse_XCI_skews = horse_skew_and_stats_df$est_skew_no_escape[sample_index]
+
+#ARHGAP6
+arhgap6_var_1_df =  get_var_data(filt_annot_horse_vcfs,'8077217', horse_XCI_skews)
+arhgap6_var_2_df =  get_var_data(filt_annot_horse_vcfs,'8077541', horse_XCI_skews)
+arhgap6_var_3_df =  get_var_data(filt_annot_horse_vcfs,'8083294', horse_XCI_skews)
+
+comb_arhgap6_df = Reduce(rbind, list(arhgap6_var_1_df, arhgap6_var_2_df, arhgap6_var_3_df))
+ggplot(comb_arhgap6_df, aes(y = skews, x = variant, fill = data_label)) + geom_boxplot() + xlab('Horse ARHGAP6') + ylab('XCI skews') + ggtitle('Horse ARHGAP6')
+#ggsave(filename = 'horse_arhgap6_variants.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/variant_escape_examples/', 
+#       device = 'pdf', height = 4, width = 6, useDingbats = F)
+
+
+#GPC4
+gpc4_var_1_df =  get_var_data(filt_annot_horse_vcfs,'110031329', horse_XCI_skews)
+gpc4_var_2_df =  get_var_data(filt_annot_horse_vcfs,'110031201', horse_XCI_skews)
+gpc4_var_3_df =  get_var_data(filt_annot_horse_vcfs,'110031506', horse_XCI_skews)
+gpc4_var_4_df =  get_var_data(filt_annot_horse_vcfs,'110031002', horse_XCI_skews)
+gpc4_var_5_df =  get_var_data(filt_annot_horse_vcfs,'110031664', horse_XCI_skews)
+
+comb_gpc4_df = Reduce(rbind, list(gpc4_var_1_df,gpc4_var_2_df, gpc4_var_3_df, gpc4_var_4_df, gpc4_var_5_df))
+ggplot(comb_gpc4_df, aes(y = skews, x = variant, fill = data_label)) + geom_boxplot() + xlab('Horse GPC4') + ylab('XCI skews') + ggtitle('Horse GPC4')
+#ggsave(filename = 'horse_gpc4_variants.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/variant_escape_examples/', 
+#       device = 'pdf', height = 4, width = 6, useDingbats = F)
+
+
+#PLCXD1
+plcxd1_var_1_df =  get_var_data(filt_annot_horse_vcfs,'32437', horse_XCI_skews)
+plcxd1_var_2_df =  get_var_data(filt_annot_horse_vcfs,'32442', horse_XCI_skews)
+plcxd1_var_3_df =  get_var_data(filt_annot_horse_vcfs,'32592', horse_XCI_skews)
+plcxd1_var_4_df =  get_var_data(filt_annot_horse_vcfs,'33358', horse_XCI_skews)
+plcxd1_var_5_df =  get_var_data(filt_annot_horse_vcfs,'33906', horse_XCI_skews)
+plcxd1_var_6_df =  get_var_data(filt_annot_horse_vcfs,'34231', horse_XCI_skews)
+plcxd1_var_7_df =  get_var_data(filt_annot_horse_vcfs,'30849', horse_XCI_skews)
+
+comb_plcxd1_df = Reduce(rbind, list(plcxd1_var_1_df,plcxd1_var_2_df,plcxd1_var_3_df,plcxd1_var_4_df,plcxd1_var_5_df,plcxd1_var_6_df,plcxd1_var_7_df))
+ggplot(comb_plcxd1_df, aes(y = skews, x = variant, fill = data_label)) + geom_boxplot() + xlab('Horse PLCXD1') + ylab('XCI skews') + ggtitle('Horse PLCXD1')
+#ggsave(filename = 'horse_plcxd1_variants.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/variant_escape_examples/', 
+#       device = 'pdf', height = 4, width = 6, useDingbats = F)
+
+
+#ARSE
+arse_var_1_df =  get_var_data(filt_annot_horse_vcfs,'1218988', horse_XCI_skews)
+arse_var_2_df =  get_var_data(filt_annot_horse_vcfs,'1218989', horse_XCI_skews)
+
+comb_arse_df = Reduce(rbind, list(arse_var_1_df, arse_var_2_df))
+ggplot(comb_arse_df, aes(y = skews, x = variant, fill = data_label)) + geom_boxplot() + xlab('Horse ARSE') + ylab('XCI skews') + ggtitle('Horse ARSE')
+#ggsave(filename = 'horse_arse_variants.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/variant_escape_examples/', 
+#       device = 'pdf', height = 4, width = 6, useDingbats = F)
+
+save(comb_arse_df, comb_plcxd1_df, comb_gpc4_df, comb_arhgap6_df, 
+     file = '/home/werner/projects/cross_species_XCI/final_plots/R/data_for_plots/horse_individual_variant_auc_boxplots.Rdata')
+
+
+```
+
+Checking out the variants associated with skew in mice
+
+```{r}
+
+snp_skew_auc_with_meta_df %>% filter(label == 'Mouse', skew_auc >= .75 )
+
+```
+
+
+102619182 is between Mir374c (miRNA) and Gm9159 (pseudogene)
+104379565 is between GM14824 (pseudogene) and Mir384 (miRNA)
+
+```{r}
+
+filter(mouse_snp_stat_df, snp_pos == 102619182 & num_samples_present >= 10) %>% arrange(desc(num_samples_present))
+filter(mouse_snp_stat_df, snp_pos == 104379565 & num_samples_present >= 10) %>% arrange(desc(num_samples_present))
+
+
+filter(mouse_x_meta, start >= 104370000)
+```
+
+
+
+```{r}
+
+sample_index = which(mouse_skew_and_stats_df$num_good_snps_no_escape >= 10 & mouse_skew_and_stats_df$autosome_imbalance == F)
+filt_annot_mouse_vcfs = annot_mouse_vcfs[sample_index]
+mouse_XCI_skews = mouse_skew_and_stats_df$est_skew_no_escape[sample_index]
+
+#only 2 associated mouse variants are not in an annotated gene
+mouse_var_1_df =  get_var_data(filt_annot_mouse_vcfs,'102619182', mouse_XCI_skews)
+mouse_var_2_df =  get_var_data(filt_annot_mouse_vcfs,'104379565', mouse_XCI_skews)
+
+
+comb_test_df = rbind(mouse_var_1_df, mouse_var_2_df)
+ggplot(comb_test_df, aes(y = skews, x = variant, fill = data_label)) + geom_boxplot() + xlab('Mouse variants') + ylab('XCI skews') + ggtitle('Mouse variants')
+
+```
+
+
+
+
+
+Checking out the Snps associated with XCI skews in goat
+```{r}
+
+snp_skew_auc_with_meta_df %>% filter(label == 'Goat', skew_auc >= .75 )
+
+```
+
+```{r}
+filter(goat_snp_stat_df, gene == 'LOC102168615' & num_samples_present >= 10) %>% arrange(desc(num_samples_present))
+
+```
+
+```{r}
+sample_index = which(goat_skew_and_stats_df$num_good_snps_no_escape >= 10 & goat_skew_and_stats_df$autosome_imbalance == F)
+filt_annot_goat_vcfs = annot_goat_vcfs[sample_index]
+goat_XCI_skews = goat_skew_and_stats_df$est_skew_no_escape[sample_index]
+
+#MSL3
+msl3_var_1_df =  get_var_data(filt_annot_goat_vcfs,'58365038', goat_XCI_skews)
+msl3_var_2_df =  get_var_data(filt_annot_goat_vcfs,'58375993', goat_XCI_skews)
+msl3_var_3_df =  get_var_data(filt_annot_goat_vcfs,'58377919', goat_XCI_skews)
+msl3_var_4_df =  get_var_data(filt_annot_goat_vcfs,'58364846', goat_XCI_skews)
+
+comb_msl3_df = Reduce(rbind, list(msl3_var_1_df, msl3_var_2_df, msl3_var_3_df, msl3_var_4_df))
+ggplot(comb_msl3_df, aes(y = skews, x = variant, fill = data_label)) + geom_boxplot() + xlab('goat MSL3') + ylab('XCI skews') + ggtitle('goat MSL3')
+#ggsave(filename = 'goat_msl3_variants.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/variant_escape_examples/', 
+#       device = 'pdf', height = 4, width = 6, useDingbats = F)
+
+#MXRA5
+MXRA5_var_1_df =  get_var_data(filt_annot_goat_vcfs,'65380180', goat_XCI_skews)
+MXRA5_var_2_df =  get_var_data(filt_annot_goat_vcfs,'65381048', goat_XCI_skews)
+MXRA5_var_3_df =  get_var_data(filt_annot_goat_vcfs,'65394917', goat_XCI_skews)
+MXRA5_var_4_df =  get_var_data(filt_annot_goat_vcfs,'65395668', goat_XCI_skews)
+MXRA5_var_5_df =  get_var_data(filt_annot_goat_vcfs,'65393424', goat_XCI_skews)
+MXRA5_var_6_df =  get_var_data(filt_annot_goat_vcfs,'65393664', goat_XCI_skews)
+MXRA5_var_7_df =  get_var_data(filt_annot_goat_vcfs,'65394420', goat_XCI_skews)
+MXRA5_var_8_df =  get_var_data(filt_annot_goat_vcfs,'65393460', goat_XCI_skews)
+
+comb_mxra5_df = Reduce(rbind, list(MXRA5_var_1_df, MXRA5_var_2_df, MXRA5_var_3_df, MXRA5_var_4_df, MXRA5_var_5_df, MXRA5_var_6_df, MXRA5_var_7_df, MXRA5_var_8_df))
+ggplot(comb_mxra5_df, aes(y = skews, x = variant, fill = data_label)) + geom_boxplot() + xlab('goat MXRA5') + ylab('XCI skews') + ggtitle('goat MXRA5')
+#ggsave(filename = 'goat_mxra5_variants.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/variant_escape_examples/', 
+#       device = 'pdf', height = 4, width = 6, useDingbats = F)
+
+#SHROOM2
+SHROOM2_var_1_df =  get_var_data(filt_annot_goat_vcfs,'60903653', goat_XCI_skews)
+SHROOM2_var_2_df =  get_var_data(filt_annot_goat_vcfs,'60919507', goat_XCI_skews)
+SHROOM2_var_3_df =  get_var_data(filt_annot_goat_vcfs,'60919917', goat_XCI_skews)
+SHROOM2_var_4_df =  get_var_data(filt_annot_goat_vcfs,'60905961', goat_XCI_skews)
+SHROOM2_var_5_df =  get_var_data(filt_annot_goat_vcfs,'60899151', goat_XCI_skews)
+SHROOM2_var_6_df =  get_var_data(filt_annot_goat_vcfs,'60867055', goat_XCI_skews)
+SHROOM2_var_7_df =  get_var_data(filt_annot_goat_vcfs,'60867365', goat_XCI_skews)
+SHROOM2_var_8_df =  get_var_data(filt_annot_goat_vcfs,'60917891', goat_XCI_skews)
+
+comb_shroom2_df = Reduce(rbind, list(SHROOM2_var_1_df, SHROOM2_var_2_df, SHROOM2_var_3_df, SHROOM2_var_4_df, SHROOM2_var_5_df, SHROOM2_var_6_df, SHROOM2_var_7_df, SHROOM2_var_8_df))
+ggplot(comb_shroom2_df, aes(y = skews, x = variant, fill = data_label)) + geom_boxplot() + xlab('goat SHROOM2') + ylab('XCI skews') + ggtitle('goat SHROOM2')
+#ggsave(filename = 'goat_shroom2_variants.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/variant_escape_examples/', 
+#       device = 'pdf', height = 4, width = 6, useDingbats = F)
+
+#loc102
+loc102_var_1_df =  get_var_data(filt_annot_goat_vcfs,'8677070', goat_XCI_skews)
+loc102_var_2_df =  get_var_data(filt_annot_goat_vcfs,'8684125', goat_XCI_skews)
+loc102_var_3_df =  get_var_data(filt_annot_goat_vcfs,'8716897', goat_XCI_skews)
+loc102_var_4_df =  get_var_data(filt_annot_goat_vcfs,'8707809', goat_XCI_skews)
+loc102_var_5_df =  get_var_data(filt_annot_goat_vcfs,'8801309', goat_XCI_skews)
+loc102_var_6_df =  get_var_data(filt_annot_goat_vcfs,'8677624', goat_XCI_skews)
+loc102_var_7_df =  get_var_data(filt_annot_goat_vcfs,'8685099', goat_XCI_skews)
+loc102_var_8_df =  get_var_data(filt_annot_goat_vcfs,'8677596', goat_XCI_skews)
+
+comb_loc102_df = Reduce(rbind, list(loc102_var_1_df, loc102_var_2_df, loc102_var_3_df, loc102_var_4_df, loc102_var_5_df, loc102_var_6_df, loc102_var_7_df, loc102_var_8_df))
+ggplot(comb_loc102_df, aes(y = skews, x = variant, fill = data_label)) + geom_boxplot() + xlab('goat LOC102168615') + ylab('XCI skews') + ggtitle('goat LOC102168615')
+#ggsave(filename = 'goat_loc102_variants.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/variant_escape_examples/', 
+#       device = 'pdf', height = 4, width = 6, useDingbats = F)
+
+save(comb_msl3_df, comb_mxra5_df, comb_shroom2_df, comb_loc102_df, 
+     file = '/home/werner/projects/cross_species_XCI/final_plots/R/data_for_plots/goat_individual_variant_auc_boxplots.Rdata')
+
+
+
+```
+
+
+Checking out the Snps associated with XCI skews in cow
+```{r}
+
+snp_skew_auc_with_meta_df %>% filter(label == 'Cow', skew_auc >= .75 )
+
+```
+
+```{r}
+filter(cow_snp_stat_df, gene == 'KDM6A' & num_samples_present >= 10) %>% arrange(desc(num_samples_present))
+
+```
+
+```{r}
+
+sample_index = which(cow_skew_and_stats_df$num_good_snps_no_escape >= 10 & cow_skew_and_stats_df$autosome_imbalance == F)
+filt_annot_cow_vcfs = annot_cow_vcfs[sample_index]
+cow_XCI_skews = cow_skew_and_stats_df$est_skew_no_escape[sample_index]
+
+
+#MAMLD1
+MAMLD1_var_1_df =  get_var_data(filt_annot_cow_vcfs,'33106543', cow_XCI_skews)
+MAMLD1_var_2_df =  get_var_data(filt_annot_cow_vcfs,'33135236', cow_XCI_skews)
+MAMLD1_var_3_df =  get_var_data(filt_annot_cow_vcfs,'33114156', cow_XCI_skews)
+MAMLD1_var_4_df =  get_var_data(filt_annot_cow_vcfs,'33141579', cow_XCI_skews)
+MAMLD1_var_5_df =  get_var_data(filt_annot_cow_vcfs,'33141584', cow_XCI_skews)
+MAMLD1_var_6_df =  get_var_data(filt_annot_cow_vcfs,'33128071', cow_XCI_skews)
+MAMLD1_var_7_df =  get_var_data(filt_annot_cow_vcfs,'33134000', cow_XCI_skews)
+MAMLD1_var_8_df =  get_var_data(filt_annot_cow_vcfs,'33138476', cow_XCI_skews)
+
+comb_mamld1_df = Reduce(rbind, list(MAMLD1_var_1_df, MAMLD1_var_2_df, MAMLD1_var_3_df, MAMLD1_var_4_df, MAMLD1_var_5_df, MAMLD1_var_6_df, MAMLD1_var_7_df, MAMLD1_var_8_df))
+ggplot(comb_mamld1_df, aes(y = skews, x = variant, fill = data_label)) + geom_boxplot() + xlab('cow MAMLD1') + ylab('XCI skews') + ggtitle('cow MAMLD1')
+#ggsave(filename = 'cow_mamld1_variants.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/variant_escape_examples/', 
+#       device = 'pdf', height = 4, width = 6, useDingbats = F)
+
+
+#MID2
+MID2_var_1_df =  get_var_data(filt_annot_cow_vcfs,'56469706', cow_XCI_skews)
+MID2_var_2_df =  get_var_data(filt_annot_cow_vcfs,'56492919', cow_XCI_skews)
+MID2_var_3_df =  get_var_data(filt_annot_cow_vcfs,'56557471', cow_XCI_skews)
+MID2_var_4_df =  get_var_data(filt_annot_cow_vcfs,'56558220', cow_XCI_skews)
+MID2_var_5_df =  get_var_data(filt_annot_cow_vcfs,'56555624', cow_XCI_skews)
+MID2_var_6_df =  get_var_data(filt_annot_cow_vcfs,'56471967', cow_XCI_skews)
+MID2_var_7_df =  get_var_data(filt_annot_cow_vcfs,'56470399', cow_XCI_skews)
+MID2_var_8_df =  get_var_data(filt_annot_cow_vcfs,'56491067', cow_XCI_skews)
+
+comb_mid2_df = Reduce(rbind, list(MID2_var_1_df, MID2_var_2_df, MID2_var_3_df, MID2_var_4_df, MID2_var_5_df, MID2_var_6_df, MID2_var_7_df, MID2_var_8_df))
+ggplot(comb_mid2_df, aes(y = skews, x = variant, fill = data_label)) + geom_boxplot() + xlab('cow MID2') + ylab('XCI skews') + ggtitle('cow MID2')
+#ggsave(filename = 'cow_mid2_variants.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/variant_escape_examples/', 
+#       device = 'pdf', height = 4, width = 6, useDingbats = F)
+
+#TMEM164
+TMEM164_var_1_df =  get_var_data(filt_annot_cow_vcfs,'58445235', cow_XCI_skews)
+TMEM164_var_2_df =  get_var_data(filt_annot_cow_vcfs,'58445236', cow_XCI_skews)
+TMEM164_var_3_df =  get_var_data(filt_annot_cow_vcfs,'58424460', cow_XCI_skews)
+TMEM164_var_4_df =  get_var_data(filt_annot_cow_vcfs,'58434987', cow_XCI_skews)
+TMEM164_var_5_df =  get_var_data(filt_annot_cow_vcfs,'58435002', cow_XCI_skews)
+TMEM164_var_6_df =  get_var_data(filt_annot_cow_vcfs,'58432292', cow_XCI_skews)
+TMEM164_var_7_df =  get_var_data(filt_annot_cow_vcfs,'58466645', cow_XCI_skews)
+TMEM164_var_8_df =  get_var_data(filt_annot_cow_vcfs,'58441229', cow_XCI_skews)
+
+comb_tmem164_df = Reduce(rbind, list(TMEM164_var_1_df, TMEM164_var_2_df, TMEM164_var_3_df, TMEM164_var_4_df, TMEM164_var_5_df, TMEM164_var_6_df, TMEM164_var_7_df, TMEM164_var_8_df))
+ggplot(comb_tmem164_df, aes(y = skews, x = variant, fill = data_label)) + geom_boxplot() + xlab('cow TMEM164') + ylab('XCI skews') + ggtitle('cow TMEM164')
+#ggsave(filename = 'cow_tmem164_variants.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/variant_escape_examples/', 
+#       device = 'pdf', height = 4, width = 6, useDingbats = F)
+
+#KDM6A
+KDM6A_var_1_df =  get_var_data(filt_annot_cow_vcfs,'98666547', cow_XCI_skews)
+KDM6A_var_2_df =  get_var_data(filt_annot_cow_vcfs,'98670561', cow_XCI_skews)
+KDM6A_var_3_df =  get_var_data(filt_annot_cow_vcfs,'98666128', cow_XCI_skews)
+KDM6A_var_4_df =  get_var_data(filt_annot_cow_vcfs,'98679560', cow_XCI_skews)
+KDM6A_var_5_df =  get_var_data(filt_annot_cow_vcfs,'98802379', cow_XCI_skews)
+KDM6A_var_6_df =  get_var_data(filt_annot_cow_vcfs,'98801035', cow_XCI_skews)
+KDM6A_var_7_df =  get_var_data(filt_annot_cow_vcfs,'98685885', cow_XCI_skews)
+KDM6A_var_8_df =  get_var_data(filt_annot_cow_vcfs,'98785159', cow_XCI_skews)
+
+comb_kdm6a_df = Reduce(rbind, list(KDM6A_var_1_df, KDM6A_var_2_df, KDM6A_var_3_df, KDM6A_var_4_df, KDM6A_var_5_df, KDM6A_var_6_df, KDM6A_var_7_df, KDM6A_var_8_df))
+ggplot(comb_kdm6a_df, aes(y = skews, x = variant, fill = data_label)) + geom_boxplot() + xlab('cow KDM6A') + ylab('XCI skews') + ggtitle('cow KDM6A')
+#ggsave(filename = 'cow_kdm6a_variants.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/variant_escape_examples/', 
+#       device = 'pdf', height = 4, width = 6, useDingbats = F)
+
+save(comb_mamld1_df, comb_mid2_df, comb_tmem164_df, comb_kdm6a_df, 
+     file = '/home/werner/projects/cross_species_XCI/final_plots/R/data_for_plots/cow_individual_variant_auc_boxplots.Rdata')
+
+
+```
+
+
+
+
+Checking out the Snps associated with XCI skews in sheep
+```{r}
+
+snp_skew_auc_with_meta_df %>% filter(label == 'Sheep', skew_auc >= .75 )
+
+```
+
+```{r}
+filter(sheep_snp_stat_df, gene == 'IL3RA' & num_samples_present >= 10) %>% arrange(desc(num_samples_present))
+
+```
+
+```{r}
+sample_index = which(sheep_skew_and_stats_df$num_good_snps_no_escape >= 10 & sheep_skew_and_stats_df$autosome_imbalance == F)
+filt_annot_sheep_vcfs = annot_sheep_vcfs[sample_index]
+sheep_XCI_skews = sheep_skew_and_stats_df$est_skew_no_escape[sample_index]
+
+
+#LAS1L
+LAS1L_var_1_df =  get_var_data(filt_annot_sheep_vcfs,'47731599', sheep_XCI_skews)
+LAS1L_var_2_df =  get_var_data(filt_annot_sheep_vcfs,'47731971', sheep_XCI_skews)
+LAS1L_var_3_df =  get_var_data(filt_annot_sheep_vcfs,'47730518', sheep_XCI_skews)
+LAS1L_var_4_df =  get_var_data(filt_annot_sheep_vcfs,'47725877', sheep_XCI_skews)
+LAS1L_var_5_df =  get_var_data(filt_annot_sheep_vcfs,'47728201', sheep_XCI_skews)
+LAS1L_var_6_df =  get_var_data(filt_annot_sheep_vcfs,'47713895', sheep_XCI_skews)
+LAS1L_var_7_df =  get_var_data(filt_annot_sheep_vcfs,'47732094', sheep_XCI_skews)
+LAS1L_var_8_df =  get_var_data(filt_annot_sheep_vcfs,'47726456', sheep_XCI_skews)
+
+comb_test_df = Reduce(rbind, list(LAS1L_var_1_df, LAS1L_var_2_df, LAS1L_var_3_df, LAS1L_var_4_df, LAS1L_var_5_df, LAS1L_var_6_df, LAS1L_var_7_df, LAS1L_var_8_df))
+ggplot(comb_test_df, aes(y = skews, x = variant, fill = data_label)) + geom_boxplot() + xlab('sheep LAS1L') + ylab('XCI skews') + ggtitle('sheep LAS1L')
+
+
+
+#MXRA5
+MXRA5_var_1_df =  get_var_data(filt_annot_sheep_vcfs,'5797063', sheep_XCI_skews)
+MXRA5_var_2_df =  get_var_data(filt_annot_sheep_vcfs,'5797102', sheep_XCI_skews)
+MXRA5_var_3_df =  get_var_data(filt_annot_sheep_vcfs,'5814806', sheep_XCI_skews)
+MXRA5_var_4_df =  get_var_data(filt_annot_sheep_vcfs,'5814449', sheep_XCI_skews)
+MXRA5_var_5_df =  get_var_data(filt_annot_sheep_vcfs,'5814644', sheep_XCI_skews)
+MXRA5_var_6_df =  get_var_data(filt_annot_sheep_vcfs,'5814101', sheep_XCI_skews)
+MXRA5_var_7_df =  get_var_data(filt_annot_sheep_vcfs,'5805814', sheep_XCI_skews)
+MXRA5_var_8_df =  get_var_data(filt_annot_sheep_vcfs,'5797399', sheep_XCI_skews)
+
+comb_mxra5_df = Reduce(rbind, list(MXRA5_var_1_df, MXRA5_var_2_df, MXRA5_var_3_df, MXRA5_var_4_df, MXRA5_var_5_df, MXRA5_var_6_df, MXRA5_var_7_df, MXRA5_var_8_df))
+ggplot(comb_mxra5_df, aes(y = skews, x = variant, fill = data_label)) + geom_boxplot() + xlab('sheep MXRA5') + ylab('XCI skews') + ggtitle('sheep MXRA5')
+#ggsave(filename = 'sheep_mxra5_variants.pdf', path = '/home/werner/projects/cross_species_XCI/code/graphs/skew_predict_snp/variant_escape_examples/', 
+#       device = 'pdf', height = 4, width = 6, useDingbats = F)
+
+#PRKX
+PRKX_var_1_df =  get_var_data(filt_annot_sheep_vcfs,'5660010', sheep_XCI_skews)
+PRKX_var_2_df =  get_var_data(filt_annot_sheep_vcfs,'5658562', sheep_XCI_skews)
+PRKX_var_3_df =  get_var_data(filt_annot_sheep_vcfs,'5660456', sheep_XCI_skews)
+PRKX_var_4_df =  get_var_data(filt_annot_sheep_vcfs,'5660494', sheep_XCI_skews)
+PRKX_var_5_df =  get_var_data(filt_annot_sheep_vcfs,'5660365', sheep_XCI_skews)
+PRKX_var_6_df =  get_var_data(filt_annot_sheep_vcfs,'5659443', sheep_XCI_skews)
+PRKX_var_7_df =  get_var_data(filt_annot_sheep_vcfs,'5657672', sheep_XCI_skews)
+PRKX_var_8_df =  get_var_data(filt_annot_sheep_vcfs,'5661013', sheep_XCI_skews)
+
+comb_test_df = Reduce(rbind, list(PRKX_var_1_df, PRKX_var_2_df, PRKX_var_3_df, PRKX_var_4_df, PRKX_var_5_df, PRKX_var_6_df, PRKX_var_7_df, PRKX_var_8_df))
+ggplot(comb_test_df, aes(y = skews, x = variant, fill = data_label)) + geom_boxplot() + xlab('sheep PRKX') + ylab('XCI skews') + ggtitle('sheep PRKX')
+
+
+#CXCR3
+CXCR3_var_1_df =  get_var_data(filt_annot_sheep_vcfs,'64273174', sheep_XCI_skews)
+CXCR3_var_2_df =  get_var_data(filt_annot_sheep_vcfs,'64271204', sheep_XCI_skews)
+CXCR3_var_3_df =  get_var_data(filt_annot_sheep_vcfs,'64270869', sheep_XCI_skews)
+
+
+comb_test_df = Reduce(rbind, list(CXCR3_var_1_df, CXCR3_var_2_df, CXCR3_var_3_df))
+ggplot(comb_test_df, aes(y = skews, x = variant, fill = data_label)) + geom_boxplot() + xlab('sheep CXCR3') + ylab('XCI skews') + ggtitle('sheep CXCR3')
+
+
+#IL3RA
+IL3RA_var_1_df =  get_var_data(filt_annot_sheep_vcfs,'6648655', sheep_XCI_skews)
+IL3RA_var_2_df =  get_var_data(filt_annot_sheep_vcfs,'6654816', sheep_XCI_skews)
+IL3RA_var_3_df =  get_var_data(filt_annot_sheep_vcfs,'6658743', sheep_XCI_skews)
+IL3RA_var_4_df =  get_var_data(filt_annot_sheep_vcfs,'6662529', sheep_XCI_skews)
+IL3RA_var_5_df =  get_var_data(filt_annot_sheep_vcfs,'6648106', sheep_XCI_skews)
+IL3RA_var_6_df =  get_var_data(filt_annot_sheep_vcfs,'6662912', sheep_XCI_skews)
+IL3RA_var_7_df =  get_var_data(filt_annot_sheep_vcfs,'6657058', sheep_XCI_skews)
+IL3RA_var_8_df =  get_var_data(filt_annot_sheep_vcfs,'6662926', sheep_XCI_skews)
+
+comb_test_df = Reduce(rbind, list(IL3RA_var_1_df, IL3RA_var_2_df, IL3RA_var_3_df, IL3RA_var_4_df, IL3RA_var_5_df, IL3RA_var_6_df, IL3RA_var_7_df, IL3RA_var_8_df))
+ggplot(comb_test_df, aes(y = skews, x = variant, fill = data_label)) + geom_boxplot() + xlab('sheep IL3RA') + ylab('XCI skews') + ggtitle('sheep IL3RA')
+
+save(comb_mxra5_df,
+     file = '/home/werner/projects/cross_species_XCI/final_plots/R/data_for_plots/sheep_individual_variant_auc_boxplots.Rdata')
+
+
+
+```
+
+
+
+
+
+
+
+
+
+
