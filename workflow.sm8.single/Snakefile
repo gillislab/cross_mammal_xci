@@ -69,7 +69,10 @@ rule all:
 	input:
 		expand(wdir + "/{sample}.Aligned.out.bam", sample=SAMPLE ),
 		expand(wdir + "/{sample}.ReadsPerGene.out.tab", sample=SAMPLE )
-        
+        #expand(wdir + "/{sample}.wasp." +  chr + ".snps.vcf", sample=SAMPLE),
+        #expand(wdir + "/{sample}.wasp." +  chr + ".snps_filtered.vcf", sample=SAMPLE),
+        #expand(wdir + "/{sample}.wasp." +  chr + ".split.filtered.wig", sample=SAMPLE )
+
         #expand(wdir + "/{sample}.wasp." + chr + ".snps.vcf", sample=SAMPLE),
         #expand(wdir + "/{sample}.wasp." + chr + ".snps_filtered.vcf", sample=SAMPLE),
         #expand(wdir + "/{sample}.wasp." + chr + ".split.filtered.wig", sample=SAMPLE )

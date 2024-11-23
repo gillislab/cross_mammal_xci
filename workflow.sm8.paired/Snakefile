@@ -31,8 +31,8 @@ num_workers = config["num_workers"]
 worker_idx = config["worker_idx"]
 sample = config["sample"]
 
-genomedir = os.path.expanduser(f'~/data/cross_mammal_xci/genomes/{species}')
-datadir = os.path.expanduser(f'~/data/cross_mammal_xci/sra/{species}.paired')
+genomedir = os.path.expanduser(f'~/data/cmxci/genomes/{species}')
+datadir = os.path.expanduser(f'~/data/cmxci/sra/{species}.paired')
 homedir = os.path.expanduser("~/")
 wdir = f"{homedir}work/cmxci.paired/{species}"
 
@@ -58,10 +58,13 @@ wildcard_constraints:
 # localrules: dump_fastq
 
 rule all:
-    input:
-        expand(wdir + "/{sample}.wasp." +  chr + ".snps.vcf", sample=SAMPLE),
-        expand(wdir + "/{sample}.wasp." +  chr + ".snps_filtered.vcf", sample=SAMPLE),
-        expand(wdir + "/{sample}.wasp." +  chr + ".split.filtered.wig", sample=SAMPLE )
+	input:
+		expand(wdir + "/{sample}.Aligned.out.bam", sample=SAMPLE ),
+		expand(wdir + "/{sample}.ReadsPerGene.out.tab", sample=SAMPLE )
+
+        #expand(wdir + "/{sample}.wasp." +  chr + ".snps.vcf", sample=SAMPLE),
+        #expand(wdir + "/{sample}.wasp." +  chr + ".snps_filtered.vcf", sample=SAMPLE),
+        #expand(wdir + "/{sample}.wasp." +  chr + ".split.filtered.wig", sample=SAMPLE )
         
         #expand(wdir + "/{sample}.Aligned.out.bam", sample=SAMPLE ),
         #expand(wdir + "/{sample}.ReadsPerGene.out.tab", sample=SAMPLE ),
