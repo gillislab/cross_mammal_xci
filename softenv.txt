@@ -51,29 +51,30 @@ ln -s ../sratoolkit.2.11.0-centos_linux64/bin/* ./
 LATEST SNAKEMAKE
 
 Create an environment for the MAPseq pipeline:
-	conda create -n cmxci snakemake=7.32.4
-	# pulls in pandas 2.2.3 python=3.12 numpy=2.1.3   
-
+	conda create -n cmxci snakemake biopython pandas samtools gatk4 igvtools  
+  
 Activate the environment:
 	conda activate cmxci
 
-# conda install -y -c conda-forge -c bioconda pandas ipython jupyter numpy scikit-learn matplotlib seaborn biopython  scikit-plot scipy pyvis samtools gatk4 igvtools 
+# conda install -y -c conda-forge -c bioconda pandas ipython jupyter numpy scikit-learn matplotlib seaborn biopython scikit-plot scipy pyvis samtools gatk4 igvtools star 
 
 conda install -y ipython scipy star install biopython
 # pulls in matplotlib-inline 
 
-# SRA toolkit
+# SRA toolkit on mac/amd?
 cd  $CONDA_PREFIX
 wget https://ftp-trace.ncbi.nlm.nih.gov/sra/sdk/3.1.1/sratoolkit.3.1.1-centos_linux64.tar.gz
+ sratoolkit.3.1.1-mac-x86_64/
 tar -xvzf sratoolkit.2.11.0-centos_linux64.tar.gz
 cd bin
-ln -s ../sratoolkit.2.11.0-centos_linux64/bin/* ./
+ln -s ../sratoolkit.2.11.0-centos_linux64/bin/* ./cd
 
 
 # igvtools needs its own java, 
-#
-# 
+# https://data.broadinstitute.org/igv/projects/downloads/2.14/ 
+
 cd ~/src 
+https://data.broadinstitute.org/igv/projects/downloads/2.14/IGV_Linux_2.14.1_WithJava.zip
 wget https://data.broadinstitute.org/igv/projects/downloads/2.14/IGV_MacApp_2.14.1_WithJava.zip
 unzip  
 mv IGV_Linux_2.5.3/jdk-11 $CONDA_PREFIX/share/igvtools-2.5.3-1/ 

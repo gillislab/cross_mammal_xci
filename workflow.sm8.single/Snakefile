@@ -1,6 +1,14 @@
 #
 # Genomes in /data/cmxci/genomes/<species>
 # Data in /data/cmxci/sra/<species>.single
+#
+# Snakemake 8 with 
+#  snakemake 
+#  --executor cluster-generic \
+#         --cluster-generic-submit-cmd 'qsub -N {rule} -q all.q -l h_vmem=8G -pe smp {threads} -V -cwd'
+#
+
+
 # #  snakemake --jobs 20 --cluster "qsub -N cmxci1 -pe threads {threads} -wd ~/work/cmxci1 -l m_mem_free={resources.mem_mb}M 
 #
 # Cluster w/ batches 
@@ -58,10 +66,13 @@ wildcard_constraints:
     sample="\\w+"
 
 rule all:
-    input:
-        expand(wdir + "/{sample}.wasp." + chr + ".snps.vcf", sample=SAMPLE),
-        expand(wdir + "/{sample}.wasp." + chr + ".snps_filtered.vcf", sample=SAMPLE),
-        expand(wdir + "/{sample}.wasp." + chr + ".split.filtered.wig", sample=SAMPLE )
+	input:
+		expand(wdir + "/{sample}.Aligned.out.bam", sample=SAMPLE ),
+		expand(wdir + "/{sample}.ReadsPerGene.out.tab", sample=SAMPLE )
+        
+        #expand(wdir + "/{sample}.wasp." + chr + ".snps.vcf", sample=SAMPLE),
+        #expand(wdir + "/{sample}.wasp." + chr + ".snps_filtered.vcf", sample=SAMPLE),
+        #expand(wdir + "/{sample}.wasp." + chr + ".split.filtered.wig", sample=SAMPLE )
 		#expand(wdir + "/{sample}.Aligned.out.bam", sample=SAMPLE ),
 		#expand(wdir + "/{sample}.ReadsPerGene.out.tab", sample=SAMPLE ),    
         #expand(wdir + "/{sample}." + str(chr) + ".split.filtered.wig", sample=SAMPLE ),
@@ -143,9 +154,11 @@ rule dump_fastq:
 
     run:
         fasterq_dump( infile=input.sra, 
-                      outdir=wdir, 
+        			  outdir=wdir,  
                       nthreads=f"{threads}", 
-                      tempdir =wdir)
+                      tempdir =wdir,
+                      outfile=output.end1
+                      )
         
         
 rule star_nowasp:

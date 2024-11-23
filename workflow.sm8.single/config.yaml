@@ -2,4 +2,4 @@ species: "Macaca_mulatta"
 chr: "3"
 num_workers: 1
 worker_idx: 0
-sample: "SRR14483250"
+sample: ""
