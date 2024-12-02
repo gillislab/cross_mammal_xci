@@ -39,7 +39,7 @@ wdir = f"{homedir}work/cmxci.single/{species}"
 
 setup_logging(logging.DEBUG)
 logging.debug(f'config/CLI sample = {sample}')
-logging.debug(f"HOME={homedir} WORKDIR={wdir} CHR={chr} GENOMEDIR={genomedir}")
+logging.debug(f"HOME={homedir} WORKDIR={wdir} CHR={chr} DATADIR={datadir} GENOMEDIR={genomedir}")
 logging.debug(f"NUM_WORKERS={num_workers} WORKER_IDX={worker_idx}")
 
 # Collect samples and optionally filter across hosts.

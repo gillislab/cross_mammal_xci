@@ -1,12 +1,19 @@
 Install Conda
 
-Get installer:
-	wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh  
+Get the latest installer(Intel Linux, Intel Mac, Apple Silicon Mac) from
+
+	https://repo.anaconda.com/archive/
+
+E.g., 
+	curl -O https://repo.anaconda.com/archive/Anaconda3-2024.10-1-Linux-x86_64.sh  
 	OR
-	wget https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh
+	curl -O https://repo.anaconda.com/archive/Anaconda3-2024.10-1-MacOSX-x86_64.sh
+	OR
+	curl -O https://repo.anaconda.com/archive/Anaconda3-2024.10-1-MacOSX-arm64.sh
+	
 
 Install:
-	bash Miniconda3-latest-Linux-x86_64.sh
+	bash Anaconda3-2024.10-1-Linux-x86_64.sh
 
 You may need to restart your shell to enable the conda command.
 
@@ -56,7 +63,7 @@ Create an environment for the MAPseq pipeline:
 Activate the environment:
 	conda activate cmxci
 
-# conda install -y -c conda-forge -c bioconda pandas ipython jupyter numpy scikit-learn matplotlib seaborn biopython scikit-plot scipy pyvis samtools gatk4 igvtools star 
+# conda install -y -c conda-forge -c bioconda pandas ipython jupyter numpy scikit-learn matplotlib seaborn biopython scikit-plot scipy pyvis samtools gatk4 igvtools star bcbio-gff 
 
 conda install -y ipython scipy star install biopython
 # pulls in matplotlib-inline 
