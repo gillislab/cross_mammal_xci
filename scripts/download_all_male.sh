@@ -11,5 +11,5 @@ DATE=`date +"%Y%m%d.%H%M"`
 for SPEC in $SPECIES; do 
 	echo $SPEC
 	mkdir -p $SPEC
-        cat ${SPEC}_male_SRR.txt | xargs -I {} ~/git/cshlwork/scripts/sra_download.py -d -o $SPEC/ -r {} 	
+        cat ${SPEC}_male_SRR.txt | xargs -I {} ~/git/cmxci/scripts/sra_download.py -d -o $SPEC/ -r {} 	
 done
