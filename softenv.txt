@@ -34,7 +34,7 @@ Enable additional Conda repositories:
 LATEST SNAKEMAKE
 
 Create an environment for the CMXCI pipeline:
-	conda create -n cmxci snakemake biopython pandas samtools gatk4 igvtools sra-tools star 
+	conda create -n cmxci snakemake biopython pandas samtools gatk4 igvtools sra-tools star scipy 
   
 Activate the environment:
 	conda activate cmxci
